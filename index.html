@@ -7277,6 +7277,7 @@ function TransactionsScreen() {
                           style={{marginLeft:40,marginBottom:4,marginRight:28}}>
                           <CatPicker
                             value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
+                            filterType={type==="income"?"income":"expense"}
                             onChange={(catId,subId)=>{
                               setTxs(p=>p.map(t=>t.id===tx.id?{...t,
                                 splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
