@@ -73,6 +73,21 @@
     height: 52px !important;
     padding-bottom: 0 !important;
   }
+  /* Pixel-Raster für Messung */
+  .pixel-grid {
+    position: fixed; inset: 0; pointer-events: none; z-index: 99999;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(255,0,0,0.15) 4px, rgba(255,0,0,0.15) 5px),
+      repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(255,0,0,0.15) 4px, rgba(255,0,0,0.15) 5px);
+  }
+  .pixel-grid-label {
+    position: fixed; left: 0; top: 50%; transform: translateY(-50%);
+    pointer-events: none; z-index: 99999;
+  }
+  .pixel-grid-label span {
+    display: block; height: 5px; font-size: 6px; color: red;
+    line-height: 5px; padding-left: 2px; font-family: monospace;
+  }
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   input, select, textarea { font-size: 16px !important; } /* prevent iOS zoom */
@@ -15001,6 +15016,7 @@ window.FinanzApp = function FinanzApp() {
   const [newCat,        setNewCat]       = useState({name:"",type:"expense",icon:"tag",color:T.blue,subs:[]});
   const [newSubName,    setNewSubName]   = useState("");
   const [showSettings,  setShowSettings] = useState(false);
+  const [showPixelGrid, setShowPixelGrid] = useState(false);
   const [reviewQueue,   setReviewQueue]  = useState(null);
   const [customIcons,   setCustomIconsRaw] = useState(()=>{
     try { return JSON.parse(localStorage.getItem("mbt_custom_icons")||"[]"); } catch{ return []; }
@@ -17242,6 +17258,16 @@ Abbrechen = ${remoteName}-Stand laden`
           </div>
         );
       })()}
+
+      {/* ── PIXEL GRID (temp) ── */}
+      {showPixelGrid&&<div className="pixel-grid"/>}
+      <button onClick={()=>setShowPixelGrid(v=>!v)}
+        style={{position:"fixed",bottom:70,left:8,zIndex:99998,
+          background:showPixelGrid?"red":"rgba(255,0,0,0.5)",
+          color:"#fff",border:"none",borderRadius:6,padding:"4px 8px",
+          fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"monospace"}}>
+        {showPixelGrid?"✕ Grid":"5px Grid"}
+      </button>
 
       {/* ── MODALS ── */}
       {modal==="addTx"&&<AddTxModal/>}
