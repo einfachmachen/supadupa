@@ -15462,7 +15462,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 2: Kategorie ── */}
       {step===2&&<>
-        {header("Kategorie",fmt(pn(amount.replace(",",".")))+" €",2,()=>setStep(1))}
+        {header("Kategorie",fmt(pn(amount.replace(",","."))),2,()=>setStep(1))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {catStep==="cat"&&<>
             <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:S.gap}}>
