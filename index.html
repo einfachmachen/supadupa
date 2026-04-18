@@ -15047,13 +15047,13 @@ function ThemeDropdown({themeName, setThemeName}) {
           background:thOpen?`${T.blue}18`:"rgba(255,255,255,0.06)",
           border:`1px solid ${thOpen?T.blue:T.bd}`,
           borderRadius:9,padding:"4px 8px 4px 6px",cursor:"pointer",
-          height:30,color:T.txt,fontSize:11,fontWeight:600,fontFamily:"inherit"}}>
+          height:26,color:T.txt,fontSize:10,fontWeight:600,fontFamily:"inherit"}}>
         <div style={{display:"flex",gap:2,alignItems:"center"}}>
           {[cur.bg,cur.blue,cur.pos,cur.neg].map((c,i)=>(
-            <div key={i} style={{width:8,height:8,borderRadius:"50%",background:toH(c),border:"1px solid rgba(128,128,128,0.3)"}}/>
+            <div key={i} style={{width:6,height:6,borderRadius:"50%",background:toH(c),border:"1px solid rgba(128,128,128,0.3)"}}/>
           ))}
         </div>
-        <span style={{maxWidth:70,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.txt2}}>
+        <span style={{maxWidth:55,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.txt2,fontSize:10}}>
           {cur.name||themeName}
         </span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={T.txt2} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -15367,7 +15367,7 @@ function MobileVormerkenModal({onClose}) {
       </button>
       <div style={{flex:1,minWidth:0}}>
         <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,
-          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",fontSize:S.fs+2}}>{title}</div>
         <div style={{color:T.txt2,fontSize:S.fs-6,marginTop:2,
           display:"flex",alignItems:"center",gap:8}}>
           <span style={{color:T.blue,fontWeight:700}}>{stepNum}v4</span>
@@ -15468,7 +15468,7 @@ function MobileVormerkenModal({onClose}) {
             </div>
             {shownCats.map(cat=>(
               <button key={cat.id} onClick={()=>{setSelCat(cat);setCatStep("sub");}}
-                style={{...btnBase,justifyContent:"space-between",
+                style={{...btnBase,justifyContent:"flex-start",
                   marginBottom:S.gap/2,
                   background:"rgba(255,255,255,0.04)",
                   border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
@@ -15502,7 +15502,7 @@ function MobileVormerkenModal({onClose}) {
               <button key={sub.id} onClick={()=>{
                 setCatId(selCat.id);setSubId(sub.id);setStep(3);
               }}
-                style={{...btnBase,justifyContent:"space-between",
+                style={{...btnBase,justifyContent:"flex-start",
                   marginBottom:S.gap/2,
                   background:"rgba(255,255,255,0.04)",
                   border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
@@ -15571,7 +15571,7 @@ function MobileVormerkenModal({onClose}) {
               borderBottom:`1px solid ${T.bd}`,alignItems:"flex-start",gap:16}}>
               <span style={{color:T.txt2,fontSize:S.fs,flexShrink:0}}>{k}</span>
               <span style={{color:T.txt,fontSize:S.fs,fontWeight:600,
-                textAlign:"right",flex:1}}>{v}</span>
+                textAlign:"right",flex:1,wordBreak:"break-word"}}>{v}</span>
             </div>
           ))}
 
@@ -17597,6 +17597,15 @@ Abbrechen = ${remoteName}-Stand laden`
 
         {/* Rechte Seite: Theme-Dropdown | Monatspicker | Cloud */}
         <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+
+          {/* Mobiler Modus Toggle */}
+          <button onClick={()=>setMobileMode(v=>!v)}
+            title="Mobiler Modus"
+            style={{width:30,height:26,borderRadius:8,border:`1px solid ${mobileMode?T.blue:T.bd}`,
+              background:mobileMode?`${T.blue}22`:"rgba(255,255,255,0.06)",
+              cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {Li("smartphone",14,mobileMode?T.blue:T.txt2)}
+          </button>
 
           {/* ── Theme-Dropdown ── */}
           <ThemeDropdown themeName={themeName} setThemeName={setThemeName}/>
