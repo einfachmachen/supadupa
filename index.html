@@ -65,6 +65,10 @@
     pre, code { font-family:monospace !important; }
   </style>
 <style>
+  /* Kein horizontales Scrollen in der App */
+  #root, #root * {
+    overscroll-behavior-x: none;
+  }
   /* Safe area — iOS PWA verwaltet das selbst */
   .nav-top {
     height: 44px !important;
@@ -74,13 +78,7 @@
     height: 57px !important;
     padding-bottom: 5px !important;
   }
-  /* Pixel-Raster für Messung */
-  .pixel-grid {
-    position: fixed; inset: 0; pointer-events: none; z-index: 99999;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 9px, rgba(0,200,255,0.5) 9px, rgba(0,200,255,0.5) 10px),
-      repeating-linear-gradient(90deg, transparent, transparent 9px, rgba(0,200,255,0.5) 9px, rgba(0,200,255,0.5) 10px);
-  }
+
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   input, select, textarea { font-size: 16px !important; } /* prevent iOS zoom */
@@ -15009,7 +15007,6 @@ window.FinanzApp = function FinanzApp() {
   const [newCat,        setNewCat]       = useState({name:"",type:"expense",icon:"tag",color:T.blue,subs:[]});
   const [newSubName,    setNewSubName]   = useState("");
   const [showSettings,  setShowSettings] = useState(false);
-  const [showPixelGrid, setShowPixelGrid] = useState(false);
   const [reviewQueue,   setReviewQueue]  = useState(null);
   const [customIcons,   setCustomIconsRaw] = useState(()=>{
     try { return JSON.parse(localStorage.getItem("mbt_custom_icons")||"[]"); } catch{ return []; }
@@ -15906,6 +15903,7 @@ Abbrechen = ${remoteName}-Stand laden`
   const deletedTxIds = useRef(new Set());
   const prevTxsRef   = useRef(null);
   const t0           = useRef(null);
+  const t0y          = useRef(null);
 
   // Delta-Sync: merkt sich Hashes pro Jahr + Config — nur geänderte Daten nach CF schreiben
   const savedYearHashRef = useRef({});
@@ -16004,15 +16002,20 @@ Abbrechen = ${remoteName}-Stand laden`
   const [cfSaveOnClose, setCfSaveOnClose] = useState(false);
 
   // swipe for month navigation
-  const onTS = e => { t0.current = e.touches[0].clientX; };
+  const onTS = e => {
+    t0.current  = e.touches[0].clientX;
+    t0y.current = e.touches[0].clientY;
+  };
   const onTE = e => {
-    if (t0.current===null) return;
+    if(t0.current===null) return;
     const dx = e.changedTouches[0].clientX - t0.current;
-    if (Math.abs(dx)>45) {
+    const dy = e.changedTouches[0].clientY - t0y.current;
+    // Nur auslösen wenn eindeutig horizontal (dx > dy * 1.5) und Mindestdistanz
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       if(dx<0) { setMonth(m=>{ if(m<11)return m+1; setYear(y=>y+1); return 0; }); }
-      else      { setMonth(m=>{ if(m>0) return m-1; setYear(y=>y-1); return 11; }); }
+      else     { setMonth(m=>{ if(m>0) return m-1; setYear(y=>y-1); return 11; }); }
     }
-    t0.current = null;
+    t0.current = null; t0y.current = null;
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -17035,7 +17038,8 @@ Abbrechen = ${remoteName}-Stand laden`
       <ErrorBoundary name="EditPopup"><EditPopup/></ErrorBoundary>
 
       {/* ── CONTENT ── */}
-      <div style={{flex:1,minHeight:0,overflow:"hidden",display:"flex",flexDirection:"column"}}
+      <div style={{flex:1,minHeight:0,overflow:"hidden",display:"flex",flexDirection:"column",
+        touchAction:"pan-y"}}
         onTouchStart={onTS} onTouchEnd={onTE}>
         {mainTab==="erfassen"&&subTab==="dashboard"&&<ErrorBoundary name="DashboardScreen"><DashboardScreen/></ErrorBoundary>}
         {mainTab==="erfassen"&&subTab==="monat"    &&<ErrorBoundary name="MonatScreen"><MonatScreen/></ErrorBoundary>}
@@ -17251,16 +17255,6 @@ Abbrechen = ${remoteName}-Stand laden`
           </div>
         );
       })()}
-
-      {/* ── PIXEL GRID (temp) ── */}
-      {showPixelGrid&&<div className="pixel-grid"/>}
-      <button onClick={()=>setShowPixelGrid(v=>!v)}
-        style={{position:"fixed",bottom:70,left:8,zIndex:99998,
-          background:showPixelGrid?"red":"rgba(255,0,0,0.5)",
-          color:"#fff",border:"none",borderRadius:6,padding:"4px 8px",
-          fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"monospace"}}>
-        {showPixelGrid?"✕ Grid":"5px Grid"}
-      </button>
 
       {/* ── MODALS ── */}
       {modal==="addTx"&&<AddTxModal/>}
