@@ -10653,9 +10653,9 @@ function AddTxModal() {
 
       {/* Typ-Tabs — horizontal scrollbar auf kleinen Screens */}
       <div style={{overflowX:"auto",marginBottom:12,WebkitOverflowScrolling:"touch",
-        scrollbarWidth:"none",msOverflowStyle:"none"}}>
-        <div style={{display:"flex",gap:3,background:"rgba(0,0,0,0.15)",borderRadius:11,
-          padding:3,minWidth:"max-content"}}>
+        scrollbarWidth:"none",msOverflowStyle:"none",margin:"0 -16px 12px"}}>
+        <div style={{display:"flex",gap:3,background:"rgba(0,0,0,0.15)",
+          padding:"3px 16px",minWidth:"max-content"}}>
           {TABS.map(({id,label,icon})=>{
             const active=typ===id;
             return (
@@ -15059,8 +15059,34 @@ window.FinanzApp = function FinanzApp() {
   const gistActive = !!(gistToken && gistId);
 
   // Cloudflare Workers settings
-  const [cfUrl,    setCfUrl]    = useState(()=>localStorage.getItem("cf_url")||"");
-  const [cfSecret, setCfSecret] = useState(()=>localStorage.getItem("cf_secret")||"");
+  const [cfUrl,    setCfUrlRaw]    = useState("");
+  const [cfSecret, setCfSecretRaw] = useState("");
+  const [cfCredsReady, setCfCredsReady] = useState(false);
+  // CF-Zugangsdaten aus IDB laden (stabiler auf iOS als localStorage)
+  React.useEffect(()=>{
+    (async()=>{
+      try {
+        const url = await window.IDB.get("cf_url").catch(()=>null) || localStorage.getItem("cf_url") || "";
+        const sec = await window.IDB.get("cf_secret").catch(()=>null) || localStorage.getItem("cf_secret") || "";
+        setCfUrlRaw(url);
+        setCfSecretRaw(sec);
+        // Auch in IDB sichern falls nur in localStorage
+        if(url) window.IDB.set("cf_url", url).catch(()=>{});
+        if(sec) window.IDB.set("cf_secret", sec).catch(()=>{});
+      } catch(e){}
+      setCfCredsReady(true);
+    })();
+  }, []);
+  const setCfUrl = (v) => {
+    setCfUrlRaw(v);
+    try { localStorage.setItem("cf_url", v); } catch(e){}
+    window.IDB.set("cf_url", v).catch(()=>{});
+  };
+  const setCfSecret = (v) => {
+    setCfSecretRaw(v);
+    try { localStorage.setItem("cf_secret", v); } catch(e){}
+    window.IDB.set("cf_secret", v).catch(()=>{});
+  };
   const [cfStatus, setCfStatus] = useState("idle");
   const cfActive = !!(cfUrl && cfSecret);
 
@@ -15613,8 +15639,9 @@ window.FinanzApp = function FinanzApp() {
     }
   };
 
-  // Load on startup
+  // Load on startup — wartet bis CF-Zugangsdaten aus IDB geladen sind
   useEffect(()=>{
+    if(!cfCredsReady) return;
     setSyncStatus("loading");
     const doLoad = async () => {
       // Hilfsfunktion: lokalen Stand laden
@@ -15651,6 +15678,27 @@ Abbrechen = ${remoteName}-Stand laden`
         // ── 1. Lokaler Stand ist immer die Wahrheit ───────────────────
         if(localTs > 0) {
           await loadLocal();
+          // Prüfen ob wirklich Daten geladen wurden
+          const hasData = txs.length > 0 || (cats && cats.length > 2);
+          if(!hasData && cfActive) {
+            setSyncError("⚠️ Lokale Daten leer — lade automatisch von Cloudflare...");
+            try {
+              const cdata = await cfLoad();
+              if(cdata.cats?.length) {
+                applyData(cdata);
+                const ts2 = Date.now();
+                const toStore = JSON.stringify({...cdata, saved_at:ts2});
+                window.IDB.set(LS_KEY, toStore).catch(()=>{});
+                window.IDB.set("mbt_local_backup", toStore).catch(()=>{});
+                try { localStorage.setItem(LS_KEY, toStore); } catch(e){}
+                try { localStorage.setItem("mbt_local_backup", toStore); } catch(e){}
+                setSyncError("✓ Von Cloudflare geladen");
+              }
+              setCfStatus("ok");
+            } catch(e) { setCfStatus("error"); }
+            setIsLand(false); setSyncStatus("idle");
+            return;
+          }
           setSyncError(`✓ Lokale Daten geladen (${new Date(localTs).toLocaleTimeString()})`);
           if(cfActive) {
             cfLoad().then(cdata=>{
@@ -15730,7 +15778,7 @@ Abbrechen = ${remoteName}-Stand laden`
       }
     };
     doLoad();
-  }, []);
+  }, [cfCredsReady]);
 
   // ── Auto-Migration: altes startBalances-Format → neues Monats-Format ────
   // Altes Format: startBalances[Jahr]["acc-giro"] = Endstand 31.12.(Jahr-1)
