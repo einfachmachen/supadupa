@@ -2271,7 +2271,7 @@ function VormVerknuepfenPanel({editVorm, txs, setTxs, onClose}) {
   );
 }
 
-function VormerkungHub({onClose, editVorm=null}) {
+function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const { cats, txs, setTxs, accounts, year, month, getCat, getSub } = useContext(AppCtx);
   const today = new Date().toISOString().slice(0,10);
   const pad = n => String(n).padStart(2,"0");
@@ -2575,36 +2575,45 @@ function VormerkungHub({onClose, editVorm=null}) {
     : null;
 
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
-      backdropFilter:"blur(8px)",zIndex:70,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:"24px 24px 0 0",
-        width:"100%",maxWidth:520,maxHeight:"92vh",display:"flex",flexDirection:"column",
-        border:`1px solid ${T.bds}`,boxShadow:"0 -8px 40px rgba(0,0,0,0.6)"}}>
+    <div onClick={mobileMode?null:onClose}
+      className={mobileMode?"mobile-modal":""}
+      style={mobileMode
+        ? {position:"fixed",inset:0,background:T.bg,zIndex:300,display:"flex",flexDirection:"column"}
+        : {position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
+            backdropFilter:"blur(8px)",zIndex:70,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+      <div onClick={e=>e.stopPropagation()} style={mobileMode
+        ? {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}
+        : {background:T.surf2,borderRadius:"24px 24px 0 0",
+            width:"100%",maxWidth:520,maxHeight:"92vh",display:"flex",flexDirection:"column",
+            border:`1px solid ${T.bds}`,boxShadow:"0 -8px 40px rgba(0,0,0,0.6)"}}>
 
         {/* Header */}
-        <div style={{padding:"14px 16px 10px",borderBottom:`1px solid ${T.bd}`,
+        <div style={{padding:mobileMode?"12px 16px":"14px 16px 10px",
+          borderBottom:`1px solid ${T.bd}`,background:mobileMode?T.surf:"transparent",
           display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-          <div style={{width:34,height:34,borderRadius:11,background:`${T.gold}22`,
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {Li("calendar-plus",16,T.gold)}
-          </div>
+          <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",
+            color:T.txt2,width:mobileMode?44:34,height:mobileMode?44:34,
+            borderRadius:11,cursor:"pointer",fontSize:mobileMode?20:16,
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            ←
+          </button>
           <div style={{flex:1}}>
-            <div style={{color:T.txt,fontSize:15,fontWeight:700}}>
-              {isEdit ? "Vormerkung bearbeiten" : "Vormerkungen & Wiederkehrende"}
+            <div style={{color:T.txt,fontSize:mobileMode?24:15,fontWeight:700}}>
+              {isEdit ? "Vormerkung bearbeiten" : "Wiederkehrende anlegen"}
             </div>
-            <div style={{color:T.txt2,fontSize:10}}>
+            <div style={{color:T.txt2,fontSize:mobileMode?16:10}}>
               {isEdit
                 ? (editVorm._seriesId ? `${typ==="finanzierung"?"Finanzierung":"Serie"} · ${txs.filter(t=>t._seriesId===editVorm._seriesId).length} Buchungen · Intervall: ${interval_===1?"monatlich":interval_===3?"quartalsweise":interval_===12?"jährlich":interval_+"M"}` : "Einmalige Vormerkung")
                 : "Einmalig · Wiederkehrend · Finanzierung · Erkennen"}
             </div>
           </div>
-          <button onClick={onClose} style={{background:"rgba(255,255,255,0.07)",border:"none",
+          {!mobileMode&&<button onClick={onClose} style={{background:"rgba(255,255,255,0.07)",border:"none",
             color:T.txt2,borderRadius:9,width:30,height:30,cursor:"pointer"}}>
             {Li("x",14)}
-          </button>
+          </button>}
         </div>
 
-        <div style={{flex:1,overflowY:"auto"}}>
+        <div style={{flex:1,overflowY:"auto",background:mobileMode?T.surf2:"transparent"}}>
 
           {/* NEU ERSTELLEN */}
           <VormHubSecToggle label="Neue Vormerkung erstellen" icon="plus-circle"
@@ -18013,7 +18022,7 @@ Abbrechen = ${remoteName}-Stand laden`
           setShowMobilePicker(false);
           if(action==="vormerken") setShowMobileVormerken(true);
           else if(action==="csv") setShowCsv(true);
-          else if(action==="wiederkehrend") setShowRecurring(true);
+          else if(action==="wiederkehrend") { if(mobileMode) setShowVormHub(true); else setShowRecurring(true); }
           else if(action==="kategorien") { setMainTab("struktur"); setActiveStructurTab("kategorien"); }
           else setModal("addTx"); // fallback für budget, finanzierung
         }}
@@ -18023,7 +18032,7 @@ Abbrechen = ${remoteName}-Stand laden`
       {modal==="addTx"&&<AddTxModal/>}
       {showCsv&&<CsvImportScreen onClose={()=>setShowCsv(false)} csvRules={csvRules} setCsvRules={setCsvRules} mobileMode={mobileMode}/>}
       {showMatching&&<MatchingScreen onClose={()=>setShowMatching(false)}/>}
-      {showVormHub&&<VormerkungHub onClose={()=>{setShowVormHub(false);setEditVormTx(null);}} editVorm={editVormTx}/>}
+      {showVormHub&&<VormerkungHub onClose={()=>{setShowVormHub(false);setEditVormTx(null);}} editVorm={editVormTx} mobileMode={mobileMode}/>}
       {showRecurring&&<RecurringDetectionScreen onClose={()=>setShowRecurring(false)}/>}
       {showKategorisieren&&<RecurringDetectionScreen initialTab="kategorisieren" onClose={()=>setShowKategorisieren(false)}/>}
       {showSettings&&(
