@@ -15403,11 +15403,11 @@ function MobileVormerkenModal({onClose}) {
   return (
     <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,zIndex:300,
       display:"flex",flexDirection:"column",overflowY:"auto",
-      "--mob-fs": S.fsL+"px"}}>
+      "--mob-fs": S.fs+"px"}}>
 
       {/* ── Schritt 1: Betrag ── */}
       {step===1&&<>
-        {header("Neue Vormerkung","Schritt 1 · Betrag & Typ",1)}
+        {header("Neue Vormerkung","Betrag & Typ",1)}
         <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
 
           {/* Ausgabe / Einnahme */}
@@ -15433,7 +15433,7 @@ function MobileVormerkenModal({onClose}) {
               padding:`${S.padL}px`,borderRadius:S.radius,
               border:`2px solid ${amount?T.blue:T.bd}`,
               background:"rgba(255,255,255,0.06)",color:T.txt,
-              fontSize:S.fsL,fontWeight:700,fontFamily:"monospace",
+              fontSize:S.fs,fontWeight:700,fontFamily:"monospace",
               textAlign:"right",outline:"none",marginBottom:S.gap*1.5}}
           />
 
@@ -15460,7 +15460,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 2: Kategorie ── */}
       {step===2&&<>
-        {header("Kategorie","Schritt 2 · "+fmt(pn(amount.replace(",",".")))+" €",2,()=>setStep(1))}
+        {header("Kategorie",fmt(pn(amount.replace(",",".")))+" €",2,()=>setStep(1))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
           {catStep==="cat"&&<>
             <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:S.gap}}>
@@ -15519,7 +15519,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 3: Details ── */}
       {step===3&&<>
-        {header("Details","Schritt 3 · Beschreibung & Konto",3,()=>setStep(2))}
+        {header("Details","Beschreibung & Konto",3,()=>setStep(2))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
 
           {fieldLabel("Beschreibung")}
@@ -15556,7 +15556,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 4: Bestätigung ── */}
       {step===4&&<>
-        {header("Bestätigen","Schritt 4 · Alles korrekt?",4,()=>setStep(3))}
+        {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
           {[
             ["Betrag", (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))+" €"],
