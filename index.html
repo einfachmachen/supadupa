@@ -15407,8 +15407,8 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 1: Betrag ── */}
       {step===1&&<>
-        {header("Neue Vormerkung","Betrag & Typ",1)}
-        <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
+        {header("neue Vormerkung","Betrag & Typ",1)}
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
           {/* Ausgabe / Einnahme */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:S.gap,marginBottom:S.gap*1.5}}>
@@ -15461,7 +15461,7 @@ function MobileVormerkenModal({onClose}) {
       {/* ── Schritt 2: Kategorie ── */}
       {step===2&&<>
         {header("Kategorie",fmt(pn(amount.replace(",",".")))+" €",2,()=>setStep(1))}
-        <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {catStep==="cat"&&<>
             <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:S.gap}}>
               Kategorie wählen:
@@ -15520,7 +15520,7 @@ function MobileVormerkenModal({onClose}) {
       {/* ── Schritt 3: Details ── */}
       {step===3&&<>
         {header("Details","Beschreibung & Konto",3,()=>setStep(2))}
-        <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
           {fieldLabel("Beschreibung")}
           <input type="text" value={desc} onChange={e=>setDesc(e.target.value)}
@@ -15557,7 +15557,7 @@ function MobileVormerkenModal({onClose}) {
       {/* ── Schritt 4: Bestätigung ── */}
       {step===4&&<>
         {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
-        <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {[
             ["Betrag", (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))+" €"],
             ["Typ", csvType==="expense"?"Ausgabe":"Einnahme"],
