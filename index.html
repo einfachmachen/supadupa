@@ -11766,6 +11766,7 @@ function MonatScreen() {
     const [showAllCats, setShowAllCats] = useState(false);
     const [activeCatTxId, setActiveCatTxId] = useState(null);
     const pendingCatsRef = useRef({});
+    const [txIconPickM, setTxIconPickM] = useState(null);
     const [search,   setSearch]   = useState("");
     const [selected, setSelected] = useState(new Set());
     const [bulkCat,  setBulkCat]  = useState({catId:"",subId:""});
