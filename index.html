@@ -3994,7 +3994,7 @@ function QuickBtnsBarWithColor({onSelectIcon, onSelectColor, _onDragStart, _onDr
 // value={catId+"|"+subId}, onChange={(catId,subId)=>...}
 // onSplit={(splits)=>...} optional – wenn gesetzt, erscheint Split-Button
 // ══════════════════════════════════════════════════════════════════════
-function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAmount=0, onSplit=null, filterType=null}) {
+function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAmount=0, onSplit=null, filterType=null, openUp=false}) {
   const { cats, groups, setCats, setGroups, quickBtns, setQuickBtns } = useContext(AppCtx);
   const [step,    setStep]    = useState(0);  // 0=Gruppe 1=Kat 2=Unterkat
   const [selGrp,  setSelGrp]  = useState(null);
@@ -4064,7 +4064,11 @@ function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAm
   const openPanel = () => {
     if(triggerRef.current) {
       const r = triggerRef.current.getBoundingClientRect();
-      setPanelPos({top: r.bottom+4, left: r.left, width: r.width});
+      setPanelPos({
+        top: openUp ? r.top - 4 : r.bottom + 4,
+        left: r.left, width: r.width,
+        up: openUp
+      });
     }
     setOpen(o=>!o); if(open) reset();
   };
@@ -4099,7 +4103,11 @@ function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAm
       {/* Panel */}
       {open&&(
         <div onClick={e=>e.stopPropagation()}
-          style={{position:"fixed",top:panelPos.top,left:panelPos.left,width:panelPos.width,zIndex:200,
+          style={{position:"fixed",
+            ...(panelPos.up
+              ? {bottom: `calc(100vh - ${panelPos.top}px)`, top:"auto"}
+              : {top:panelPos.top}),
+            left:panelPos.left,width:panelPos.width,zIndex:200,
             background:T.surf2,borderRadius:14,border:`1px solid ${T.bds}`,
             boxShadow:"0 8px 32px rgba(0,0,0,0.6)",padding:10,maxHeight:320,overflowY:"auto"}}>
 
@@ -12373,17 +12381,19 @@ function MonatScreen() {
                         {/* MitteEndeFields ausgeblendet — nur in Jahresansicht */}
                         {/* Kategorie-Picker — erscheint wenn globaler Toggle an */}
                         {showAllCats&&(
-                          <div onClick={e=>{e.stopPropagation();setActiveCatTxId(tx.id);}}
-                            style={{marginLeft:40,marginBottom:4,marginRight:28,
-                              padding:"6px 10px",borderRadius:8,cursor:"pointer",
-                              border:`1px solid ${(tx.splits||[])[0]?.catId?T.gold+"55":T.bd}`,
-                              background:"rgba(255,255,255,0.04)",
-                              color:(tx.splits||[])[0]?.catId?T.gold:T.txt2,
-                              fontSize:12,display:"flex",alignItems:"center",gap:6}}>
-                            {Li("tag",10,(tx.splits||[])[0]?.catId?T.gold:T.txt2)}
-                            {(tx.splits||[])[0]?.catId
-                              ? `${getCat((tx.splits||[])[0]?.catId)?.name||"?"} / ${getSub((tx.splits||[])[0]?.catId,(tx.splits||[])[0]?.subId)?.name||"?"}`
-                              : "— Kategorie wählen —"}
+                          <div onClick={e=>e.stopPropagation()}
+                            style={{marginLeft:40,marginBottom:4,marginRight:28}}>
+                            <CatPicker
+                              value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
+                              filterType={txType(tx)==="income"?"income":"expense"}
+                              openUp={true}
+                              onChange={(catId,subId)=>{
+                                setTxs(p=>p.map(t=>t.id===tx.id?{...t,
+                                  splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
+                                }:t));
+                              }}
+                              placeholder="— Kategorie wählen —"
+                            />
                           </div>
                         )}
                       </div>
