@@ -69,6 +69,9 @@
   #root, #root * {
     overscroll-behavior-x: none;
   }
+  #root {
+    overflow-x: hidden;
+  }
   /* Safe area — iOS PWA verwaltet das selbst */
   .nav-top {
     height: 44px !important;
@@ -5794,7 +5797,7 @@ function DashboardScreen() {
     }).sort((a,b)=>b.date.localeCompare(a.date));
 
     return (<>
-      <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+      <div style={{flex:1,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}}>
         {/* Duplikat-Warnung */}
         {dupCount>0&&(
           <div style={{margin:"6px 10px",background:T.err_bg,border:`2px solid ${T.neg}`,borderRadius:12,padding:"10px 12px"}}>
@@ -6915,7 +6918,7 @@ function TransactionsScreen() {
     const inSearchMode = search.trim().length > 0 || filt==="mismatch";
 
     return (
-      <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",display:"flex",flexDirection:"column"}}>
+      <div style={{flex:1,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch",display:"flex",flexDirection:"column"}}>
 
         {/* ── Buchungen nachkategorisieren — einklappbar ── */}
         <WerkzeugeSection/>
@@ -10106,7 +10109,7 @@ function ManagementScreen({activeTab="kategorien"}) {
           </div>
         )}
         {mgrTab!=="einstellungen"&&mgrTab!=="konten"&&(
-      <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",display:"flex",flexDirection:"column"}}>
+      <div style={{flex:1,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch",display:"flex",flexDirection:"column"}}>
 
         {/* ── Kategorie-Zuordnungen ── */}
         <div style={{padding:"10px 14px 6px",borderBottom:`1px solid ${T.bd}`}}>
