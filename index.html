@@ -15335,7 +15335,7 @@ function MobileVormerkenModal({onClose}) {
   const [selCat, setSelCat] = useState(null);
   const [saved, setSaved] = useState(false);
 
-  const S = {fs:22, fsL:56, pad:16, padL:20, radius:18, gap:16};
+  const S = {fs:28, fsL:72, pad:20, padL:26, radius:20, gap:20};
   const expCats = cats.filter(c=>c.type==="expense"||c.type==="tagesgeld");
   const incCats = cats.filter(c=>c.type==="income");
   const shownCats = csvType==="expense" ? expCats : incCats;
