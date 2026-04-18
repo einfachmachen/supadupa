@@ -12001,20 +12001,8 @@ function MonatScreen() {
               style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",fontSize:13}}>{Li("x",13)}</button>}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-            <span style={{color:T.txt2,fontSize:11}}>Kategorisieren</span>
-            <div onClick={()=>{
-                const next = !showAllCats;
-                setShowAllCats(next);
-                if(!next && Object.keys(pendingCatsRef.current).length > 0) {
-                  setTxs(p=>p.map(t=>{
-                    const pc = pendingCatsRef.current[t.id];
-                    if(!pc) return t;
-                    return {...t, splits:[{id:(t.splits||[])[0]?.id||uid(),
-                      catId:pc.catId, subId:pc.subId, amount:t.totalAmount}]};
-                  }));
-                  pendingCatsRef.current = {};
-                }
-              }}
+            <span style={{color:T.txt2,fontSize:11}}>Kategorien</span>
+            <div onClick={()=>setShowAllCats(v=>!v)}
               style={{width:40,height:24,borderRadius:12,cursor:"pointer",
                 background:showAllCats?T.blue:"rgba(255,255,255,0.12)",
                 position:"relative",transition:"background 0.2s",flexShrink:0}}>
@@ -12387,22 +12375,16 @@ function MonatScreen() {
                         {showAllCats&&(
                           <div onClick={e=>e.stopPropagation()}
                             style={{marginLeft:40,marginBottom:4,marginRight:28}}>
-                            <button onClick={()=>setActiveCatTxId(tx.id)}
-                              style={{width:"100%",padding:"6px 10px",borderRadius:8,
-                                border:`1px solid ${(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold+"55":T.bd}`,
-                                background:"rgba(255,255,255,0.04)",
-                                color:(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2,
-                                fontSize:12,cursor:"pointer",fontFamily:"inherit",textAlign:"left",
-                                display:"flex",alignItems:"center",gap:6}}>
-                              {Li("tag",10,(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2)}
-                              {(()=>{
-                                const pc = pendingCatsRef.current[tx.id];
-                                const catId = pc?.catId||(tx.splits||[])[0]?.catId;
-                                const subId = pc?.subId||(tx.splits||[])[0]?.subId;
-                                if(!catId) return "— Kategorie wählen —";
-                                return `${getCat(catId)?.name||"?"} / ${getSub(catId,subId)?.name||"?"}`;
-                              })()}
-                            </button>
+                            <CatPicker
+                              value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
+                              filterType={txType(tx)==="income"?"income":"expense"}
+                              onChange={(catId,subId)=>{
+                                setTxs(p=>p.map(t=>t.id===tx.id?{...t,
+                                  splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
+                                }:t));
+                              }}
+                              placeholder="— Kategorie wählen —"
+                            />
                           </div>
                         )}
                       </div>
