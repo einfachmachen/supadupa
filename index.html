@@ -15346,8 +15346,9 @@ function MobileVormerkenModal({onClose}) {
     width:"100%", padding:`${S.padL}px`, borderRadius:S.radius,
     border:"none", cursor:"pointer", fontFamily:"inherit",
     fontSize:S.fs, fontWeight:700, display:"flex",
-    alignItems:"center", justifyContent:"center", gap:10,
+    alignItems:"center", justifyContent:"flex-start", gap:10,
   };
+  const btnCenter = {...btnBase, justifyContent:"center"};
 
   const fieldLabel = (txt) => (
     <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:6,fontWeight:600}}>{txt}</div>
@@ -15414,7 +15415,7 @@ function MobileVormerkenModal({onClose}) {
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:S.gap,marginBottom:S.gap*1.5}}>
             {[["expense","Ausgabe",T.neg],["income","Einnahme",T.pos]].map(([t,l,c])=>(
               <button key={t} onClick={()=>setCsvType(t)}
-                style={{...btnBase, padding:`${S.padL}px`,
+                style={{...btnCenter, padding:`${S.padL}px`,
                   background:csvType===t?c+"22":"rgba(255,255,255,0.06)",
                   border:`2px solid ${csvType===t?c:T.bd}`,
                   color:csvType===t?c:T.txt2, borderRadius:S.radius}}>
@@ -15450,7 +15451,7 @@ function MobileVormerkenModal({onClose}) {
 
           <button onClick={()=>{ const a=pn(amount.replace(",",".")); if(a>0) setStep(2); }}
             disabled={!amount||pn(amount.replace(",","."))<= 0}
-            style={{...btnBase,
+            style={{...btnCenter,
               background:amount&&pn(amount.replace(",",".")>0)?T.blue:"rgba(255,255,255,0.1)",
               color:amount&&pn(amount.replace(",",".")>0)?"#fff":T.txt2}}>
             Weiter → Kategorie
@@ -15548,7 +15549,7 @@ function MobileVormerkenModal({onClose}) {
           </div>
 
           <button onClick={()=>setStep(4)}
-            style={{...btnBase,background:T.blue,color:"#fff"}}>
+            style={{...btnCenter,background:T.blue,color:"#fff"}}>
             Weiter → Bestätigen
           </button>
         </div>
@@ -15576,11 +15577,11 @@ function MobileVormerkenModal({onClose}) {
           ))}
 
           <button onClick={doSave}
-            style={{...btnBase,background:T.pos,color:"#fff",marginTop:S.gap*2}}>
+            style={{...btnCenter,background:T.pos,color:"#fff",marginTop:S.gap*2}}>
             ✓ Vormerkung speichern
           </button>
           <button onClick={onClose}
-            style={{...btnBase,background:"transparent",
+            style={{...btnCenter,background:"transparent",
               border:`1.5px solid ${T.bd}`,color:T.txt2,
               marginTop:S.gap,fontWeight:400}}>
             Abbrechen
