@@ -6784,6 +6784,8 @@ function TransactionsScreen() {
     const [hideLinked, setHideLinked] = useState(true);
     const [showAllCats, setShowAllCats] = useState(false);
     const [activeCatTxId, setActiveCatTxId] = useState(null);
+    // Lokale Kategorie-Änderungen — werden erst beim Toggle-Aus gespeichert
+    const [pendingCats, setPendingCats] = useState({}); // {txId: {catId, subId}}
     const [expandedGroups, setExpandedGroups] = useState(new Set());
     const toggleExpand = id => setExpandedGroups(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;}); // verknüpfte Unterbuchungen ausblenden
 
@@ -6944,8 +6946,20 @@ function TransactionsScreen() {
               <div onClick={()=>{
                   const next = !showAllCats;
                   setShowAllCats(next);
-                  // Automatisch auf unkategorisiert filtern um Performance zu schonen
-                  if(next) setFilt("uncat");
+                  if(next) {
+                    setFilt("uncat");
+                  } else {
+                    // Alle ausstehenden Kategorie-Änderungen auf einmal speichern
+                    if(Object.keys(pendingCats).length > 0) {
+                      setTxs(p=>p.map(t=>{
+                        const pc = pendingCats[t.id];
+                        if(!pc) return t;
+                        return {...t, splits:[{id:(t.splits||[])[0]?.id||uid(),
+                          catId:pc.catId, subId:pc.subId, amount:t.totalAmount}]};
+                      }));
+                      setPendingCats({});
+                    }
+                  }
                 }}
                 style={{width:40,height:24,borderRadius:12,cursor:"pointer",
                   background:showAllCats?T.blue:"rgba(255,255,255,0.12)",
@@ -7279,15 +7293,19 @@ function TransactionsScreen() {
                           style={{marginLeft:40,marginBottom:4,marginRight:28}}>
                           <button onClick={()=>setActiveCatTxId(tx.id)}
                             style={{width:"100%",padding:"6px 10px",borderRadius:8,
-                              border:`1px solid ${(tx.splits||[])[0]?.catId?T.gold+"55":T.bd}`,
+                              border:`1px solid ${(pendingCats[tx.id]||(tx.splits||[])[0]?.catId)?T.gold+"55":T.bd}`,
                               background:"rgba(255,255,255,0.04)",
-                              color:(tx.splits||[])[0]?.catId?T.gold:T.txt2,
+                              color:(pendingCats[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2,
                               fontSize:12,cursor:"pointer",fontFamily:"inherit",textAlign:"left",
                               display:"flex",alignItems:"center",gap:6}}>
-                            {Li("tag",10,(tx.splits||[])[0]?.catId?T.gold:T.txt2)}
-                            {(tx.splits||[])[0]?.catId
-                              ? `${getCat((tx.splits||[])[0]?.catId)?.name||"?"} / ${getSub((tx.splits||[])[0]?.catId,(tx.splits||[])[0]?.subId)?.name||"?"}`
-                              : "— Kategorie wählen —"}
+                            {Li("tag",10,(pendingCats[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2)}
+                            {(()=>{
+                              const pc = pendingCats[tx.id];
+                              const catId = pc?.catId || (tx.splits||[])[0]?.catId;
+                              const subId = pc?.subId || (tx.splits||[])[0]?.subId;
+                              if(!catId) return "— Kategorie wählen —";
+                              return `${getCat(catId)?.name||"?"} / ${getSub(catId,subId)?.name||"?"}`;
+                            })()}
                           </button>
                         </div>
                       )}
@@ -7321,12 +7339,19 @@ function TransactionsScreen() {
                 Kategorie zuweisen
               </div>
               <CatPicker
-                value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
-                filterType={type==="income"?"income":"expense"}
+                value={(()=>{
+                  const pc = pendingCats[activeCatTxId];
+                  const tx2 = txs.find(t=>t.id===activeCatTxId);
+                  const catId = pc?.catId || (tx2?.splits||[])[0]?.catId || "";
+                  const subId = pc?.subId || (tx2?.splits||[])[0]?.subId || "";
+                  return catId+"|"+subId;
+                })()}
+                filterType={(()=>{
+                  const tx2 = txs.find(t=>t.id===activeCatTxId);
+                  return txType(tx2)==="income"?"income":"expense";
+                })()}
                 onChange={(catId,subId)=>{
-                  setTxs(p=>p.map(t=>t.id===activeCatTxId?{...t,
-                    splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
-                  }:t));
+                  setPendingCats(p=>({...p,[activeCatTxId]:{catId,subId}}));
                   setActiveCatTxId(null);
                 }}
                 placeholder="— Kategorie wählen —"
