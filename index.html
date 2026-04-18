@@ -6783,6 +6783,7 @@ function TransactionsScreen() {
     const [filtAcc, setFiltAcc] = useState("");
     const [hideLinked, setHideLinked] = useState(true);
     const [showAllCats, setShowAllCats] = useState(false);
+    const [activeCatTxId, setActiveCatTxId] = useState(null);
     const [expandedGroups, setExpandedGroups] = useState(new Set());
     const toggleExpand = id => setExpandedGroups(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;}); // verknüpfte Unterbuchungen ausblenden
 
@@ -7271,20 +7272,22 @@ function TransactionsScreen() {
                           </div>
                         </div>
                       </div>
-                      {/* Kategorie-Picker — erscheint wenn globaler Toggle an */}
+                      {/* Kategorie-Button — öffnet separaten Dialog */}
                       {showAllCats&&(
                         <div onClick={e=>e.stopPropagation()}
                           style={{marginLeft:40,marginBottom:4,marginRight:28}}>
-                          <CatPicker
-                            value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
-                            filterType={type==="income"?"income":"expense"}
-                            onChange={(catId,subId)=>{
-                              setTxs(p=>p.map(t=>t.id===tx.id?{...t,
-                                splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
-                              }:t));
-                            }}
-                            placeholder="— Kategorie wählen —"
-                          />
+                          <button onClick={()=>setActiveCatTxId(tx.id)}
+                            style={{width:"100%",padding:"6px 10px",borderRadius:8,
+                              border:`1px solid ${(tx.splits||[])[0]?.catId?T.gold+"55":T.bd}`,
+                              background:"rgba(255,255,255,0.04)",
+                              color:(tx.splits||[])[0]?.catId?T.gold:T.txt2,
+                              fontSize:12,cursor:"pointer",fontFamily:"inherit",textAlign:"left",
+                              display:"flex",alignItems:"center",gap:6}}>
+                            {Li("tag",10,(tx.splits||[])[0]?.catId?T.gold:T.txt2)}
+                            {(tx.splits||[])[0]?.catId
+                              ? `${getCat((tx.splits||[])[0]?.catId)?.name||"?"} / ${getSub((tx.splits||[])[0]?.catId,(tx.splits||[])[0]?.subId)?.name||"?"}`
+                              : "— Kategorie wählen —"}
+                          </button>
                         </div>
                       )}
                     </div>
@@ -7294,6 +7297,42 @@ function TransactionsScreen() {
           }
         </div>
       </div>
+
+      {/* Kategorie-Zuweisung Modal */}
+      {activeCatTxId&&(()=>{
+        const tx = txs.find(t=>t.id===activeCatTxId);
+        if(!tx) return null;
+        const type = txType(tx);
+        return (
+          <div onClick={()=>setActiveCatTxId(null)}
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",
+              backdropFilter:"blur(8px)",zIndex:200,
+              display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+            <div onClick={e=>e.stopPropagation()}
+              style={{background:T.surf2,borderRadius:"20px 20px 0 0",width:"100%",
+                maxWidth:480,padding:"16px",maxHeight:"60vh",overflowY:"auto",
+                border:`1px solid ${T.bd}`}}>
+              <div style={{color:T.txt,fontSize:13,fontWeight:700,marginBottom:4}}>
+                {tx.desc}
+              </div>
+              <div style={{color:T.txt2,fontSize:11,marginBottom:12}}>
+                Kategorie zuweisen
+              </div>
+              <CatPicker
+                value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
+                filterType={type==="income"?"income":"expense"}
+                onChange={(catId,subId)=>{
+                  setTxs(p=>p.map(t=>t.id===activeCatTxId?{...t,
+                    splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
+                  }:t));
+                  setActiveCatTxId(null);
+                }}
+                placeholder="— Kategorie wählen —"
+              />
+            </div>
+          </div>
+        );
+      })()}
     );
 
 }
