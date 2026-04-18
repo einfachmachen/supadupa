@@ -15652,7 +15652,7 @@ Abbrechen = ${remoteName}-Stand laden`
         // CF dient NUR zur Synchronisierung zwischen Geräten
         // Automatischer CF-Check wurde deaktiviert — verhinderte Datenverlust
         if(localTs > 0) {
-          loadLocal();
+          await loadLocal();
           // CF-Status im Hintergrund prüfen (nur Status, kein automatisches Laden)
           if(cfActive) {
             cfLoad().then(cdata=>{
@@ -15695,11 +15695,11 @@ Abbrechen = ${remoteName}-Stand laden`
             const jdata = await jsonbinLoad();
             const jTs = jdata.saved_at||0;
             if(checkLocalNewer(jTs,"JSONBin")) {
-              loadLocal();
+              await loadLocal();
             } else if(jdata.cats?.length) {
               applyData(jdata);
             } else {
-              loadLocal();
+              await loadLocal();
             }
             setJsonbinStatus("ok"); setIsLand(false); setSyncStatus("idle");
             return;
@@ -15707,7 +15707,7 @@ Abbrechen = ${remoteName}-Stand laden`
             console.error("JSONBin load error:", e);
             setJsonbinStatus("error");
             // JSONBin Fehler → lokal laden
-            loadLocal(); setIsLand(false); setSyncStatus("idle");
+            await loadLocal(); setIsLand(false); setSyncStatus("idle");
             return;
           }
         }
@@ -15715,12 +15715,12 @@ Abbrechen = ${remoteName}-Stand laden`
         // Supabase/JSONBin/Gist deaktiviert — nur Cloudflare aktiv
 
         // ── 3. Fallback: localStorage ───────────────────────────────────
-        loadLocal();
+        await loadLocal();
         setIsLand(false); setSyncStatus("idle");
       } catch(e) {
         console.error("Load error:", e);
         setSyncError(e.message); setSyncStatus("error");
-        loadLocal(); setSyncStatus("idle");
+        await loadLocal(); setSyncStatus("idle");
       }
     };
     doLoad();

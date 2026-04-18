@@ -1,20 +1,15 @@
-const CACHE = 'mybudgettracker-v1';
-const FILES = ['./index.html'];
-
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
-  self.skipWaiting();
-});
-
+// Network-first: immer die neueste Version laden
+self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    Promise.all(keys.map(k => caches.delete(k)))
   ));
   self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
+  // Immer vom Netzwerk laden, kein Cache
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
