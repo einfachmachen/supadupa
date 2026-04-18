@@ -15319,6 +15319,64 @@ function ModalTestScreen({onClose}) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
+// MobileActionPicker — Auswahl der + Funktion im mobilen Modus
+function MobileActionPicker({onClose, onSelect}) {
+  const fs = 26;
+  const actions = [
+    {id:"csv",          label:"Importieren",    icon:"download",     color:T.pos,   sub:"CSV aus Banking-App"},
+    {id:"vormerken",    label:"Vormerken",      icon:"calendar",     color:T.gold,  sub:"Neue Buchung vormerken"},
+    {id:"wiederkehrend",label:"Wiederkehrende", icon:"repeat",       color:T.blue,  sub:"Regelmäßige Buchungen"},
+    {id:"finanzierung", label:"Finanzierungen", icon:"credit-card",  color:T.txt2,  sub:"Kredit, Ratenkauf"},
+    {id:"budget",       label:"Budget",         icon:"target",       color:T.gold,  sub:"Budgets festlegen"},
+    {id:"kategorien",   label:"Kategorien",     icon:"tag",          color:T.blue,  sub:"Kategorien verwalten"},
+  ];
+
+  return (
+    <div style={{position:"fixed",inset:0,background:T.bg,zIndex:300,
+      display:"flex",flexDirection:"column"}}>
+
+      {/* Header */}
+      <div style={{background:T.surf,borderBottom:`1px solid ${T.bd}`,
+        padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+        <button onClick={onClose}
+          style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
+            width:44,height:44,borderRadius:14,cursor:"pointer",fontSize:20,
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          ✕
+        </button>
+        <div style={{flex:1}}>
+          <div style={{color:T.txt,fontSize:fs+2,fontWeight:700}}>Was möchtest du tun?</div>
+        </div>
+      </div>
+
+      {/* Aktionen */}
+      <div style={{flex:1,overflowY:"auto",padding:16,WebkitOverflowScrolling:"touch"}}>
+        {actions.map(({id,label,icon,color,sub})=>(
+          <button key={id} onClick={()=>onSelect(id)}
+            style={{width:"100%",padding:"18px 16px",borderRadius:18,
+              border:`1.5px solid ${T.bd}`,
+              background:"rgba(255,255,255,0.04)",
+              display:"flex",alignItems:"center",gap:16,
+              marginBottom:12,cursor:"pointer",fontFamily:"inherit",
+              textAlign:"left",WebkitTapHighlightColor:"transparent"}}>
+            <div style={{width:52,height:52,borderRadius:14,flexShrink:0,
+              background:color+"22",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {Li(icon,26,color)}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{color:T.txt,fontSize:fs,fontWeight:700}}>{label}</div>
+              <div style={{color:T.txt2,fontSize:fs-8,marginTop:3}}>{sub}</div>
+            </div>
+            <span style={{color:T.txt2,fontSize:fs,flexShrink:0}}>›</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
 // MobileVormerkenModal — Schritt-für-Schritt Vormerkung für iPhone
 function MobileVormerkenModal({onClose}) {
   const { cats, accounts, txs, setTxs, year, month, getCat, getSub } = useContext(AppCtx);
@@ -15640,6 +15698,7 @@ window.FinanzApp = function FinanzApp() {
   const [showModalTest, setShowModalTest] = useState(false);
   const [mobileMode, setMobileMode] = useState(false); // Großes Mobile-UI
   const [showMobileVormerken, setShowMobileVormerken] = useState(false);
+  const [showMobilePicker, setShowMobilePicker] = useState(false);
   const [reviewQueue,   setReviewQueue]  = useState(null);
   const [customIcons,   setCustomIconsRaw] = useState(()=>{
     try { return JSON.parse(localStorage.getItem("mbt_custom_icons")||"[]"); } catch{ return []; }
@@ -17900,7 +17959,7 @@ Abbrechen = ${remoteName}-Stand laden`
                 splits:[{id:uid(),catId:"",subId:"",amount:""}],
               });
               setModal("addTx");
-              if(mobileMode) { setModal(null); setShowMobileVormerken(true); }
+              if(mobileMode) { setModal(null); setShowMobilePicker(true); }
             }}
               style={{
                 width:60, height:60, borderRadius:"50%",
@@ -17937,6 +17996,17 @@ Abbrechen = ${remoteName}-Stand laden`
       {/* ── MOBILE UI TEST ── */}
       {showModalTest&&<ModalTestScreen onClose={()=>setShowModalTest(false)}/>}
       {showMobileVormerken&&<MobileVormerkenModal onClose={()=>setShowMobileVormerken(false)}/>}
+      {showMobilePicker&&<MobileActionPicker
+        onClose={()=>setShowMobilePicker(false)}
+        onSelect={(action)=>{
+          setShowMobilePicker(false);
+          if(action==="vormerken") setShowMobileVormerken(true);
+          else if(action==="csv") setShowCsv(true);
+          else if(action==="wiederkehrend") setShowRecurring(true);
+          else if(action==="kategorien") { setMainTab("struktur"); setActiveStructurTab("kategorien"); }
+          else setModal("addTx"); // fallback für budget, finanzierung
+        }}
+      />
 
       {/* ── MODALS ── */}
       {modal==="addTx"&&<AddTxModal/>}
