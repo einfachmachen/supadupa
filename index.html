@@ -15353,17 +15353,8 @@ function MobileVormerkenModal({onClose}) {
     <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:6,fontWeight:600}}>{txt}</div>
   );
 
-  const stepDots = (cur) => (
-    <div style={{display:"flex",alignItems:"center",gap:6}}>
-      {[1,2,3,4].map(i=>(
-        <div key={i} style={{width:i===cur?24:8,height:8,borderRadius:4,
-          transition:"width 0.2s",
-          background:i===cur?T.blue:i<cur?"rgba(74,159,212,0.4)":"rgba(255,255,255,0.15)"}}/>
-      ))}
-    </div>
-  );
 
-  const header = (title, sub, step, onBack) => (
+  const header = (title, sub, stepNum, onBack) => (
     <div style={{background:T.surf,borderBottom:`1px solid ${T.bd}`,
       padding:`12px ${S.padL}px`,display:"flex",alignItems:"center",
       gap:12,flexShrink:0}}>
@@ -15374,11 +15365,15 @@ function MobileVormerkenModal({onClose}) {
           flexShrink:0}}>
         ←
       </button>
-      <div style={{flex:1}}>
-        <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700}}>{title}</div>
-        <div style={{color:T.txt2,fontSize:S.fs-4,marginTop:2}}>{sub}</div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+        <div style={{color:T.txt2,fontSize:S.fs-6,marginTop:2,
+          display:"flex",alignItems:"center",gap:8}}>
+          <span style={{color:T.blue,fontWeight:700}}>{stepNum}v4</span>
+          <span>{sub}</span>
+        </div>
       </div>
-      {stepDots(step)}
     </div>
   );
 
