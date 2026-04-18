@@ -6919,6 +6919,7 @@ function TransactionsScreen() {
     const inSearchMode = search.trim().length > 0 || filt==="mismatch";
 
     return (
+      <>
       <div style={{flex:1,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch",display:"flex",flexDirection:"column"}}>
 
         {/* ── Buchungen nachkategorisieren — einklappbar ── */}
@@ -7333,8 +7334,8 @@ function TransactionsScreen() {
           </div>
         );
       })()}
+      </>
     );
-
 }
 
 // ══════════════════════════════════════════════════════════════════════
