@@ -6752,6 +6752,43 @@ function DashboardScreen() {
         sub={{id:budgetEditSub.id,name:budgetEditSub.name}}
         cat={{id:budgetEditSub.catId,color:budgetEditSub.catColor}}
         onClose={()=>setBudgetEditSub(null)}/>}
+
+      {/* Kategorie-Zuweisung Modal */}
+      {activeCatTxId&&(()=>{
+        const tx = txs.find(t=>t.id===activeCatTxId);
+        if(!tx) return null;
+        const type = txType(tx);
+        return (
+          <div onClick={()=>setActiveCatTxId(null)}
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",
+              backdropFilter:"blur(8px)",zIndex:200,
+              display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:60}}>
+            <div onClick={e=>e.stopPropagation()}
+              style={{background:T.surf2,borderRadius:"0 0 20px 20px",width:"100%",
+                maxWidth:480,padding:"16px",maxHeight:"70vh",overflowY:"auto",
+                border:`1px solid ${T.bd}`}}>
+              <div style={{color:T.txt,fontSize:13,fontWeight:700,marginBottom:4}}>{tx.desc}</div>
+              <div style={{color:T.txt2,fontSize:11,marginBottom:12}}>Kategorie zuweisen</div>
+              <CatPicker
+                value={(()=>{
+                  const pc = pendingCatsRef.current[activeCatTxId];
+                  const catId = pc?.catId||(tx.splits||[])[0]?.catId||"";
+                  const subId = pc?.subId||(tx.splits||[])[0]?.subId||"";
+                  return catId+"|"+subId;
+                })()}
+                filterType={type==="income"?"income":"expense"}
+                onChange={(catId,subId)=>{
+                  pendingCatsRef.current = {...pendingCatsRef.current,[activeCatTxId]:{catId,subId}};
+                  setShowAllCats(false);
+                  setActiveCatTxId(null);
+                  setTimeout(()=>setShowAllCats(true), 50);
+                }}
+                placeholder="— Kategorie wählen —"
+              />
+            </div>
+          </div>
+        );
+      })()}
     </>);
 
 }
@@ -6784,8 +6821,8 @@ function TransactionsScreen() {
     const [hideLinked, setHideLinked] = useState(true);
     const [showAllCats, setShowAllCats] = useState(false);
     const [activeCatTxId, setActiveCatTxId] = useState(null);
-    // Lokale Kategorie-Änderungen — werden erst beim Toggle-Aus gespeichert
-    const [pendingCats, setPendingCats] = useState({}); // {txId: {catId, subId}}
+    const pendingCatsRef = useRef({});
+    const [, forceUpdate] = React.useReducer(x=>x+1, 0); // Ref statt State — kein Re-render bei Änderung
     const [expandedGroups, setExpandedGroups] = useState(new Set());
     const toggleExpand = id => setExpandedGroups(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;}); // verknüpfte Unterbuchungen ausblenden
 
@@ -6950,14 +6987,14 @@ function TransactionsScreen() {
                     setFilt("uncat");
                   } else {
                     // Alle ausstehenden Kategorie-Änderungen auf einmal speichern
-                    if(Object.keys(pendingCats).length > 0) {
+                    if(Object.keys(pendingCatsRef.current).length > 0) {
                       setTxs(p=>p.map(t=>{
-                        const pc = pendingCats[t.id];
+                        const pc = pendingCatsRef.current[t.id];
                         if(!pc) return t;
                         return {...t, splits:[{id:(t.splits||[])[0]?.id||uid(),
                           catId:pc.catId, subId:pc.subId, amount:t.totalAmount}]};
                       }));
-                      setPendingCats({});
+                      pendingCatsRef.current = {};
                     }
                   }
                 }}
@@ -7293,14 +7330,14 @@ function TransactionsScreen() {
                           style={{marginLeft:40,marginBottom:4,marginRight:28}}>
                           <button onClick={()=>setActiveCatTxId(tx.id)}
                             style={{width:"100%",padding:"6px 10px",borderRadius:8,
-                              border:`1px solid ${(pendingCats[tx.id]||(tx.splits||[])[0]?.catId)?T.gold+"55":T.bd}`,
+                              border:`1px solid ${(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold+"55":T.bd}`,
                               background:"rgba(255,255,255,0.04)",
-                              color:(pendingCats[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2,
+                              color:(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2,
                               fontSize:12,cursor:"pointer",fontFamily:"inherit",textAlign:"left",
                               display:"flex",alignItems:"center",gap:6}}>
-                            {Li("tag",10,(pendingCats[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2)}
+                            {Li("tag",10,(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2)}
                             {(()=>{
-                              const pc = pendingCats[tx.id];
+                              const pc = pendingCatsRef.current[tx.id];
                               const catId = pc?.catId || (tx.splits||[])[0]?.catId;
                               const subId = pc?.subId || (tx.splits||[])[0]?.subId;
                               if(!catId) return "— Kategorie wählen —";
@@ -7340,7 +7377,7 @@ function TransactionsScreen() {
               </div>
               <CatPicker
                 value={(()=>{
-                  const pc = pendingCats[activeCatTxId];
+                  const pc = pendingCatsRef.current[activeCatTxId];
                   const tx2 = txs.find(t=>t.id===activeCatTxId);
                   const catId = pc?.catId || (tx2?.splits||[])[0]?.catId || "";
                   const subId = pc?.subId || (tx2?.splits||[])[0]?.subId || "";
@@ -7351,8 +7388,11 @@ function TransactionsScreen() {
                   return txType(tx2)==="income"?"income":"expense";
                 })()}
                 onChange={(catId,subId)=>{
-                  setPendingCats(p=>({...p,[activeCatTxId]:{catId,subId}}));
+                  pendingCatsRef.current = {...pendingCatsRef.current, [activeCatTxId]:{catId,subId}};
+                  // Toggle kurz aus/an um Re-render der Liste zu vermeiden
+                  setShowAllCats(false);
                   setActiveCatTxId(null);
+                  setTimeout(()=>setShowAllCats(true), 50);
                 }}
                 placeholder="— Kategorie wählen —"
               />
@@ -11761,7 +11801,8 @@ function MonatScreen() {
 
     const [filt,     setFilt]     = useState("all");
     const [showAllCats, setShowAllCats] = useState(false);
-    const [txIconPickM, setTxIconPickM] = useState(null);
+    const [activeCatTxId, setActiveCatTxId] = useState(null);
+    const pendingCatsRef = useRef({});
     const [search,   setSearch]   = useState("");
     const [selected, setSelected] = useState(new Set());
     const [bulkCat,  setBulkCat]  = useState({catId:"",subId:""});
@@ -11997,7 +12038,19 @@ function MonatScreen() {
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
             <span style={{color:T.txt2,fontSize:11}}>Kategorisieren</span>
-            <div onClick={()=>setShowAllCats(v=>!v)}
+            <div onClick={()=>{
+                const next = !showAllCats;
+                setShowAllCats(next);
+                if(!next && Object.keys(pendingCatsRef.current).length > 0) {
+                  setTxs(p=>p.map(t=>{
+                    const pc = pendingCatsRef.current[t.id];
+                    if(!pc) return t;
+                    return {...t, splits:[{id:(t.splits||[])[0]?.id||uid(),
+                      catId:pc.catId, subId:pc.subId, amount:t.totalAmount}]};
+                  }));
+                  pendingCatsRef.current = {};
+                }
+              }}
               style={{width:40,height:24,borderRadius:12,cursor:"pointer",
                 background:showAllCats?T.blue:"rgba(255,255,255,0.12)",
                 position:"relative",transition:"background 0.2s",flexShrink:0}}>
@@ -12370,15 +12423,22 @@ function MonatScreen() {
                         {showAllCats&&(
                           <div onClick={e=>e.stopPropagation()}
                             style={{marginLeft:40,marginBottom:4,marginRight:28}}>
-                            <CatPicker
-                              value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
-                              onChange={(catId,subId)=>{
-                                setTxs(p=>p.map(t=>t.id===tx.id?{...t,
-                                  splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
-                                }:t));
-                              }}
-                              placeholder="— Kategorie wählen —"
-                            />
+                            <button onClick={()=>setActiveCatTxId(tx.id)}
+                              style={{width:"100%",padding:"6px 10px",borderRadius:8,
+                                border:`1px solid ${(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold+"55":T.bd}`,
+                                background:"rgba(255,255,255,0.04)",
+                                color:(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2,
+                                fontSize:12,cursor:"pointer",fontFamily:"inherit",textAlign:"left",
+                                display:"flex",alignItems:"center",gap:6}}>
+                              {Li("tag",10,(pendingCatsRef.current[tx.id]||(tx.splits||[])[0]?.catId)?T.gold:T.txt2)}
+                              {(()=>{
+                                const pc = pendingCatsRef.current[tx.id];
+                                const catId = pc?.catId||(tx.splits||[])[0]?.catId;
+                                const subId = pc?.subId||(tx.splits||[])[0]?.subId;
+                                if(!catId) return "— Kategorie wählen —";
+                                return `${getCat(catId)?.name||"?"} / ${getSub(catId,subId)?.name||"?"}`;
+                              })()}
+                            </button>
                           </div>
                         )}
                       </div>
