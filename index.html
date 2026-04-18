@@ -15649,15 +15649,12 @@ Abbrechen = ${remoteName}-Stand laden`
 
       try {
         // ── 1. Lokaler Stand ist immer die Wahrheit ───────────────────
-        // CF dient NUR zur Synchronisierung zwischen Geräten
-        // Automatischer CF-Check wurde deaktiviert — verhinderte Datenverlust
         if(localTs > 0) {
           await loadLocal();
-          // CF-Status im Hintergrund prüfen (nur Status, kein automatisches Laden)
+          setSyncError(`✓ Lokale Daten geladen (${new Date(localTs).toLocaleTimeString()})`);
           if(cfActive) {
             cfLoad().then(cdata=>{
               setCfStatus("ok");
-              // Nur informieren wenn CF deutlich neuer — kein automatisches Überschreiben
               const cTs = cdata.saved_at||0;
               if(cTs > localTs + 60000) {
                 const diff = Math.round((cTs-localTs)/1000);
@@ -15671,11 +15668,20 @@ Abbrechen = ${remoteName}-Stand laden`
         }
 
         // ── 2. Kein lokaler Stand → von Cloudflare laden ──────────────
+        setSyncError("⚠️ Kein lokaler Stand gefunden — lade von Cloudflare...");
         if(cfActive) {
           try {
             const cdata = await cfLoad();
             if(cdata.cats?.length) {
               applyData(cdata);
+              // Sofort lokal speichern damit nächster Start funktioniert
+              const ts = Date.now();
+              const toStore = JSON.stringify({...cdata, saved_at:ts});
+              window.IDB.set(LS_KEY, toStore).catch(()=>{});
+              window.IDB.set("mbt_local_backup", toStore).catch(()=>{});
+              try { localStorage.setItem(LS_KEY, toStore); } catch(e){}
+              try { localStorage.setItem("mbt_local_backup", toStore); } catch(e){}
+              setSyncError("✓ Von Cloudflare geladen und lokal gespeichert");
             }
             setCfStatus("ok"); setIsLand(false); setSyncStatus("idle");
             return;
