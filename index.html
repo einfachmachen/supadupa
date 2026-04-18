@@ -7308,10 +7308,11 @@ function TransactionsScreen() {
           <div onClick={()=>setActiveCatTxId(null)}
             style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",
               backdropFilter:"blur(8px)",zIndex:200,
-              display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+              display:"flex",alignItems:"flex-start",justifyContent:"center",
+              paddingTop:60}}>
             <div onClick={e=>e.stopPropagation()}
-              style={{background:T.surf2,borderRadius:"20px 20px 0 0",width:"100%",
-                maxWidth:480,padding:"16px",maxHeight:"60vh",overflowY:"auto",
+              style={{background:T.surf2,borderRadius:"0 0 20px 20px",width:"100%",
+                maxWidth:480,padding:"16px",maxHeight:"70vh",overflowY:"auto",
                 border:`1px solid ${T.bd}`}}>
               <div style={{color:T.txt,fontSize:13,fontWeight:700,marginBottom:4}}>
                 {tx.desc}
