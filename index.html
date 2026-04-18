@@ -15037,6 +15037,7 @@ window.FinanzApp = function FinanzApp() {
   const globalDrag = React.useRef(null);
   const [showQuickPicker, setShowQuickPicker] = useState(false);
   const [syncStatus, setSyncStatus] = useState("idle");
+  const [isDirty, setIsDirty] = useState(false);
   const [syncError, setSyncError] = useState("");
 
   // Supabase settings
@@ -15906,7 +15907,7 @@ Abbrechen = ${remoteName}-Stand laden`
     setSyncStatus("saving"); setCfStatus("saving");
     try {
       await cfSave({...payload, saved_at:Date.now()});
-      setCfStatus("ok"); setSyncStatus("saved");
+      setCfStatus("ok"); setSyncStatus("saved"); setIsDirty(false);
       setTimeout(()=>setSyncStatus("idle"), 2000);
     } catch(e) {
       console.error("CF save error:", e);
@@ -15939,14 +15940,13 @@ Abbrechen = ${remoteName}-Stand laden`
         Object.keys(cleanYD[y][m]||{}).forEach(k=>{ if(k.startsWith("jsub_")) delete cleanYD[y][m][k]; });
       }));
       const toStore = {...payload, yearData:cleanYD, saved_at:ts};
-      // Primär: IndexedDB (stabiler auf iOS als localStorage)
       window.IDB.set(LS_KEY, JSON.stringify(toStore)).catch(()=>{});
       window.IDB.set("mbt_local_backup", JSON.stringify(toStore)).catch(()=>{});
-      // Fallback: localStorage
       try { localStorage.setItem(LS_KEY, JSON.stringify(toStore)); } catch(e){}
       try { localStorage.setItem("mbt_local_backup", JSON.stringify(toStore)); } catch(e){}
       if(payload.csvRules&&Object.keys(payload.csvRules).length>0)
         localStorage.setItem("mbt_csvRules_backup", JSON.stringify(payload.csvRules));
+      setIsDirty(true); // Änderungen noch nicht in CF gespeichert
     } catch(e) {}
     // CF: kein Auto-Save — nur localStorage (spart Cloudflare Write-Operationen)
     // CF-Sync erfolgt manuell oder beim Schließen der App
@@ -16872,8 +16872,8 @@ Abbrechen = ${remoteName}-Stand laden`
     csvRules, setCsvRules,
     budgets, setBudgets,
     startBalances, setStartBalances,
-    saveConfig: ()=>{ if(cfActive) { savedYearHashRef.current={}; savedConfigHashRef.current=""; saveToCloud({cats, groups, txs, accounts, yearData, col3Name, quickBtns, quickColors, csvRules, budgets, customIcons, startBalances, saved_at:Date.now()}); } },
-    loadFromCloud: async ()=>{ if(!cfActive) return; try { const d=await cfLoad(); if(d.cats?.length) { applyData(d); setSyncStatus("saved"); setTimeout(()=>setSyncStatus("idle"),2000); } } catch(e){} },
+    saveConfig: ()=>{ if(cfActive) { savedYearHashRef.current={}; savedConfigHashRef.current=""; saveToCloud({cats, groups, txs, accounts, yearData, col3Name, quickBtns, quickColors, csvRules, budgets, customIcons, startBalances, saved_at:Date.now()}); setIsDirty(false); } },
+    loadFromCloud: async ()=>{ if(!cfActive) return; try { const d=await cfLoad(); if(d.cats?.length) { applyData(d); setIsDirty(false); setSyncStatus("saved"); setTimeout(()=>setSyncStatus("idle"),2000); } } catch(e){} },
     jsonbinActive, jsonbinSave, jsonbinLoad, jsonbinStatus, setJsonbinStatus, jsonbinKey, jsonbinId, setJsonbinKey, setJsonbinId,
     gistActive, gistSave, gistLoad, gistStatus, setGistStatus, gistToken, gistId, setGistToken, setGistId, applyData,
     // saveToCloudDirect removed — use manual upload button only
@@ -16926,11 +16926,11 @@ Abbrechen = ${remoteName}-Stand laden`
       {/* ── HEADER ── */}
       <div style={{
         background:T.surf,borderBottom:`1px solid ${T.bds}`,
-        padding:"0 12px",height:44,flexShrink:0,zIndex:20,
-        display:"flex",alignItems:"center",gap:8,
-        paddingTop:"env(safe-area-inset-top,0px)"}}>
-
-        {/* Logo + Titel — links */}
+        padding:"0 12px",flexShrink:0,zIndex:20,
+        paddingTop:"env(safe-area-inset-top,0px)",
+        height:"calc(44px + env(safe-area-inset-top,0px))",
+        display:"flex",alignItems:"flex-end",gap:8,paddingBottom:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,width:"100%",height:44,paddingBottom:2}}>
         <div style={{display:"flex",alignItems:"center",gap:7,flexShrink:0}}>
           <div style={{width:28,height:28,borderRadius:8,
             background:`linear-gradient(135deg,${T.logo_c1},${T.logo_c2})`,
@@ -16969,7 +16969,7 @@ Abbrechen = ${remoteName}-Stand laden`
               {Li(syncStatus==="saving"?"loader":syncStatus==="saved"?"check-circle":syncStatus==="error"?"alert-circle":cfActive?"cloud":"cloud-off",17,
                 syncStatus==="error"?T.err:syncStatus==="saving"?T.warn:syncStatus==="saved"?T.pos:cfActive&&cfStatus==="ok"?T.pos:T.txt2)}
               {/* Oranger Punkt = ungespeicherte Änderungen */}
-              {cfActive&&syncStatus==="idle"&&cfStatus!=="saving"&&(
+              {cfActive&&isDirty&&syncStatus==="idle"&&(
                 <div style={{position:"absolute",top:5,right:5,width:7,height:7,
                   borderRadius:"50%",background:T.gold,
                   boxShadow:`0 0 4px ${T.gold}`}}/>
@@ -17001,6 +17001,7 @@ Abbrechen = ${remoteName}-Stand laden`
                 </button>
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>
