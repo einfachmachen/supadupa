@@ -67,7 +67,7 @@
   /* Safe area — iOS PWA verwaltet das selbst */
   .nav-top {
     height: 44px !important;
-    margin-top: -10px !important;
+    margin-top: 0 !important;
   }
   .nav-bottom {
     height: 57px !important;
@@ -16933,7 +16933,8 @@ Abbrechen = ${remoteName}-Stand laden`
   return (
   <AppCtx.Provider value={cx}>
     <>
-    <div style={{background:T.bg,height:"100vh",maxHeight:"100vh",
+    <div style={{background:T.bg,height:"calc(100vh + 10px)",maxHeight:"calc(100vh + 10px)",
+      marginTop:"-10px",
       colorScheme:themeName==="light"?"light":"dark",
       display:"flex",flexDirection:"column",
       fontFamily:"'SF Pro Text',-apple-system,BlinkMacSystemFont,sans-serif",
