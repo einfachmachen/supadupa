@@ -12373,18 +12373,17 @@ function MonatScreen() {
                         {/* MitteEndeFields ausgeblendet — nur in Jahresansicht */}
                         {/* Kategorie-Picker — erscheint wenn globaler Toggle an */}
                         {showAllCats&&(
-                          <div onClick={e=>e.stopPropagation()}
-                            style={{marginLeft:40,marginBottom:4,marginRight:28}}>
-                            <CatPicker
-                              value={(tx.splits||[])[0]?.catId+"|"+((tx.splits||[])[0]?.subId||"")}
-                              filterType={txType(tx)==="income"?"income":"expense"}
-                              onChange={(catId,subId)=>{
-                                setTxs(p=>p.map(t=>t.id===tx.id?{...t,
-                                  splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
-                                }:t));
-                              }}
-                              placeholder="— Kategorie wählen —"
-                            />
+                          <div onClick={e=>{e.stopPropagation();setActiveCatTxId(tx.id);}}
+                            style={{marginLeft:40,marginBottom:4,marginRight:28,
+                              padding:"6px 10px",borderRadius:8,cursor:"pointer",
+                              border:`1px solid ${(tx.splits||[])[0]?.catId?T.gold+"55":T.bd}`,
+                              background:"rgba(255,255,255,0.04)",
+                              color:(tx.splits||[])[0]?.catId?T.gold:T.txt2,
+                              fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+                            {Li("tag",10,(tx.splits||[])[0]?.catId?T.gold:T.txt2)}
+                            {(tx.splits||[])[0]?.catId
+                              ? `${getCat((tx.splits||[])[0]?.catId)?.name||"?"} / ${getSub((tx.splits||[])[0]?.catId,(tx.splits||[])[0]?.subId)?.name||"?"}`
+                              : "— Kategorie wählen —"}
                           </div>
                         )}
                       </div>
@@ -12429,10 +12428,10 @@ function MonatScreen() {
                 })()}
                 filterType={type==="income"?"income":"expense"}
                 onChange={(catId,subId)=>{
-                  pendingCatsRef.current = {...pendingCatsRef.current,[activeCatTxId]:{catId,subId}};
-                  setShowAllCats(false);
+                  setTxs(p=>p.map(t=>t.id===activeCatTxId?{...t,
+                    splits:[{id:(t.splits||[])[0]?.id||uid(),catId,subId,amount:t.totalAmount}]
+                  }:t));
                   setActiveCatTxId(null);
-                  setTimeout(()=>setShowAllCats(true), 50);
                 }}
                 placeholder="— Kategorie wählen —"
               />
