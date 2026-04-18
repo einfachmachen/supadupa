@@ -87,6 +87,10 @@
   input, select, textarea { font-size: 16px !important; } /* prevent iOS zoom */
   .mobile-modal input { font-size: var(--mob-fs) !important; }
   .mobile-modal input[type="date"] { font-size: var(--mob-fs) !important; }
+  /* Mobile mode — alle Texte und Buttons größer */
+  .mobile-modal { font-size: 18px; }
+  .mobile-modal button { min-height: 48px; font-size: 18px !important; }
+  .mobile-modal label, .mobile-modal span, .mobile-modal div { font-size: inherit; }
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(1.3); }
@@ -14163,8 +14167,11 @@ function parseCSV(text, {noGroup=false}={}) {
   return { rows, format, detectedBalance };
 }
 
-function CsvImportScreen({onClose, embedded=false}) {
+function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   const { cats, groups, txs, setTxs, accounts, csvRules, setCsvRules, startBalances, setStartBalances } = useContext(AppCtx);
+  const MFS = mobileMode ? 22 : 13; // mobile font size base
+  const MFSl = mobileMode ? 18 : 11; // mobile font size small
+  const MPad = mobileMode ? "14px 16px" : "8px 12px"; // mobile padding
   const [csvText, setCsvText]       = useState("");
   const [csvSources, setCsvSources] = useState([]); // Dateinamen der importierten CSVs
   const [parsed,  setParsed]        = useState(null);
@@ -14408,22 +14415,26 @@ function CsvImportScreen({onClose, embedded=false}) {
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
   return (
-    <div style={embedded
+    <div className={mobileMode?"mobile-modal":""} style={embedded
       ? {display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif",minHeight:300}
       : {position:"fixed",inset:0,background:T.bg,zIndex:70,display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif"}}>
-      {/* Header — im embedded-Modus kein eigener Header (nutzt MHead des Overlays) */}
-      {!embedded&&<div style={{background:T.surf,borderBottom:`1px solid ${T.bds}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
-        <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt,borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:18}}>{Li("arrow-left",13)}</button>
+      {/* Header */}
+      {!embedded&&<div style={{background:T.surf,borderBottom:`1px solid ${T.bds}`,padding:MPad,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+        <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt,borderRadius:10,width:mobileMode?44:34,height:mobileMode?44:34,cursor:"pointer",fontSize:18}}>{Li("arrow-left",mobileMode?20:13)}</button>
         <div style={{flex:1}}>
-          <div style={{color:T.blue,fontSize:16,fontWeight:700}}>{Li("upload-cloud",16,T.blue)} CSV-Import</div>
-          <div style={{color:T.txt2,fontSize:11}}>DKB · Finanzblick · beliebiges Format</div>
+          <div style={{color:T.blue,fontSize:mobileMode?24:16,fontWeight:700}}>{Li("upload-cloud",mobileMode?22:16,T.blue)} CSV-Import</div>
+          <div style={{color:T.txt2,fontSize:MFSl}}>DKB · Finanzblick · beliebiges Format</div>
         </div>
-        {step==="review"&&<div style={{color:T.txt2,fontSize:11}}>{parsed?.format}</div>}
+        {step==="review"&&<div style={{color:T.txt2,fontSize:MFSl}}>{parsed?.format}</div>}
       </div>}
 
       {/* STEP: INPUT */}
       {step==="input"&&(
-        <div style={{flex:1,overflowY:"auto",padding:16}}>
+        <div style={{flex:1,overflowY:"auto",padding:mobileMode?20:16,
+          fontSize:mobileMode?"inherit":"inherit",
+          "--csv-fs": mobileMode?"18px":"12px",
+          "--csv-fs-s": mobileMode?"15px":"11px",
+          "--csv-fs-l": mobileMode?"22px":"14px"}}>
           <div style={{color:T.txt2,fontSize:12,marginBottom:8,lineHeight:1.5}}>
             CSV-Export aus deiner Banking-App hier einfügen oder Datei laden:
           </div>
@@ -18010,7 +18021,7 @@ Abbrechen = ${remoteName}-Stand laden`
 
       {/* ── MODALS ── */}
       {modal==="addTx"&&<AddTxModal/>}
-      {showCsv&&<CsvImportScreen onClose={()=>setShowCsv(false)} csvRules={csvRules} setCsvRules={setCsvRules}/>}
+      {showCsv&&<CsvImportScreen onClose={()=>setShowCsv(false)} csvRules={csvRules} setCsvRules={setCsvRules} mobileMode={mobileMode}/>}
       {showMatching&&<MatchingScreen onClose={()=>setShowMatching(false)}/>}
       {showVormHub&&<VormerkungHub onClose={()=>{setShowVormHub(false);setEditVormTx(null);}} editVorm={editVormTx}/>}
       {showRecurring&&<RecurringDetectionScreen onClose={()=>setShowRecurring(false)}/>}
