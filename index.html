@@ -10651,20 +10651,20 @@ function AddTxModal() {
     <Overlay onClose={closeReset}>
       <MHead title={TAB_TITLES[typ]||"Erfassen"} onClose={closeReset}/>
 
-      {/* Typ-Tabs — horizontal scrollbar auf kleinen Screens */}
-      <div style={{overflowX:"auto",marginBottom:12,WebkitOverflowScrolling:"touch",
-        scrollbarWidth:"none",msOverflowStyle:"none",margin:"0 -16px 12px"}}>
-        <div style={{display:"flex",gap:3,background:"rgba(0,0,0,0.15)",
-          padding:"3px 16px",minWidth:"max-content"}}>
+      {/* Typ-Tabs — volle Breite, horizontal scrollbar auf kleinen Screens */}
+      <div style={{overflowX:"auto",margin:"0 -16px 12px",
+        WebkitOverflowScrolling:"touch",scrollbarWidth:"none",msOverflowStyle:"none"}}>
+        <div style={{display:"flex",gap:0,background:"rgba(0,0,0,0.15)",
+          padding:"3px",width:"100%",minWidth:"max-content"}}>
           {TABS.map(({id,label,icon})=>{
             const active=typ===id;
             return (
               <button key={id} onClick={()=>setTyp(id)}
-                style={{padding:"6px 8px",borderRadius:8,border:"none",cursor:"pointer",
+                style={{flex:1,padding:"6px 4px",borderRadius:8,border:"none",cursor:"pointer",
                   fontFamily:"inherit",fontSize:10,fontWeight:active?700:400,
                   background:active?T.surf:"transparent",color:active?T.blue:T.txt2,
                   display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                  transition:"all 0.15s",whiteSpace:"nowrap",minWidth:52}}>
+                  transition:"all 0.15s",whiteSpace:"nowrap",minWidth:48}}>
                 {Li(icon,13,active?T.blue:T.txt2)}{label}
               </button>
             );
@@ -16872,6 +16872,7 @@ Abbrechen = ${remoteName}-Stand laden`
     budgets, setBudgets,
     startBalances, setStartBalances,
     saveConfig: ()=>{ if(cfActive) { savedYearHashRef.current={}; savedConfigHashRef.current=""; saveToCloud({cats, groups, txs, accounts, yearData, col3Name, quickBtns, quickColors, csvRules, budgets, customIcons, startBalances, saved_at:Date.now()}); } },
+    loadFromCloud: async ()=>{ if(!cfActive) return; try { const d=await cfLoad(); if(d.cats?.length) { applyData(d); setSyncStatus("saved"); setTimeout(()=>setSyncStatus("idle"),2000); } } catch(e){} },
     jsonbinActive, jsonbinSave, jsonbinLoad, jsonbinStatus, setJsonbinStatus, jsonbinKey, jsonbinId, setJsonbinKey, setJsonbinId,
     gistActive, gistSave, gistLoad, gistStatus, setGistStatus, gistToken, gistId, setGistToken, setGistId, applyData,
     // saveToCloudDirect removed — use manual upload button only
@@ -16957,19 +16958,49 @@ Abbrechen = ${remoteName}-Stand laden`
               yearOnly={activeNavTab==="jahr"}/>
           )}
 
-          {/* Cloud-Sync Button */}
-          <button onClick={()=>{ if(cfActive) cx.saveConfig?.(); }}
-            title={cfActive?"Jetzt synchronisieren":"Kein Cloud-Backend aktiv"}
-            style={{width:34,height:34,borderRadius:10,border:"none",cursor:"pointer",
-              background:syncStatus==="error"?"rgba(255,0,0,0.15)":syncStatus==="saving"?"rgba(245,166,35,0.15)":syncStatus==="saved"?"rgba(170,204,0,0.15)":cfActive&&cfStatus==="ok"?"rgba(170,204,0,0.08)":"rgba(255,255,255,0.06)",
-              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
-            {Li(syncStatus==="saving"?"loader":syncStatus==="saved"?"check-circle":syncStatus==="error"?"alert-circle":cfActive?"cloud":"cloud-off",17,
-              syncStatus==="error"?T.err:syncStatus==="saving"?T.warn:syncStatus==="saved"?T.pos:cfActive&&cfStatus==="ok"?T.pos:T.txt2)}
-            {syncStatus==="saving"&&(
-              <div style={{position:"absolute",top:4,right:4,width:6,height:6,
-                borderRadius:"50%",background:T.warn,animation:"pulse 1s infinite"}}/>
+          {/* Cloud-Sync Button mit Dropdown */}
+          <div style={{position:"relative"}}>
+            <button onClick={()=>setTopMenu(m=>m==="cloud"?null:"cloud")}
+              title={cfActive?"Cloud-Menü öffnen":"Kein Cloud-Backend aktiv"}
+              style={{width:34,height:34,borderRadius:10,border:"none",cursor:"pointer",
+                background:syncStatus==="error"?"rgba(255,0,0,0.15)":syncStatus==="saving"?"rgba(245,166,35,0.15)":syncStatus==="saved"?"rgba(170,204,0,0.15)":cfActive&&cfStatus==="ok"?"rgba(170,204,0,0.08)":"rgba(255,255,255,0.06)",
+                display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
+              {Li(syncStatus==="saving"?"loader":syncStatus==="saved"?"check-circle":syncStatus==="error"?"alert-circle":cfActive?"cloud":"cloud-off",17,
+                syncStatus==="error"?T.err:syncStatus==="saving"?T.warn:syncStatus==="saved"?T.pos:cfActive&&cfStatus==="ok"?T.pos:T.txt2)}
+              {/* Oranger Punkt = ungespeicherte Änderungen */}
+              {cfActive&&syncStatus==="idle"&&cfStatus!=="saving"&&(
+                <div style={{position:"absolute",top:5,right:5,width:7,height:7,
+                  borderRadius:"50%",background:T.gold,
+                  boxShadow:`0 0 4px ${T.gold}`}}/>
+              )}
+              {syncStatus==="saving"&&(
+                <div style={{position:"absolute",top:4,right:4,width:6,height:6,
+                  borderRadius:"50%",background:T.warn,animation:"pulse 1s infinite"}}/>
+              )}
+            </button>
+            {topMenu==="cloud"&&(
+              <div onClick={e=>e.stopPropagation()}
+                style={{position:"absolute",top:38,right:0,zIndex:300,
+                  background:T.surf2,borderRadius:12,border:`1px solid ${T.bd}`,
+                  boxShadow:"0 8px 24px rgba(0,0,0,0.4)",minWidth:180,overflow:"hidden"}}>
+                <button onClick={()=>{setTopMenu(null); cx.saveConfig?.();}}
+                  style={{width:"100%",padding:"11px 14px",background:"none",border:"none",
+                    color:T.txt,fontSize:13,cursor:"pointer",fontFamily:"inherit",
+                    display:"flex",alignItems:"center",gap:10,
+                    borderBottom:`1px solid ${T.bd}`}}>
+                  {Li("upload-cloud",14,T.gold)}
+                  <span>In Cloudflare speichern</span>
+                </button>
+                <button onClick={()=>{setTopMenu(null); cx.loadFromCloud?.();}}
+                  style={{width:"100%",padding:"11px 14px",background:"none",border:"none",
+                    color:T.txt,fontSize:13,cursor:"pointer",fontFamily:"inherit",
+                    display:"flex",alignItems:"center",gap:10}}>
+                  {Li("download-cloud",14,T.blue)}
+                  <span>Von Cloudflare laden</span>
+                </button>
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
       {/* Sync-Fehler Banner */}
