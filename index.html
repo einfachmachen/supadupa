@@ -15091,6 +15091,231 @@ function ThemeDropdown({themeName, setThemeName}) {
   );
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// ModalTestScreen — Schriftgrössen-Vergleich für iPhone
+function ModalTestScreen({onClose}) {
+  const [size, setSize] = useState("m");
+  const sizes = {
+    s: {label:"Klein",  fs:12, fsL:22, fsXL:28, pad:8,  padL:10, radius:8,  gap:8},
+    m: {label:"Mittel", fs:15, fsL:32, fsXL:36, pad:10, padL:14, radius:12, gap:10},
+    l: {label:"Groß",   fs:18, fsL:42, fsXL:48, pad:14, padL:18, radius:16, gap:14},
+  };
+  const S = sizes[size];
+
+  const inp = {
+    width:"100%", boxSizing:"border-box",
+    padding:`${S.padL}px ${S.padL}px`,
+    borderRadius:S.radius, border:`1.5px solid ${T.bd}`,
+    background:"rgba(255,255,255,0.06)", color:T.txt,
+    fontSize:S.fs, fontFamily:"inherit", outline:"none",
+  };
+  const field = (label, content, accent) => (
+    <div style={{marginBottom:S.gap}}>
+      <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:4,fontWeight:600}}>{label}</div>
+      <div style={{...inp, border:`1.5px solid ${accent?T.blue:T.bd}`,
+        display:"flex",alignItems:"center",justifyContent:"space-between",
+        cursor:"pointer"}}>
+        <span style={{color:content?T.txt:T.txt2}}>{content||"— tippen zum Wählen"}</span>
+        {content&&<span style={{color:T.txt2,fontSize:S.fs-2}}>›</span>}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",
+      backdropFilter:"blur(12px)",zIndex:300,
+      display:"flex",flexDirection:"column"}}>
+
+      {/* Header */}
+      <div style={{background:T.surf,borderBottom:`1px solid ${T.bd}`,
+        padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+        <button onClick={onClose}
+          style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
+            width:36,height:36,borderRadius:10,cursor:"pointer",fontSize:18,
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+          ←
+        </button>
+        <div style={{flex:1,color:T.txt,fontSize:16,fontWeight:700}}>
+          Mobile UI — Schriftgrösse
+        </div>
+      </div>
+
+      {/* Größen-Wähler */}
+      <div style={{background:T.surf,padding:"10px 14px",
+        display:"flex",gap:8,borderBottom:`1px solid ${T.bd}`,flexShrink:0}}>
+        {Object.entries(sizes).map(([k,v])=>(
+          <button key={k} onClick={()=>setSize(k)}
+            style={{flex:1,padding:"8px",borderRadius:10,border:"none",
+              background:size===k?T.blue:"rgba(255,255,255,0.08)",
+              color:size===k?"#fff":T.txt2,fontSize:14,fontWeight:700,
+              cursor:"pointer",fontFamily:"inherit"}}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Modal-Vorschau */}
+      <div style={{flex:1,overflowY:"auto",padding:14}}>
+
+        {/* Schritt 1: Betrag */}
+        <div style={{background:T.surf2,borderRadius:S.radius+4,
+          border:`1px solid ${T.gold}44`,marginBottom:14,overflow:"hidden"}}>
+          <div style={{background:T.surf,padding:`${S.pad}px ${S.padL}px`,
+            borderBottom:`1px solid ${T.bd}`,
+            display:"flex",alignItems:"center",gap:S.gap}}>
+            <div style={{background:T.gold+"22",borderRadius:S.radius,
+              width:S.fsL,height:S.fsL,display:"flex",alignItems:"center",
+              justifyContent:"center",flexShrink:0,fontSize:S.fs+2}}>
+              💶
+            </div>
+            <div style={{flex:1}}>
+              <div style={{color:T.gold,fontSize:S.fs,fontWeight:700}}>Neue Buchung</div>
+              <div style={{color:T.txt2,fontSize:S.fs-3}}>Schritt 1 von 3 · Betrag</div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              {[1,2,3].map(i=>(
+                <div key={i} style={{width:i===1?20:8,height:8,borderRadius:4,
+                  background:i===1?T.gold:"rgba(255,255,255,0.15)"}}/>
+              ))}
+            </div>
+          </div>
+          <div style={{padding:S.padL}}>
+            {/* Betrag-Feld gross */}
+            <div style={{marginBottom:S.gap}}>
+              <div style={{color:T.txt2,fontSize:S.fs-2,marginBottom:6}}>Betrag €</div>
+              <div style={{background:"rgba(255,255,255,0.06)",
+                border:`2px solid ${T.blue}`,borderRadius:S.radius+2,
+                padding:`${S.padL}px`,
+                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",gap:S.gap}}>
+                  <button style={{padding:`6px ${S.pad}px`,borderRadius:S.radius,
+                    border:`1px solid ${T.neg}44`,background:`${T.neg}15`,
+                    color:T.neg,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>
+                    Ausgabe
+                  </button>
+                  <button style={{padding:`6px ${S.pad}px`,borderRadius:S.radius,
+                    border:`1px solid ${T.bd}`,background:"transparent",
+                    color:T.txt2,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit"}}>
+                    Einnahme
+                  </button>
+                </div>
+                <span style={{color:T.txt,fontSize:S.fsXL,fontWeight:700,fontFamily:"monospace"}}>
+                  42,50
+                </span>
+              </div>
+            </div>
+            {/* Datum + Konto */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:S.gap,marginBottom:S.gap}}>
+              {field("Datum","18.04.2026")}
+              {field("Konto","Giro")}
+            </div>
+            {/* Beschreibung */}
+            <div style={{marginBottom:S.gap*1.5}}>
+              <div style={{color:T.txt2,fontSize:S.fs-2,marginBottom:4,fontWeight:600}}>Beschreibung</div>
+              <input placeholder="z.B. Rewe Koblenz" style={{...inp}} readOnly/>
+            </div>
+            {/* Weiter-Button */}
+            <button style={{width:"100%",padding:`${S.padL}px`,borderRadius:S.radius+2,
+              border:"none",background:T.blue,color:"#fff",
+              fontSize:S.fs+2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              Weiter → Kategorie
+            </button>
+          </div>
+        </div>
+
+        {/* Schritt 2: Kategorie */}
+        <div style={{background:T.surf2,borderRadius:S.radius+4,
+          border:`1px solid ${T.blue}44`,marginBottom:14,overflow:"hidden"}}>
+          <div style={{background:T.surf,padding:`${S.pad}px ${S.padL}px`,
+            borderBottom:`1px solid ${T.bd}`,
+            display:"flex",alignItems:"center",gap:S.gap}}>
+            <button style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
+              width:S.fsL,height:S.fsL,borderRadius:S.radius,cursor:"pointer",
+              fontSize:S.fs+2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              ←
+            </button>
+            <div style={{flex:1}}>
+              <div style={{color:T.blue,fontSize:S.fs,fontWeight:700}}>Kategorie wählen</div>
+              <div style={{color:T.txt2,fontSize:S.fs-3}}>Schritt 2 von 3 · Rewe · 42,50 €</div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              {[1,2,3].map(i=>(
+                <div key={i} style={{width:i===2?20:8,height:8,borderRadius:4,
+                  background:i===2?T.blue:"rgba(255,255,255,0.15)"}}/>
+              ))}
+            </div>
+          </div>
+          <div style={{padding:S.padL}}>
+            {["Essen & Trinken","Wohnen & Kind","Sonstiges","Lebenshaltung","Verein"].map((cat,i)=>(
+              <button key={cat} style={{width:"100%",padding:`${S.padL}px`,
+                marginBottom:S.gap/2,borderRadius:S.radius+2,
+                border:`1px solid ${i===0?T.blue:T.bd}`,
+                background:i===0?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.04)",
+                color:i===0?T.blue:T.txt,fontSize:S.fs,fontWeight:i===0?700:400,
+                cursor:"pointer",fontFamily:"inherit",textAlign:"left",
+                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span>{cat}</span>
+                <span style={{color:T.txt2,fontSize:S.fs-2}}>›</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Schritt 3: Bestätigung */}
+        <div style={{background:T.surf2,borderRadius:S.radius+4,
+          border:`1px solid ${T.pos}44`,overflow:"hidden"}}>
+          <div style={{background:T.surf,padding:`${S.pad}px ${S.padL}px`,
+            borderBottom:`1px solid ${T.bd}`,
+            display:"flex",alignItems:"center",gap:S.gap}}>
+            <button style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
+              width:S.fsL,height:S.fsL,borderRadius:S.radius,cursor:"pointer",
+              fontSize:S.fs+2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              ←
+            </button>
+            <div style={{flex:1}}>
+              <div style={{color:T.pos,fontSize:S.fs,fontWeight:700}}>Bestätigen</div>
+              <div style={{color:T.txt2,fontSize:S.fs-3}}>Schritt 3 von 3</div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              {[1,2,3].map(i=>(
+                <div key={i} style={{width:i===3?20:8,height:8,borderRadius:4,
+                  background:i===3?T.pos:"rgba(255,255,255,0.15)"}}/>
+              ))}
+            </div>
+          </div>
+          <div style={{padding:S.padL}}>
+            {[
+              ["Betrag","−42,50 €"],
+              ["Typ","Ausgabe"],
+              ["Datum","18.04.2026"],
+              ["Konto","Giro"],
+              ["Kategorie","Essen & Trinken / Rewe"],
+              ["Beschreibung","Rewe Koblenz"],
+            ].map(([k,v])=>(
+              <div key={k} style={{display:"flex",justifyContent:"space-between",
+                padding:`${S.gap/2}px 0`,borderBottom:`1px solid ${T.bd}`,
+                alignItems:"center"}}>
+                <span style={{color:T.txt2,fontSize:S.fs-1}}>{k}</span>
+                <span style={{color:T.txt,fontSize:S.fs,fontWeight:500}}>{v}</span>
+              </div>
+            ))}
+            <button style={{width:"100%",padding:`${S.padL}px`,
+              borderRadius:S.radius+2,border:"none",background:T.pos,
+              color:"#fff",fontSize:S.fs+2,fontWeight:700,
+              cursor:"pointer",fontFamily:"inherit",marginTop:S.gap*1.5,
+              display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              ✓ Buchung speichern
+            </button>
+          </div>
+        </div>
+
+        <div style={{height:32}}/>
+      </div>
+    </div>
+  );
+}
+
 window.FinanzApp = function FinanzApp() {
   const [mainTab,       setMainTab]      = useState("erfassen"); // erfassen|buchungen|struktur|mehr
   const [activeStructurTab, setActiveStructurTab] = useState("einstellungen");
@@ -15134,6 +15359,7 @@ window.FinanzApp = function FinanzApp() {
   const [newCat,        setNewCat]       = useState({name:"",type:"expense",icon:"tag",color:T.blue,subs:[]});
   const [newSubName,    setNewSubName]   = useState("");
   const [showSettings,  setShowSettings] = useState(false);
+  const [showModalTest, setShowModalTest] = useState(false);
   const [reviewQueue,   setReviewQueue]  = useState(null);
   const [customIcons,   setCustomIconsRaw] = useState(()=>{
     try { return JSON.parse(localStorage.getItem("mbt_custom_icons")||"[]"); } catch{ return []; }
@@ -17182,6 +17408,19 @@ Abbrechen = ${remoteName}-Stand laden`
               textTransform:"uppercase",marginBottom:6,marginTop:2}}>
               Aktionen
             </div>
+            {/* Temporär: Mobile UI Test */}
+            <button onClick={()=>setShowModalTest(true)}
+              style={{width:"100%",padding:"11px 12px",borderRadius:13,
+                border:`2px dashed ${T.gold}`,
+                background:"rgba(245,166,35,0.06)",
+                display:"flex",alignItems:"center",gap:10,marginBottom:10,
+                cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>
+              {Li("smartphone",18,T.gold)}
+              <div>
+                <div style={{color:T.gold,fontSize:14,fontWeight:700}}>Mobile UI testen</div>
+                <div style={{color:T.txt2,fontSize:11}}>Schriftgrössen-Vergleich</div>
+              </div>
+            </button>
             {[
               {label:"Neue Vormerkung / Wiederkehrend", icon:"calendar-plus", color:T.gold,
                badge: txs.filter(t=>t.pending&&!t._linkedTo&&!t._budgetSubId).length||null,
@@ -17382,6 +17621,9 @@ Abbrechen = ${remoteName}-Stand laden`
           </div>
         );
       })()}
+
+      {/* ── MOBILE UI TEST ── */}
+      {showModalTest&&<ModalTestScreen onClose={()=>setShowModalTest(false)}/>}
 
       {/* ── MODALS ── */}
       {modal==="addTx"&&<AddTxModal/>}
