@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MyBudgetTracker</title>
 
   <!-- PWA -->
@@ -683,7 +683,8 @@ const Li = (name, size=16, color="currentColor") => {
 const Overlay = ({onClose,children}) => (
   <div onClick={onClose} style={{position:"fixed",inset:0,
     background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.45)":"rgba(0,0,0,0.78)",
-    backdropFilter:"blur(12px)",zIndex:50,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"16px",overflowY:"auto"}}>
+    backdropFilter:"blur(12px)",zIndex:50,display:"flex",alignItems:"flex-start",justifyContent:"center",
+    padding:"16px",paddingTop:"max(16px, calc(env(safe-area-inset-top) + 16px))",overflowY:"auto"}}>
     <div onClick={e=>e.stopPropagation()} style={{
       background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"#F5F7F2":T.surf2,
       borderRadius:20,padding:"20px 18px",width:"100%",maxWidth:480,maxHeight:"calc(100vh - 32px)",overflowY:"auto",boxSizing:"border-box",
