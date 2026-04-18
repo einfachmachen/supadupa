@@ -85,7 +85,8 @@
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   input, select, textarea { font-size: 16px !important; } /* prevent iOS zoom */
-  .mobile-modal input, .mobile-modal select, .mobile-modal textarea { font-size: inherit !important; }
+  .mobile-modal input { font-size: var(--mob-fs) !important; }
+  .mobile-modal input[type="date"] { font-size: var(--mob-fs) !important; }
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(1.3); }
@@ -15406,7 +15407,8 @@ function MobileVormerkenModal({onClose}) {
 
   return (
     <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,zIndex:300,
-      display:"flex",flexDirection:"column",overflowY:"auto"}}>
+      display:"flex",flexDirection:"column",overflowY:"auto",
+      "--mob-fs": S.fsL+"px"}}>
 
       {/* ── Schritt 1: Betrag ── */}
       {step===1&&<>
