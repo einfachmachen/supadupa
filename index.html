@@ -17230,9 +17230,9 @@ Abbrechen = ${remoteName}-Stand laden`
         return (
           <div style={{
             background:T.surf, borderTop:`1px solid ${T.bds}`,
-            display:"flex", alignItems:"flex-start", flexShrink:0, zIndex:10,
-            height:"calc(58px + env(safe-area-inset-bottom, 0px))",
-            paddingBottom:"env(safe-area-inset-bottom, 0px)"}}>
+            display:"flex", alignItems:"center", flexShrink:0, zIndex:10,
+            paddingBottom:"env(safe-area-inset-bottom, 0px)",
+            minHeight:58}}>
             {items.map(item => item==="plus" ? plusBtn : navTab(item))}
           </div>
         );
