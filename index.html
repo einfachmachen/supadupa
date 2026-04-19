@@ -15639,7 +15639,7 @@ function MobileVormerkenModal({onClose}) {
         {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {[
-            ["Betrag", (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))+" €"],
+            ["Betrag", (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))],
             ["Typ", csvType==="expense"?"Ausgabe":"Einnahme"],
             ["Datum", date],
             ["Konto", (accounts||[]).find(a=>a.id===accId)?.name||accId],
