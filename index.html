@@ -15491,7 +15491,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 1: Betrag ── */}
       {step===1&&<>
-        {header("neue Vormerkung","Betrag & Typ",1)}
+        {header("neue Vormerkung","1v4 · Betrag & Typ",1)}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
           {/* Ausgabe / Einnahme */}
@@ -15507,17 +15507,22 @@ function MobileVormerkenModal({onClose}) {
             ))}
           </div>
 
-          {/* Konto */}
+          {/* Konto als Symbol-Reihe */}
           {fieldLabel("Konto")}
-          <div style={{display:"flex",flexDirection:"column",gap:S.gap/2,marginBottom:S.gap*1.5}}>
+          <div style={{display:"flex",gap:S.gap/2,flexWrap:"wrap",marginBottom:S.gap*1.5}}>
             {(accounts||[]).map(acc=>(
               <button key={acc.id} onClick={()=>setAccId(acc.id)}
-                style={{...btnBase,justifyContent:"space-between",
-                  background:accId===acc.id?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.04)",
+                style={{flex:"1 1 auto",padding:`${S.pad}px ${S.padL}px`,
+                  borderRadius:S.radius,
+                  background:accId===acc.id?"rgba(74,159,212,0.18)":"rgba(255,255,255,0.06)",
                   border:`2px solid ${accId===acc.id?T.blue:T.bd}`,
-                  color:accId===acc.id?T.blue:T.txt,fontWeight:accId===acc.id?700:400}}>
+                  color:accId===acc.id?T.blue:T.txt2,
+                  fontSize:S.fs,fontWeight:accId===acc.id?700:400,
+                  cursor:"pointer",fontFamily:"inherit",
+                  display:"flex",alignItems:"center",gap:10}}>
+                {Li("landmark",S.fs,accId===acc.id?T.blue:T.txt2)}
                 <span>{acc.name||acc.id}</span>
-                {accId===acc.id&&<span>✓</span>}
+                {accId===acc.id&&<span style={{marginLeft:"auto"}}>✓</span>}
               </button>
             ))}
           </div>
@@ -15536,12 +15541,23 @@ function MobileVormerkenModal({onClose}) {
               textAlign:"right",outline:"none",marginBottom:S.gap*1.5}}
           />
 
-          {/* Datum */}
-          {fieldLabel("Datum")}
+          {/* Verursacherdatum */}
+          {fieldLabel("Verursacherdatum (optional)")}
+          <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
+            style={{width:"100%",boxSizing:"border-box",
+              padding:`${S.padL}px`,borderRadius:S.radius,
+              border:`2px solid ${valueDate?T.blue:T.bd}`,
+              background:"rgba(255,255,255,0.06)",color:T.txt,
+              fontSize:S.fs,fontFamily:"inherit",outline:"none",
+              colorScheme:"dark",marginBottom:S.gap*1.5}}
+          />
+
+          {/* Buchungsdatum */}
+          {fieldLabel("Buchungsdatum (voraussichtlich)")}
           <input type="date" value={date} onChange={e=>setDate(e.target.value)}
             style={{width:"100%",boxSizing:"border-box",
               padding:`${S.padL}px`,borderRadius:S.radius,
-              border:`2px solid ${T.bd}`,
+              border:`2px solid ${date?T.blue:T.bd}`,
               background:"rgba(255,255,255,0.06)",color:T.txt,
               fontSize:S.fs,fontFamily:"inherit",outline:"none",
               colorScheme:"dark",marginBottom:S.gap*1.5}}
@@ -15618,15 +15634,20 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 3: Details ── */}
       {step===3&&<>
-        {header("Details","Beschreibung & Konto",3,()=>setStep(2))}
+        {header("Details","3v4 · Beschreibung & Notiz",3,()=>setStep(2))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
-          {fieldLabel("Beschreibung")}
+          {/* Beschreibung — Pflichtfeld */}
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+            <div style={{color:T.txt2,fontSize:S.fs-3,fontWeight:600}}>Beschreibung</div>
+            <div style={{background:T.neg+"22",color:T.neg,fontSize:S.fs-6,
+              borderRadius:6,padding:"2px 8px",fontWeight:700}}>Pflichtfeld</div>
+          </div>
           <input type="text" value={desc} onChange={e=>setDesc(e.target.value)}
             placeholder="z.B. Rewe Koblenz"
             style={{width:"100%",boxSizing:"border-box",
               padding:`${S.padL}px`,borderRadius:S.radius,
-              border:`2px solid ${desc?T.blue:T.bd}`,
+              border:`2px solid ${desc?T.blue:T.neg}`,
               background:"rgba(255,255,255,0.06)",color:T.txt,
               fontSize:S.fs,fontFamily:"inherit",outline:"none",
               marginBottom:S.gap*1.5}}
@@ -15643,22 +15664,11 @@ function MobileVormerkenModal({onClose}) {
               marginBottom:S.gap*1.5}}
           />
 
-          {fieldLabel("Verursacherdatum (optional)")}
-          <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
-            style={{width:"100%",boxSizing:"border-box",
-              padding:`${S.padL}px`,borderRadius:S.radius,
-              border:`2px solid ${valueDate?T.blue:T.bd}`,
-              background:"rgba(255,255,255,0.06)",color:T.txt,
-              fontSize:S.fs,fontFamily:"inherit",outline:"none",
-              colorScheme:"dark",marginBottom:S.gap/2}}
-          />
-          <div style={{color:T.txt2,fontSize:S.fs-6,marginBottom:S.gap*1.5}}>
-            Voraussichtliches Buchungsdatum: {date}
-          </div>
-
-
-          <button onClick={()=>setStep(4)}
-            style={{...btnCenter,background:T.blue,color:"#fff"}}>
+          <button onClick={()=>{ if(desc.trim()) setStep(4); }}
+            disabled={!desc.trim()}
+            style={{...btnCenter,
+              background:desc.trim()?T.blue:"rgba(255,255,255,0.1)",
+              color:desc.trim()?"#fff":T.txt2}}>
             Weiter → Bestätigen
           </button>
         </div>
@@ -15666,17 +15676,17 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 4: Bestätigung ── */}
       {step===4&&<>
-        {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
+        {header("Bestätigen","4v4 · Alles korrekt?",4,()=>setStep(3))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {[
-            ["Betrag", (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))],
-            ["Typ", csvType==="expense"?"Ausgabe":"Einnahme"],
+            ["Typ",            csvType==="expense"?"Ausgabe":"Einnahme"],
+            ["Konto",          (accounts||[]).find(a=>a.id===accId)?.name||accId],
+            ["Betrag",         (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))],
             ["Verursacherdatum", valueDate||"—"],
-            ["Buchungsdatum", date],
-            ["Konto", (accounts||[]).find(a=>a.id===accId)?.name||accId],
-            ["Kategorie", catId?(getCat(catId)?.name||"?")+(subId?" / "+(getSub(catId,subId)?.name||""):""):"—"],
-            ["Beschreibung", desc||"—"],
-            ["Notiz", note||"—"],
+            ["Buchungsdatum",  date],
+            ["Kategorie",      catId?(getCat(catId)?.name||"?")+(subId?" / "+(getSub(catId,subId)?.name||""):""):"—"],
+            ["Beschreibung",   desc],
+            ["Notiz",          note||"—"],
           ].map(([k,v])=>(
             <div key={k} style={{display:"flex",justifyContent:"space-between",
               padding:`${S.gap}px 0`,
