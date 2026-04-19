@@ -15491,7 +15491,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 1: Betrag ── */}
       {step===1&&<>
-        {header("neue Vormerkung","1v4 · Betrag & Typ",1)}
+        {header("neue Vormerkung","Betrag & Typ",1)}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
           {/* Ausgabe / Einnahme */}
@@ -15542,7 +15542,7 @@ function MobileVormerkenModal({onClose}) {
           />
 
           {/* Verursacherdatum */}
-          {fieldLabel("Verursacherdatum (optional)")}
+          {fieldLabel("verursacht (optional)")}
           <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
             style={{width:"100%",boxSizing:"border-box",
               padding:`${S.padL}px`,borderRadius:S.radius,
@@ -15553,7 +15553,7 @@ function MobileVormerkenModal({onClose}) {
           />
 
           {/* Buchungsdatum */}
-          {fieldLabel("Buchungsdatum (voraussichtlich)")}
+          {fieldLabel("Buchung am (voraussichtlich)")}
           <input type="date" value={date} onChange={e=>setDate(e.target.value)}
             style={{width:"100%",boxSizing:"border-box",
               padding:`${S.padL}px`,borderRadius:S.radius,
@@ -15634,7 +15634,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 3: Details ── */}
       {step===3&&<>
-        {header("Details","3v4 · Beschreibung & Notiz",3,()=>setStep(2))}
+        {header("Details","Beschreibung & Notiz",3,()=>setStep(2))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
           {/* Beschreibung — Pflichtfeld */}
@@ -15676,14 +15676,14 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 4: Bestätigung ── */}
       {step===4&&<>
-        {header("Bestätigen","4v4 · Alles korrekt?",4,()=>setStep(3))}
+        {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {[
             ["Typ",            csvType==="expense"?"Ausgabe":"Einnahme"],
             ["Konto",          (accounts||[]).find(a=>a.id===accId)?.name||accId],
             ["Betrag",         (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))],
-            ["Verursacherdatum", valueDate||"—"],
-            ["Buchungsdatum",  date],
+            ["verursacht", valueDate?valueDate.split("-").reverse().join("."):"—"],
+            ["Buchung am", date?date.split("-").reverse().join("."):"—"],
             ["Kategorie",      catId?(getCat(catId)?.name||"?")+(subId?" / "+(getSub(catId,subId)?.name||""):""):"—"],
             ["Beschreibung",   desc],
             ["Notiz",          note||"—"],
