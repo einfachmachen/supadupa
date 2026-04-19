@@ -15408,6 +15408,8 @@ function MobileVormerkenModal({onClose}) {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);
   const [desc, setDesc] = useState("");
+  const [valueDate, setValueDate] = useState(""); // Verursacherdatum
+  const [note, setNote] = useState("");
   const [catId, setCatId] = useState("");
   const [subId, setSubId] = useState("");
   const [accId, setAccId] = useState(accounts?.[0]?.id||"acc-giro");
@@ -15464,6 +15466,8 @@ function MobileVormerkenModal({onClose}) {
       id:uid(), date, desc:desc||"Neue Buchung",
       totalAmount:amt, pending:true, _csvType:csvType,
       accountId:accId, repeatMonths:1,
+      note: note||undefined,
+      valueDate: valueDate||undefined,
       splits:[{id:uid(),catId,subId,amount:amt}],
     }]);
     setSaved(true);
@@ -15499,6 +15503,21 @@ function MobileVormerkenModal({onClose}) {
                   border:`2px solid ${csvType===t?c:T.bd}`,
                   color:csvType===t?c:T.txt2, borderRadius:S.radius}}>
                 {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Konto */}
+          {fieldLabel("Konto")}
+          <div style={{display:"flex",flexDirection:"column",gap:S.gap/2,marginBottom:S.gap*1.5}}>
+            {(accounts||[]).map(acc=>(
+              <button key={acc.id} onClick={()=>setAccId(acc.id)}
+                style={{...btnBase,justifyContent:"space-between",
+                  background:accId===acc.id?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.04)",
+                  border:`2px solid ${accId===acc.id?T.blue:T.bd}`,
+                  color:accId===acc.id?T.blue:T.txt,fontWeight:accId===acc.id?700:400}}>
+                <span>{acc.name||acc.id}</span>
+                {accId===acc.id&&<span>✓</span>}
               </button>
             ))}
           </div>
@@ -15552,11 +15571,11 @@ function MobileVormerkenModal({onClose}) {
                   marginBottom:S.gap/2,
                   background:"rgba(255,255,255,0.04)",
                   border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
-                <span style={{display:"flex",alignItems:"center",gap:12}}>
+                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
                   {cat.icon&&Li(cat.icon,S.fs+2,cat.color||T.blue)}
-                  {cat.name}
+                  <span>{cat.name}</span>
                 </span>
-                <span style={{color:T.txt2,fontWeight:400}}>›</span>
+                <span style={{color:T.txt2,fontWeight:400,fontSize:S.fs,marginLeft:"auto"}}>›</span>
               </button>
             ))}
             <button onClick={()=>{setCatId("");setSubId("");setStep(3);}}
@@ -15586,11 +15605,11 @@ function MobileVormerkenModal({onClose}) {
                   marginBottom:S.gap/2,
                   background:"rgba(255,255,255,0.04)",
                   border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
-                <span style={{display:"flex",alignItems:"center",gap:12}}>
+                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
                   {sub.icon&&Li(sub.icon,S.fs+2,selCat.color||T.blue)}
-                  {sub.name}
+                  <span>{sub.name}</span>
                 </span>
-                <span style={{color:T.txt2,fontWeight:400}}>›</span>
+                <span style={{color:T.txt2,fontWeight:400,fontSize:S.fs,marginLeft:"auto"}}>›</span>
               </button>
             ))}
           </>}
@@ -15613,19 +15632,30 @@ function MobileVormerkenModal({onClose}) {
               marginBottom:S.gap*1.5}}
           />
 
-          {fieldLabel("Konto")}
-          <div style={{display:"flex",flexDirection:"column",gap:S.gap/2,marginBottom:S.gap*1.5}}>
-            {(accounts||[]).map(acc=>(
-              <button key={acc.id} onClick={()=>setAccId(acc.id)}
-                style={{...btnBase,justifyContent:"space-between",
-                  background:accId===acc.id?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.04)",
-                  border:`2px solid ${accId===acc.id?T.blue:T.bd}`,
-                  color:accId===acc.id?T.blue:T.txt,fontWeight:accId===acc.id?700:400}}>
-                <span>{acc.name||acc.id}</span>
-                {accId===acc.id&&<span>✓</span>}
-              </button>
-            ))}
+          {fieldLabel("Notiz (optional)")}
+          <input type="text" value={note} onChange={e=>setNote(e.target.value)}
+            placeholder="z.B. für Jahresabschluss"
+            style={{width:"100%",boxSizing:"border-box",
+              padding:`${S.padL}px`,borderRadius:S.radius,
+              border:`2px solid ${note?T.blue:T.bd}`,
+              background:"rgba(255,255,255,0.06)",color:T.txt,
+              fontSize:S.fs,fontFamily:"inherit",outline:"none",
+              marginBottom:S.gap*1.5}}
+          />
+
+          {fieldLabel("Verursacherdatum (optional)")}
+          <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
+            style={{width:"100%",boxSizing:"border-box",
+              padding:`${S.padL}px`,borderRadius:S.radius,
+              border:`2px solid ${valueDate?T.blue:T.bd}`,
+              background:"rgba(255,255,255,0.06)",color:T.txt,
+              fontSize:S.fs,fontFamily:"inherit",outline:"none",
+              colorScheme:"dark",marginBottom:S.gap/2}}
+          />
+          <div style={{color:T.txt2,fontSize:S.fs-6,marginBottom:S.gap*1.5}}>
+            Voraussichtliches Buchungsdatum: {date}
           </div>
+
 
           <button onClick={()=>setStep(4)}
             style={{...btnCenter,background:T.blue,color:"#fff"}}>
@@ -15641,10 +15671,12 @@ function MobileVormerkenModal({onClose}) {
           {[
             ["Betrag", (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))],
             ["Typ", csvType==="expense"?"Ausgabe":"Einnahme"],
-            ["Datum", date],
+            ["Verursacherdatum", valueDate||"—"],
+            ["Buchungsdatum", date],
             ["Konto", (accounts||[]).find(a=>a.id===accId)?.name||accId],
             ["Kategorie", catId?(getCat(catId)?.name||"?")+(subId?" / "+(getSub(catId,subId)?.name||""):""):"—"],
             ["Beschreibung", desc||"—"],
+            ["Notiz", note||"—"],
           ].map(([k,v])=>(
             <div key={k} style={{display:"flex",justifyContent:"space-between",
               padding:`${S.gap}px 0`,
