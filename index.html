@@ -11733,6 +11733,32 @@ function ChartBlock({catSums, maxSum, budgets, getBudgetForMonth, year, month}) 
 
 function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month}) {
   const [chartOpen, setChartOpen] = React.useState(false);
+  const [view, setView] = React.useState("bar"); // "bar" | "pie"
+
+  // Tortendiagramm berechnen
+  const total = catSums.reduce((s,c)=>s+c.sum, 0);
+  const COLORS = ["#4a9fd4","#e8a838","#e05c5c","#5cb85c","#9b59b6","#1abc9c","#e67e22","#3498db","#e91e63","#00bcd4"];
+  const pie = React.useMemo(()=>{
+    let angle = -Math.PI/2; // Start oben
+    return catSums.map((c,i)=>{
+      const frac = c.sum / total;
+      const start = angle;
+      angle += frac * 2 * Math.PI;
+      const end = angle;
+      const large = (end-start) > Math.PI ? 1 : 0;
+      const r = 80;
+      const cx = 100, cy = 100;
+      const x1 = cx + r*Math.cos(start), y1 = cy + r*Math.sin(start);
+      const x2 = cx + r*Math.cos(end),   y2 = cy + r*Math.sin(end);
+      // Mittelpunkt des Segments für Label
+      const mid = start + (end-start)/2;
+      const lr = 58;
+      const lx = cx + lr*Math.cos(mid), ly = cy + lr*Math.sin(mid);
+      return {cat:c, frac, path:`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`,
+        color: c.color || COLORS[i%COLORS.length], lx, ly, pct:Math.round(frac*100)};
+    });
+  }, [catSums, total]);
+
   return (
     <div style={{margin:"0 10px 4px",borderRadius:12,overflow:"hidden",border:`1px solid ${T.bd}`}}>
       <div onClick={()=>setChartOpen(v=>!v)}
@@ -11742,7 +11768,65 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
         <span style={{flex:1,color:T.txt2,fontSize:11,fontWeight:600}}>Ausgaben nach Kategorie</span>
         {Li(chartOpen?"chevron-up":"chevron-down",12,T.txt2)}
       </div>
-      {chartOpen&&<ChartBlock catSums={catSums} maxSum={maxSum} budgets={budgets} getBudgetForMonth={getBudgetForMonth} year={year} month={month}/>}
+      {chartOpen&&<>
+        {/* Toggle Bar/Pie */}
+        <div style={{display:"flex",gap:6,padding:"6px 10px 2px",borderTop:`1px solid ${T.bd}`}}>
+          {[["bar","bar-chart-2","Balken"],["pie","pie-chart","Torte"]].map(([v,icon,label])=>(
+            <button key={v} onClick={()=>setView(v)}
+              style={{display:"flex",alignItems:"center",gap:4,padding:"3px 10px",
+                borderRadius:8,border:`1px solid ${view===v?T.blue:T.bd}`,
+                background:view===v?`${T.blue}18`:"transparent",
+                color:view===v?T.blue:T.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+              {Li(icon,11,view===v?T.blue:T.txt2)} {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Balken-Ansicht */}
+        {view==="bar"&&<ChartBlock catSums={catSums} maxSum={maxSum} budgets={budgets} getBudgetForMonth={getBudgetForMonth} year={year} month={month}/>}
+
+        {/* Torten-Ansicht */}
+        {view==="pie"&&(
+          <div style={{padding:"10px 10px 14px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+              {/* SVG Torte */}
+              <svg viewBox="0 0 200 200" style={{width:160,height:160,flexShrink:0}}>
+                {pie.map((seg,i)=>(
+                  <path key={i} d={seg.path} fill={seg.color} opacity={0.85}
+                    stroke={T.bg} strokeWidth={1.5}/>
+                ))}
+                {pie.map((seg,i)=>seg.pct>=5&&(
+                  <text key={"t"+i} x={seg.lx} y={seg.ly}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fill="#fff" fontSize={9} fontWeight="700">
+                    {seg.pct}%
+                  </text>
+                ))}
+                {/* Mittelloch für Donut-Effekt */}
+                <circle cx={100} cy={100} r={38} fill={T.surf2}/>
+                <text x={100} y={97} textAnchor="middle" fill={T.txt2} fontSize={9}>Gesamt</text>
+                <text x={100} y={109} textAnchor="middle" fill={T.txt} fontSize={10} fontWeight="700">
+                  {fmt(total)}
+                </text>
+              </svg>
+
+              {/* Legende */}
+              <div style={{flex:1,minWidth:100}}>
+                {pie.map((seg,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:6,
+                    marginBottom:4,fontSize:11}}>
+                    <div style={{width:10,height:10,borderRadius:3,
+                      background:seg.color,flexShrink:0}}/>
+                    <span style={{color:T.txt,flex:1,overflow:"hidden",
+                      textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{seg.cat.name}</span>
+                    <span style={{color:T.txt2,flexShrink:0}}>{fmt(seg.cat.sum)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </>}
     </div>
   );
 }
