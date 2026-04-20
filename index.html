@@ -15796,7 +15796,7 @@ function MobileActionPicker({onClose, onSelect}) {
 // ══════════════════════════════════════════════════════════════════════
 // MobileVormerkenModal — Schritt-für-Schritt Vormerkung für iPhone
 function MobileVormerkenModal({onClose}) {
-  const { cats, accounts, txs, setTxs, year, month, getCat, getSub } = useContext(AppCtx);
+  const { cats, setCats, accounts, txs, setTxs, year, month, getCat, getSub } = useContext(AppCtx);
   const pad = n => String(n).padStart(2,"0");
   const today = new Date().toISOString().split("T")[0];
 
@@ -15812,6 +15812,9 @@ function MobileVormerkenModal({onClose}) {
   const [accId, setAccId] = useState(accounts?.[0]?.id||"acc-giro");
   const [catStep, setCatStep] = useState("cat"); // "cat" | "sub"
   const [selCat, setSelCat] = useState(null);
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatType, setNewCatType] = useState("expense");
   const [saved, setSaved] = useState(false);
 
   const S = {fs:26, fsL:64, pad:10, padL:14, radius:16, gap:14};
@@ -15884,7 +15887,7 @@ function MobileVormerkenModal({onClose}) {
   return (
     <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,zIndex:300,
       display:"flex",flexDirection:"column",overflowY:"auto",
-      "--mob-fs": S.fs+"px"}}>
+      "--mob-fs": S.fs+"px", position:"relative"}}>
 
       {/* ── Schritt 1: Betrag ── */}
       {step===1&&<>
@@ -15996,6 +15999,12 @@ function MobileVormerkenModal({onClose}) {
                 border:`1.5px dashed ${T.bd}`,color:T.txt2,fontWeight:400}}>
               Ohne Kategorie überspringen
             </button>
+            <button onClick={()=>setShowNewCat(true)}
+              style={{...btnBase,marginTop:S.gap/2,
+                background:"rgba(74,159,212,0.06)",
+                border:`1.5px dashed ${T.blue}66`,color:T.blue,fontWeight:400}}>
+              {Li("plus",S.fs-4,T.blue)} neue Kategorie anlegen
+            </button>
           </>}
 
           {catStep==="sub"&&selCat&&<>
@@ -16106,17 +16115,69 @@ function MobileVormerkenModal({onClose}) {
         </div>
       </>}
 
+
+      {/* Neue Kategorie anlegen */}
+      {showNewCat&&(
+        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",
+          backdropFilter:"blur(8px)",zIndex:10,
+          display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+          <div style={{background:T.surf2,borderRadius:"20px 20px 0 0",
+            padding:S.padL,border:`1px solid ${T.bd}`}}>
+            <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,marginBottom:S.gap}}>
+              neue Kategorie
+            </div>
+            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Name</div>
+            <input type="text" value={newCatName} onChange={e=>setNewCatName(e.target.value)}
+              placeholder="z.B. Essen & Trinken"
+              style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
+                borderRadius:S.radius,border:`2px solid ${newCatName?T.blue:T.bd}`,
+                background:"rgba(255,255,255,0.06)",color:T.txt,
+                fontSize:S.fs,fontFamily:"inherit",outline:"none",marginBottom:S.gap}}/>
+            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Typ</div>
+            <div style={{display:"flex",gap:S.gap/2,marginBottom:S.gap}}>
+              {[["expense","Ausgabe",T.neg],["income","Einnahme",T.pos]].map(([t,l,c])=>(
+                <button key={t} onClick={()=>setNewCatType(t)}
+                  style={{flex:1,padding:`${S.pad}px`,borderRadius:S.radius,
+                    background:newCatType===t?c+"22":"rgba(255,255,255,0.06)",
+                    border:`2px solid ${newCatType===t?c:T.bd}`,
+                    color:newCatType===t?c:T.txt2,fontSize:S.fs,fontWeight:700,
+                    cursor:"pointer",fontFamily:"inherit"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:S.gap}}>
+              <button onClick={()=>{
+                if(!newCatName.trim()) return;
+                const newId = "cat-"+uid();
+                setCats(p=>[...p,{id:newId,name:newCatName.trim(),
+                  type:newCatType,color:T.blue,icon:"tag",subs:[]}]);
+                setCatId(newId); setSubId("");
+                setNewCatName(""); setShowNewCat(false);
+                setStep(3);
+              }} style={{flex:1,padding:`${S.padL}px`,borderRadius:S.radius,
+                border:"none",background:T.blue,color:"#fff",
+                fontSize:S.fs,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                ✓ Anlegen & wählen
+              </button>
+              <button onClick={()=>{setShowNewCat(false);setNewCatName("");}}
+                style={{padding:`${S.padL}px ${S.padL}px`,borderRadius:S.radius,
+                  border:`1.5px solid ${T.bd}`,background:"transparent",
+                  color:T.txt2,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit"}}>
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// MobileWiederkehrendModal — Schritt-für-Schritt für iPhone
-
-// ══════════════════════════════════════════════════════════════════════
 // MobileWiederkehrendModal — 4 Schritte für Wiederkehrend & Finanzierung
 function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
-  const { cats, accounts, setTxs, getCat, getSub } = useContext(AppCtx);
+  const { cats, setCats, accounts, setTxs, getCat, getSub } = useContext(AppCtx);
   const today = new Date().toISOString().split("T")[0];
   const S = {fs:26, pad:10, padL:14, radius:16, gap:14};
   const isFinanz = typ==="finanzierung";
@@ -16137,8 +16198,20 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
   const [subId,        setSubId]        = useState("");
   const [catStep,      setCatStep]      = useState("cat");
   const [selCat,       setSelCat]       = useState(null);
+  const [showNewCat,   setShowNewCat]   = useState(false);
+  const [newCatName,   setNewCatName]   = useState("");
+  const [newCatType,   setNewCatType]   = useState("expense");
+  const [desc,         setDesc]         = useState("");
   const [desc,         setDesc]         = useState("");
   const [note,         setNote]         = useState("");
+  const [valueDate,    setValueDate]    = useState("");
+  const [firstIsStart, setFirstIsStart] = useState(false);
+  const [giltFuer,     setGiltFuer]     = useState("all");
+  const [giltFuerDate, setGiltFuerDate] = useState(today);
+  const [valueDate,    setValueDate]    = useState("");
+  const [firstIsStart, setFirstIsStart] = useState(false);
+  const [giltFuer,     setGiltFuer]     = useState("all");
+  const [giltFuerDate, setGiltFuerDate] = useState(today);
   const [saved,        setSaved]        = useState(false);
 
   const shownCats = cats.filter(c=>csvType==="income"?c.type==="income":c.type!=="income");
@@ -16201,14 +16274,15 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
     const lastAmt  = customFL&&lastAmount  ? pn(lastAmount.replace(",","."))  : null;
     const newTxs = Array.from({length:n},(_,i)=>{
       const d = new Date(startDate+"T12:00:00");
-      d.setMonth(d.getMonth()+i*interval_);
-      if(lastOfMon) d.setDate(new Date(d.getFullYear(),d.getMonth()+1,0).getDate());
+      if(!firstIsStart || i>0) d.setMonth(d.getMonth()+i*interval_);
+      if(lastOfMon && (!firstIsStart || i>0)) d.setDate(new Date(d.getFullYear(),d.getMonth()+1,0).getDate());
       const date = d.toISOString().split("T")[0];
       const txAmt = (i===0&&firstAmt!=null)?firstAmt:(i===n-1&&lastAmt!=null)?lastAmt:a;
       return {
         id:uid(), date, desc:desc.trim(), totalAmount:txAmt, pending:true,
         _csvType:csvType, accountId:accId, repeatMonths:interval_,
         note:note||undefined,
+        valueDate: i===0&&valueDate ? valueDate : undefined,
         splits:catId?[{id:uid(),catId,subId:subId||"",amount:txAmt}]:[],
         _seriesId:seriesId, _seriesIdx:i+1, _seriesTotal:n,
         ...(isFinanz?{_seriesTyp:"finanzierung"}:{}),
@@ -16230,7 +16304,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
 
   return (
     <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,
-      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px"}}>
+      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px",position:"relative"}}>
 
       {/* ── Schritt 1: Betrag & Rhythmus ── */}
       {step===1&&<>
@@ -16313,19 +16387,22 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
           </div>
 
           {/* Anzahl / Enddatum */}
-          {fieldLabel(isFinanz?"Anzahl Raten":"Anzahl (leer = 7 Jahre)")}
           <div style={{display:"flex",gap:S.gap,marginBottom:S.gap/2}}>
-            <input type="text" inputMode="numeric" value={count}
-              onChange={e=>{setCount(e.target.value);if(e.target.value)setEndDate("");}}
-              placeholder={`${calcCount()}`}
-              style={{...inp(),flex:1,marginBottom:0}}/>
-            <input type="date" value={endDate}
-              onChange={e=>{setEndDate(e.target.value);setCount("");}}
-              style={{...inp({colorScheme:"dark"}),flex:1,marginBottom:0}}/>
+            <div style={{flex:1}}>
+              {fieldLabel(isFinanz?"Anzahl Raten":"Anzahl (leer=7J)")}
+              <input type="text" inputMode="numeric" value={count}
+                onChange={e=>{setCount(e.target.value);if(e.target.value)setEndDate("");}}
+                placeholder={`${calcCount()}`}
+                style={{...inp(),marginBottom:0}}/>
+            </div>
+            <div style={{flex:1}}>
+              {fieldLabel("Enddatum")}
+              <input type="date" value={endDate}
+                onChange={e=>{setEndDate(e.target.value);setCount("");}}
+                style={{...inp({colorScheme:"dark"}),marginBottom:0}}/>
+            </div>
           </div>
-          <div style={{color:T.txt2,fontSize:S.fs-8,marginBottom:S.gap}}>
-            Anzahl · oder Enddatum
-          </div>
+          <div style={{height:S.gap}}/>
 
           {/* Abweichende Erst-/Letztbuchung */}
           <div onClick={()=>{setCustomFL(v=>!v);setFirstAmount("");setLastAmount("");}}
@@ -16403,6 +16480,12 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
                 border:`1.5px dashed ${T.bd}`,color:T.txt2,fontWeight:400}}>
               Ohne Kategorie überspringen
             </button>
+            <button onClick={()=>setShowNewCat(true)}
+              style={{...btnCenter,marginTop:S.gap/2,
+                background:"rgba(74,159,212,0.06)",
+                border:`1.5px dashed ${T.blue}66`,color:T.blue,fontWeight:400}}>
+              {Li("plus",S.fs-4,T.blue)} neue Kategorie anlegen
+            </button>
           </>}
           {catStep==="sub"&&selCat&&<>
             <button onClick={()=>setCatStep("cat")}
@@ -16443,9 +16526,53 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
             placeholder="z.B. Vertragsnummer, Anmerkung"
             style={{...inp({border:`2px solid ${note?T.blue:T.bd}`,marginBottom:S.gap})}}/>
 
-          {fieldLabel("Startdatum")}
-          <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
-            style={{...inp({colorScheme:"dark",marginBottom:S.gap})}}/>
+          {/* verursacht + Startdatum nebeneinander */}
+          <div style={{display:"flex",gap:S.gap,marginBottom:S.gap}}>
+            <div style={{flex:1}}>
+              {fieldLabel("verursacht")}
+              <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
+                style={{...inp({colorScheme:"dark",marginBottom:0})}}/>
+            </div>
+            <div style={{flex:1}}>
+              {fieldLabel("Startdatum")}
+              <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+                style={{...inp({colorScheme:"dark",marginBottom:0})}}/>
+            </div>
+          </div>
+
+          {/* Erste Buchung = Startdatum Toggle */}
+          <div onClick={()=>setFirstIsStart(v=>!v)}
+            style={{display:"flex",alignItems:"center",gap:12,padding:`${S.pad}px ${S.padL}px`,
+              borderRadius:S.radius,cursor:"pointer",marginBottom:S.gap,
+              background:firstIsStart?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.04)",
+              border:`2px solid ${firstIsStart?T.blue:T.bd}`}}>
+            <div style={{width:44,height:26,borderRadius:13,position:"relative",flexShrink:0,
+              background:firstIsStart?T.blue:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
+              <div style={{position:"absolute",top:3,left:firstIsStart?21:3,width:20,height:20,
+                borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+            </div>
+            <span style={{color:firstIsStart?T.txt:T.txt2,fontSize:S.fs}}>
+              Erste Buchung = Startdatum
+            </span>
+          </div>
+
+          {/* gilt für (Scope) */}
+          {fieldLabel("gilt für")}
+          <div style={{display:"flex",gap:S.gap/2,marginBottom:S.gap}}>
+            {[["all","alle"],["from","ab dieser"],["single","nur diese"]].map(([v,l])=>(
+              <button key={v} onClick={()=>setGiltFuer(v)}
+                style={{flex:1,...btnCenter,padding:`${S.pad}px 4px`,
+                  background:giltFuer===v?T.blue:"rgba(255,255,255,0.08)",
+                  border:"none",color:giltFuer===v?"#fff":T.txt2,
+                  fontSize:S.fs-6,fontWeight:700,borderRadius:S.radius/2}}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {giltFuer!=="all"&&(
+            <input type="date" value={giltFuerDate} onChange={e=>setGiltFuerDate(e.target.value)}
+              style={{...inp({colorScheme:"dark",marginBottom:S.gap})}}/>
+          )}
 
           <button onClick={()=>{if(desc.trim()) setStep(4);}}
             disabled={!desc.trim()}
@@ -16470,6 +16597,9 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
             ["Anzahl",     `${totalCount}×`],
             ...(isFinanz?[["Gesamtbetrag", gesamtbetrag||"—"]]:[]),
             ["Startdatum", startDate.split("-").reverse().join(".")],
+            ...(valueDate?[["verursacht", valueDate.split("-").reverse().join(".")]]:[]),
+            ...(firstIsStart?[["Erste Buchung","= Startdatum"]]:[]),
+            ...(giltFuer!=="all"?[["gilt für", giltFuer==="from"?"ab "+giltFuerDate.split("-").reverse().join("."):"nur "+giltFuerDate.split("-").reverse().join(".")]]:[]),
             ["Kategorie",  catId?(getCat(catId)?.name||"?")+(subId?" / "+(getSub(catId,subId)?.name||""):""):"—"],
             ["Beschreibung",desc],
             ["Notiz",      note||"—"],
@@ -16494,6 +16624,61 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
           </button>
         </div>
       </>}
+
+      {/* Neue Kategorie anlegen */}
+      {showNewCat&&(
+        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",
+          backdropFilter:"blur(8px)",zIndex:10,
+          display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+          <div style={{background:T.surf2,borderRadius:"20px 20px 0 0",
+            padding:S.padL,border:`1px solid ${T.bd}`}}>
+            <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,marginBottom:S.gap}}>
+              neue Kategorie
+            </div>
+            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Name</div>
+            <input type="text" value={newCatName} onChange={e=>setNewCatName(e.target.value)}
+              placeholder="z.B. Essen & Trinken"
+              style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
+                borderRadius:S.radius,border:`2px solid ${newCatName?T.blue:T.bd}`,
+                background:"rgba(255,255,255,0.06)",color:T.txt,
+                fontSize:S.fs,fontFamily:"inherit",outline:"none",marginBottom:S.gap}}/>
+            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Typ</div>
+            <div style={{display:"flex",gap:S.gap/2,marginBottom:S.gap}}>
+              {[["expense","Ausgabe",T.neg],["income","Einnahme",T.pos]].map(([t,l,c])=>(
+                <button key={t} onClick={()=>setNewCatType(t)}
+                  style={{flex:1,padding:`${S.pad}px`,borderRadius:S.radius,
+                    background:newCatType===t?c+"22":"rgba(255,255,255,0.06)",
+                    border:`2px solid ${newCatType===t?c:T.bd}`,
+                    color:newCatType===t?c:T.txt2,fontSize:S.fs,fontWeight:700,
+                    cursor:"pointer",fontFamily:"inherit"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:S.gap}}>
+              <button onClick={()=>{
+                if(!newCatName.trim()) return;
+                const newId = "cat-"+uid();
+                setCats(p=>[...p,{id:newId,name:newCatName.trim(),
+                  type:newCatType,color:T.blue,icon:"tag",subs:[]}]);
+                setCatId(newId); setSubId("");
+                setNewCatName(""); setShowNewCat(false);
+                setStep(3);
+              }} style={{flex:1,padding:`${S.padL}px`,borderRadius:S.radius,
+                border:"none",background:T.blue,color:"#fff",
+                fontSize:S.fs,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                ✓ Anlegen & wählen
+              </button>
+              <button onClick={()=>{setShowNewCat(false);setNewCatName("");}}
+                style={{padding:`${S.padL}px ${S.padL}px`,borderRadius:S.radius,
+                  border:`1.5px solid ${T.bd}`,background:"transparent",
+                  color:T.txt2,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit"}}>
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
