@@ -2937,12 +2937,6 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
               <input value={desc} onChange={e=>setDesc(e.target.value)}
                 placeholder="z.B. Miete, Gehalt, Kfz-Steuer…"
                 style={{...INP,marginBottom:4,width:"100%",boxSizing:"border-box"}}/>
-              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Notiz (optional)</div>
-              <textarea value={note} onChange={e=>setNote(e.target.value)}
-                placeholder="Notiz…" rows={2}
-                style={{...INP,resize:"none",fontFamily:"inherit",lineHeight:1.4,
-                  marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
-
               {/* 11. Abweichende Erst-/Letztbuchung (Wiederkehrend/Finanzierung) */}
               {typ!=="einmalig"&&(
                 <div onClick={()=>{setCustomFirstLast(v=>!v);setFirstAmount("");setLastAmount("");}}
@@ -16117,6 +16111,355 @@ function MobileVormerkenModal({onClose}) {
   );
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// MobileWiederkehrendModal — Schritt-für-Schritt für iPhone
+function MobileWiederkehrendModal({onClose, typ: initTyp="wiederkehrend"}) {
+  const { cats, accounts, txs, setTxs, getCat, getSub } = useContext(AppCtx);
+  const today = new Date().toISOString().split("T")[0];
+  const S = {fs:26, fsL:64, pad:10, padL:14, radius:16, gap:14};
+
+  const [step,      setStep]      = useState(1);
+  const [typ,       setTyp]       = useState(initTyp); // wiederkehrend|finanzierung
+  const [csvType,   setCsvType]   = useState("expense");
+  const [accId,     setAccId]     = useState(accounts?.[0]?.id||"");
+  const [amount,    setAmount]    = useState("");
+  const [interval_, setInterval_] = useState(1);
+  const [lastOfMon, setLastOfMon] = useState(false);
+  const [count,     setCount]     = useState("");
+  const [endDate,   setEndDate]   = useState("");
+  const [catId,     setCatId]     = useState("");
+  const [subId,     setSubId]     = useState("");
+  const [catStep,   setCatStep]   = useState("cat");
+  const [selCat,    setSelCat]    = useState(null);
+  const [desc,      setDesc]      = useState("");
+  const [note,      setNote]      = useState("");
+  const [startDate, setStartDate] = useState(today);
+  const [saved,     setSaved]     = useState(false);
+
+  const shownCats = cats.filter(c=>csvType==="income"?c.type==="income":c.type!=="income");
+  const isoAddM = (iso, n) => {
+    const d = new Date(iso+"T12:00:00");
+    d.setMonth(d.getMonth()+n);
+    if(lastOfMon) d.setDate(new Date(d.getFullYear(),d.getMonth()+1,0).getDate());
+    return d.toISOString().split("T")[0];
+  };
+  const calcCount = () => {
+    if(count) return parseInt(count)||1;
+    if(endDate) {
+      const s=new Date(startDate), e=new Date(endDate);
+      return Math.max(1,Math.round(((e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth()))/interval_)+1);
+    }
+    return Math.floor(84/interval_);
+  };
+  const totalCount = calcCount();
+  const intervalLabel = {1:"monatlich",3:"quartalsweise",6:"halbjährlich",12:"jährlich"}[interval_]||`${interval_}M`;
+
+  const btnBase = {width:"100%",padding:`${S.padL}px`,borderRadius:S.radius,border:"none",
+    cursor:"pointer",fontFamily:"inherit",fontSize:S.fs,fontWeight:700,
+    display:"flex",alignItems:"center",justifyContent:"flex-start",gap:10,textAlign:"left"};
+  const btnCenter = {...btnBase,justifyContent:"center"};
+
+  const fieldLabel = (txt, required=false) => (
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+      <div style={{color:T.txt2,fontSize:S.fs-4,fontWeight:600}}>{txt}</div>
+      {required&&<div style={{background:T.neg+"22",color:T.neg,fontSize:S.fs-8,
+        borderRadius:6,padding:"2px 8px",fontWeight:700}}>Pflichtfeld</div>}
+    </div>
+  );
+
+  const inp = (extra={}) => ({width:"100%",boxSizing:"border-box",
+    padding:`${S.padL}px`,borderRadius:S.radius,border:`2px solid ${T.bd}`,
+    background:"rgba(255,255,255,0.06)",color:T.txt,
+    fontSize:S.fs,fontFamily:"inherit",outline:"none",...extra});
+
+  const toggle = (active, onClick, label) => (
+    <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:12,
+      padding:`${S.pad}px ${S.padL}px`,borderRadius:S.radius,cursor:"pointer",
+      marginBottom:S.gap/2,
+      background:active?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.04)",
+      border:`2px solid ${active?T.blue:T.bd}`}}>
+      <div style={{width:44,height:26,borderRadius:13,position:"relative",flexShrink:0,
+        background:active?T.blue:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
+        <div style={{position:"absolute",top:3,left:active?21:3,width:20,height:20,
+          borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+      </div>
+      <span style={{color:active?T.txt:T.txt2,fontSize:S.fs}}>{label}</span>
+    </div>
+  );
+
+  const header = (title, sub, stepNum, onBack) => (
+    <div style={{background:T.surf,borderBottom:`1px solid ${T.bd}`,
+      padding:`12px ${S.padL}px`,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+      <button onClick={onBack||onClose}
+        style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
+          width:44,height:44,borderRadius:S.radius,cursor:"pointer",fontSize:20,
+          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>←</button>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+        <div style={{color:T.txt2,fontSize:S.fs-6,marginTop:2,display:"flex",alignItems:"center",gap:8}}>
+          <span style={{color:T.blue,fontWeight:700}}>{stepNum}v4</span>
+          <span>{sub}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const doSave = () => {
+    const amt = pn(amount.replace(",","."));
+    if(amt<=0||!desc.trim()) return;
+    const n = totalCount;
+    const seriesId = uid();
+    const newTxs = Array.from({length:n},(_,i)=>({
+      id:uid(), date:isoAddM(startDate,i*interval_),
+      desc:desc.trim(), totalAmount:amt, pending:true,
+      _csvType:csvType, accountId:accId, repeatMonths:interval_,
+      note:note||undefined,
+      splits:catId?[{id:uid(),catId,subId:subId||"",amount:amt}]:[],
+      _seriesId:seriesId, _seriesIdx:i+1, _seriesTotal:n,
+      ...(typ==="finanzierung"?{_seriesTyp:"finanzierung"}:{}),
+      ...(lastOfMon?{_lastOfMonth:true}:{}),
+    }));
+    setTxs(p=>[...p,...newTxs]);
+    setSaved(true);
+    setTimeout(()=>onClose(), 1200);
+  };
+
+  if(saved) return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:300,
+      display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <div style={{fontSize:64,marginBottom:16}}>✓</div>
+      <div style={{color:T.pos,fontSize:24,fontWeight:700}}>{totalCount}× gespeichert!</div>
+    </div>
+  );
+
+  return (
+    <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,zIndex:300,
+      display:"flex",flexDirection:"column","--mob-fs":S.fs+"px"}}>
+
+      {/* ── Schritt 1: Typ, Konto, Betrag, Intervall ── */}
+      {step===1&&<>
+        {header(typ==="finanzierung"?"neue Finanzierung":"Wiederkehrend anlegen","Betrag & Rhythmus",1)}
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+
+          {/* Typ */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:S.gap,marginBottom:S.gap}}>
+            {[["wiederkehrend","Wiederkehrend","repeat"],["finanzierung","Finanzierung","credit-card"]].map(([t,l,ic])=>(
+              <button key={t} onClick={()=>setTyp(t)}
+                style={{...btnCenter,padding:`${S.pad}px`,
+                  background:typ===t?"rgba(74,159,212,0.15)":"rgba(255,255,255,0.06)",
+                  border:`2px solid ${typ===t?T.blue:T.bd}`,
+                  color:typ===t?T.blue:T.txt2,borderRadius:S.radius}}>
+                {Li(ic,S.fs,typ===t?T.blue:T.txt2)} {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Ausgabe/Einnahme */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:S.gap,marginBottom:S.gap}}>
+            {[["expense","Ausgabe",T.neg],["income","Einnahme",T.pos]].map(([t,l,c])=>(
+              <button key={t} onClick={()=>setCsvType(t)}
+                style={{...btnCenter,padding:`${S.padL}px`,
+                  background:csvType===t?c+"22":"rgba(255,255,255,0.06)",
+                  border:`2px solid ${csvType===t?c:T.bd}`,
+                  color:csvType===t?c:T.txt2,borderRadius:S.radius}}>
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Konto */}
+          {fieldLabel("Konto")}
+          <div style={{display:"flex",gap:S.gap/2,flexWrap:"wrap",marginBottom:S.gap}}>
+            {(accounts||[]).map(acc=>(
+              <button key={acc.id} onClick={()=>setAccId(acc.id)}
+                style={{flex:"1 1 auto",...btnBase,padding:`${S.pad}px ${S.padL}px`,
+                  background:accId===acc.id?"rgba(74,159,212,0.15)":"rgba(255,255,255,0.06)",
+                  border:`2px solid ${accId===acc.id?T.blue:T.bd}`,
+                  color:accId===acc.id?T.blue:T.txt2,fontWeight:accId===acc.id?700:400}}>
+                {Li("landmark",S.fs,accId===acc.id?T.blue:T.txt2)}
+                <span>{acc.name||acc.id}</span>
+                {accId===acc.id&&<span style={{marginLeft:"auto"}}>✓</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Betrag */}
+          {fieldLabel("Betrag €")}
+          <input type="text" inputMode="decimal" value={amount}
+            onChange={e=>setAmount(e.target.value)} placeholder="0,00"
+            style={{...inp({border:`2px solid ${amount?T.blue:T.bd}`,
+              fontWeight:700,textAlign:"right",marginBottom:S.gap})}}/>
+
+          {/* Intervall */}
+          {fieldLabel("Rhythmus")}
+          <div style={{display:"flex",gap:S.gap/2,marginBottom:S.gap}}>
+            {[[1,"monatl."],[3,"quartl."],[6,"halbj."],[12,"jährl."]].map(([v,l])=>(
+              <button key={v} onClick={()=>{setInterval_(v);}}
+                style={{flex:1,...btnCenter,padding:`${S.pad}px 4px`,
+                  background:interval_===v?T.blue:"rgba(255,255,255,0.08)",
+                  border:"none",color:interval_===v?"#fff":T.txt2,
+                  fontSize:S.fs-4,borderRadius:S.radius/2}}>
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Letzter Tag */}
+          {toggle(lastOfMon,()=>{
+            const next=!lastOfMon; setLastOfMon(next);
+            if(next&&startDate){const[y,m]=startDate.split("-").map(Number);
+              const ld=new Date(y,m,0).getDate();
+              setStartDate(`${y}-${String(m).padStart(2,"0")}-${String(ld).padStart(2,"0")}`);
+            }
+          },"Immer letzter Tag des Monats")}
+
+          {/* Anzahl / Enddatum */}
+          {fieldLabel("Anzahl")}
+          <div style={{display:"flex",gap:S.gap,marginBottom:S.gap}}>
+            <input type="text" inputMode="numeric" value={count}
+              onChange={e=>setCount(e.target.value)} placeholder={`${calcCount()} (leer=7J)`}
+              style={{...inp(),flex:1,marginBottom:0}}/>
+            <input type="date" value={endDate}
+              onChange={e=>{setEndDate(e.target.value);setCount("");}}
+              style={{...inp({colorScheme:"dark"}),flex:1,marginBottom:0}}/>
+          </div>
+
+          {/* Vorschau */}
+          <div style={{background:"rgba(0,0,0,0.2)",borderRadius:S.radius/2,
+            padding:"10px 14px",marginBottom:S.gap,fontSize:S.fs-4,color:T.txt2}}>
+            <span style={{color:T.pos,fontWeight:700}}>{totalCount}× {intervalLabel}</span>
+            {startDate&&<>{" · "}ab {startDate.split("-").reverse().join(".")}</>}
+          </div>
+
+          <button onClick={()=>{const a=pn(amount.replace(",","."));if(a>0) setStep(2);}}
+            disabled={!amount||pn(amount.replace(",",".")<=0)}
+            style={{...btnCenter,background:amount&&pn(amount.replace(",",".")>0)?T.blue:"rgba(255,255,255,0.1)",
+              color:amount&&pn(amount.replace(",",".")>0)?"#fff":T.txt2}}>
+            Weiter → Kategorie
+          </button>
+        </div>
+      </>}
+
+      {/* ── Schritt 2: Kategorie ── */}
+      {step===2&&<>
+        {header("Kategorie",fmt(pn(amount.replace(",","."))),2,()=>setStep(1))}
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+          {catStep==="cat"&&<>
+            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:S.gap}}>Kategorie wählen:</div>
+            {shownCats.map(cat=>(
+              <button key={cat.id} onClick={()=>{setSelCat(cat);setCatStep("sub");}}
+                style={{...btnBase,marginBottom:S.gap/2,
+                  background:"rgba(255,255,255,0.04)",border:`1.5px solid ${T.bd}`,
+                  color:T.txt,fontWeight:500,fontSize:S.fs}}>
+                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
+                  {cat.icon&&Li(cat.icon,S.fs+2,cat.color||T.blue)}
+                  <span>{cat.name}</span>
+                </span>
+                <span style={{color:T.txt2,fontSize:S.fs,marginLeft:"auto"}}>›</span>
+              </button>
+            ))}
+            <button onClick={()=>{setCatId("");setSubId("");setStep(3);}}
+              style={{...btnCenter,marginTop:S.gap,
+                background:"rgba(255,255,255,0.04)",
+                border:`1.5px dashed ${T.bd}`,color:T.txt2,fontWeight:400}}>
+              Ohne Kategorie überspringen
+            </button>
+          </>}
+          {catStep==="sub"&&selCat&&<>
+            <button onClick={()=>setCatStep("cat")}
+              style={{...btnBase,justifyContent:"flex-start",marginBottom:S.gap,
+                padding:`${S.pad}px 0`,background:"none",border:"none",color:T.blue,fontWeight:400}}>
+              ← {selCat.name}
+            </button>
+            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:S.gap}}>Unterkategorie:</div>
+            {(selCat.subs||[]).map(sub=>(
+              <button key={sub.id} onClick={()=>{setCatId(selCat.id);setSubId(sub.id);setStep(3);}}
+                style={{...btnBase,marginBottom:S.gap/2,
+                  background:"rgba(255,255,255,0.04)",border:`1.5px solid ${T.bd}`,
+                  color:T.txt,fontWeight:500,fontSize:S.fs}}>
+                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
+                  {sub.icon&&Li(sub.icon,S.fs+2,selCat.color||T.blue)}
+                  <span>{sub.name}</span>
+                </span>
+                <span style={{color:T.txt2,fontSize:S.fs,marginLeft:"auto"}}>›</span>
+              </button>
+            ))}
+          </>}
+        </div>
+      </>}
+
+      {/* ── Schritt 3: Beschreibung, Notiz, Datum ── */}
+      {step===3&&<>
+        {header("Details","Beschreibung & Datum",3,()=>setStep(2))}
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+
+          {/* Beschreibung Pflichtfeld */}
+          {fieldLabel("Beschreibung",true)}
+          <input type="text" value={desc} onChange={e=>setDesc(e.target.value)}
+            placeholder="z.B. Miete, Gehalt…"
+            style={{...inp({border:`2px solid ${desc?T.blue:T.neg}`,marginBottom:S.gap})}}/>
+
+          {/* Notiz */}
+          {fieldLabel("Notiz (optional)")}
+          <input type="text" value={note} onChange={e=>setNote(e.target.value)}
+            placeholder="z.B. inkl. Nebenkostenvorauszahlung"
+            style={{...inp({border:`2px solid ${note?T.blue:T.bd}`,marginBottom:S.gap})}}/>
+
+          {/* Startdatum */}
+          {fieldLabel("Startdatum")}
+          <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+            style={{...inp({colorScheme:"dark",marginBottom:S.gap})}}/>
+
+          <button onClick={()=>{if(desc.trim()) setStep(4);}}
+            disabled={!desc.trim()}
+            style={{...btnCenter,background:desc.trim()?T.blue:"rgba(255,255,255,0.1)",
+              color:desc.trim()?"#fff":T.txt2}}>
+            Weiter → Bestätigen
+          </button>
+        </div>
+      </>}
+
+      {/* ── Schritt 4: Bestätigung ── */}
+      {step===4&&<>
+        {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
+        <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+          {[
+            ["Typ",       typ==="finanzierung"?"Finanzierung":"Wiederkehrend"],
+            ["Art",       csvType==="expense"?"Ausgabe":"Einnahme"],
+            ["Konto",     (accounts||[]).find(a=>a.id===accId)?.name||accId],
+            ["Betrag",    (csvType==="expense"?"−":"+")+fmt(pn(amount.replace(",",".")))],
+            ["Rhythmus",  intervalLabel],
+            ["Anzahl",    `${totalCount}×`],
+            ["Startdatum",startDate.split("-").reverse().join(".")],
+            ["Kategorie", catId?(getCat(catId)?.name||"?")+(subId?" / "+(getSub(catId,subId)?.name||""):""):"—"],
+            ["Beschreibung",desc],
+            ["Notiz",     note||"—"],
+          ].map(([k,v])=>(
+            <div key={k} style={{display:"flex",justifyContent:"space-between",
+              padding:`${S.gap}px 0`,borderBottom:`1px solid ${T.bd}`,
+              alignItems:"flex-start",gap:16}}>
+              <span style={{color:T.txt2,fontSize:S.fs,flexShrink:0}}>{k}</span>
+              <span style={{color:T.txt,fontSize:S.fs,fontWeight:600,
+                textAlign:"right",flex:1,wordBreak:"break-word"}}>{v}</span>
+            </div>
+          ))}
+
+          <button onClick={doSave}
+            style={{...btnCenter,background:T.pos,color:"#fff",marginTop:S.gap*2}}>
+            ✓ {totalCount}× Anlegen
+          </button>
+          <button onClick={onClose}
+            style={{...btnCenter,background:"transparent",
+              border:`1.5px solid ${T.bd}`,color:T.txt2,marginTop:S.gap,fontWeight:400}}>
+            Abbrechen
+          </button>
+        </div>
+      </>}
+    </div>
+  );
+}
+
 window.FinanzApp = function FinanzApp() {
   const [mainTab,       setMainTab]      = useState("erfassen"); // erfassen|buchungen|struktur|mehr
   const [activeStructurTab, setActiveStructurTab] = useState("einstellungen");
@@ -16163,6 +16506,7 @@ window.FinanzApp = function FinanzApp() {
   const [showModalTest, setShowModalTest] = useState(false);
   const [mobileMode, setMobileMode] = useState(false); // Großes Mobile-UI
   const [showMobileVormerken, setShowMobileVormerken] = useState(false);
+  const [showMobileWiederkehrend, setShowMobileWiederkehrend] = useState(false);
   const [showMobilePicker, setShowMobilePicker] = useState(false);
   const [reviewQueue,   setReviewQueue]  = useState(null);
   const [customIcons,   setCustomIconsRaw] = useState(()=>{
@@ -18467,13 +18811,15 @@ Abbrechen = ${remoteName}-Stand laden`
       {/* ── MOBILE UI TEST ── */}
       {showModalTest&&<ModalTestScreen onClose={()=>setShowModalTest(false)}/>}
       {showMobileVormerken&&<MobileVormerkenModal onClose={()=>setShowMobileVormerken(false)}/>}
+      {showMobileWiederkehrend&&<MobileWiederkehrendModal onClose={()=>setShowMobileWiederkehrend(false)}/>}
       {showMobilePicker&&<MobileActionPicker
         onClose={()=>setShowMobilePicker(false)}
         onSelect={(action)=>{
           setShowMobilePicker(false);
           if(action==="vormerken") setShowMobileVormerken(true);
           else if(action==="csv") setShowCsv(true);
-          else if(action==="wiederkehrend") { if(mobileMode) setShowVormHub(true); else setShowRecurring(true); }
+          else if(action==="wiederkehrend") setShowMobileWiederkehrend(true);
+          else if(action==="finanzierung") setShowMobileWiederkehrend(true);
           else if(action==="kategorien") { setMainTab("struktur"); setActiveStructurTab("kategorien"); }
           else setModal("addTx"); // fallback für budget, finanzierung
         }}
