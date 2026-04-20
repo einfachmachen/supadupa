@@ -2329,16 +2329,101 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const [saved,     setSaved]     = useState(false);
   const [error,     setError]     = useState("");
 
+  // ── Eingebettete Ausnahme-Serie ───────────────────────────────────────
+  const [showExForm,    setShowExForm]    = useState(false);
+  const [exAmount,      setExAmount]      = useState("");
+  const [exInterval,    setExInterval]    = useState(12); // jährlich
+  const [exStartDate,   setExStartDate]   = useState("");
+  const [exCount,       setExCount]       = useState("");
+  const [exEditId,      setExEditId]      = useState(null);  // _exSeriesId beim Bearbeiten
+  const [exEditScope,   setExEditScope]   = useState("single");
+
+  // Alle Ausnahme-Serien dieser Hauptserie
+  const exSeries = React.useMemo(()=>{
+    if(!editVorm?._seriesId) return [];
+    const allEx = txs.filter(t=>t._seriesId===editVorm._seriesId && t._exSeriesId);
+    const byId = {};
+    allEx.forEach(t=>{
+      if(!byId[t._exSeriesId]) byId[t._exSeriesId]=[];
+      byId[t._exSeriesId].push(t);
+    });
+    return Object.entries(byId).map(([id,items])=>{
+      const sorted = items.sort((a,b)=>a.date.localeCompare(b.date));
+      return {id, items:sorted, first:sorted[0], last:sorted[sorted.length-1],
+        interval: items[0]?._exInterval||12, amount: items[0]?.totalAmount};
+    });
+  }, [editVorm, txs]);
+
+  const handleSaveException = () => {
+    const amt = pn(exAmount.replace(",","."));
+    if(!amt || !exStartDate) return;
+    const seriesId = editVorm._seriesId;
+    if(!seriesId) return;
+
+    // Alle Hauptserien-Buchungen ab exStartDate mit passendem Intervall
+    const mainTxs = txs.filter(t=>t._seriesId===seriesId && !t._exSeriesId)
+      .sort((a,b)=>a.date.localeCompare(b.date));
+
+    const exId = exEditId || ("ex-"+uid());
+    const n = exCount ? parseInt(exCount)||1 : 99;
+    let created = 0;
+
+    setTxs(prev=>{
+      const next = [...prev];
+      // Entferne alte Ausnahmen dieser exSeriesId wenn Bearbeitung
+      const filtered = exEditId
+        ? next.filter(t=>!(t._exSeriesId===exEditId && (exEditScope==="all" ||
+            (exEditScope==="from" && t.date>=exStartDate) ||
+            (exEditScope==="single" && t.date===exStartDate))))
+        : next;
+
+      // Finde passende Hauptserien-Monate
+      const matches = mainTxs.filter(t=>{
+        if(t.date < exStartDate) return false;
+        const d = new Date(t.date);
+        const s = new Date(exStartDate);
+        const monthDiff = (d.getFullYear()-s.getFullYear())*12 + (d.getMonth()-s.getMonth());
+        return monthDiff >= 0 && monthDiff % exInterval === 0;
+      }).slice(0, n);
+
+      const newExTxs = matches.map((t,i)=>({
+        ...t,
+        id: uid(),
+        totalAmount: amt,
+        splits: catId ? [{id:uid(),catId,subId:subId||"",amount:amt}] : t.splits,
+        _exSeriesId: exId,
+        _exInterval: exInterval,
+        _isException: true,
+      }));
+
+      return [...filtered, ...newExTxs];
+    });
+
+    setShowExForm(false);
+    setExAmount(""); setExStartDate(""); setExCount(""); setExEditId(null);
+  };
+
+  const handleDeleteException = (exId, scope, fromDate) => {
+    setTxs(prev=>prev.filter(t=>{
+      if(t._exSeriesId!==exId) return true;
+      if(scope==="all") return false;
+      if(scope==="from") return t.date < fromDate;
+      if(scope==="single") return t.date !== fromDate;
+      return true;
+    }));
+  };
+
   // Anzahl + Intervall der Serie aus echten Buchungen ermitteln
   const seriesCount = React.useMemo(()=>{
     if(!isEdit || !editVorm?._seriesId) return null;
-    return txs.filter(t=>t._seriesId===editVorm._seriesId).length;
+    return txs.filter(t=>t._seriesId===editVorm._seriesId && !t._isException).length;
   }, [isEdit, editVorm, txs]);
 
   // Abweichende Beträge in der Serie erkennen
   const seriesAmtInfo = React.useMemo(()=>{
     if(!isEdit || !editVorm?._seriesId) return {deviations:[],regularAmt:0,firstDev:null,lastDev:null};
-    const sorted = txs.filter(t=>t._seriesId===editVorm._seriesId)
+    // Nur Hauptserien-Buchungen (keine Ausnahmen) für regulären Betrag
+    const sorted = txs.filter(t=>t._seriesId===editVorm._seriesId && !t._isException)
       .sort((a,b)=>a.date.localeCompare(b.date));
     if(sorted.length<2) return {deviations:[],regularAmt:0,firstDev:null,lastDev:null};
     // Häufigster Betrag = "regulär"
@@ -2455,10 +2540,15 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
       } else {
         // Ab dieser / Alle
         setTxs(prevTxs=>{
-          const seriesTxs = prevTxs.filter(t=>t._seriesId===seriesId)
+          const seriesTxs = prevTxs.filter(t=>t._seriesId===seriesId && !t._exSeriesId)
             .sort((a,b)=>a.date.localeCompare(b.date));
           const thisIdx = seriesTxs.findIndex(t=>t.id===editVorm.id);
-          const toUpdate = editScope==="all" ? seriesTxs : seriesTxs.slice(thisIdx);
+          const toUpdateAll = editScope==="all" ? seriesTxs : seriesTxs.slice(thisIdx);
+          // Bereits zugeordnete Buchungen (pending:false && _linkedTo) nicht überschreiben
+          // — außer es ist explizit "Alle" und die Buchung ist die aktuell bearbeitete
+          const toUpdate = toUpdateAll.filter(t=>
+            t.pending || t.id===editVorm.id
+          );
           // Berechne Verschiebung in Monaten + Tagen
           const origDate = new Date(editVorm.date);
           const newDateD = new Date(startDate);
@@ -2478,10 +2568,10 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
               const maxD=new Date(y,m,0).getDate();
               newDate=`${y}-${String(m).padStart(2,"0")}-${String(Math.min(Math.max(1,d+dayOffset),maxD)).padStart(2,"0")}`;
             }
-            // Abweichender Betrag: erst prüfen ob erste/letzte Buchung
-            const seriesIdxSorted = toUpdate.findIndex(u=>u.id===t.id);
+            // Abweichender Betrag: erst/letzte Buchung aus der Gesamtliste erkennen
+            const seriesIdxSorted = toUpdateAll.findIndex(u=>u.id===t.id);
             const isFirstTx = seriesIdxSorted===0;
-            const isLastTx  = seriesIdxSorted===toUpdate.length-1;
+            const isLastTx  = seriesIdxSorted===toUpdateAll.length-1;
             const firstAmt2 = customFirstLast&&firstAmount ? pn(firstAmount.replace(",",".")) : null;
             const lastAmt2  = customFirstLast&&lastAmount  ? pn(lastAmount.replace(",","."))  : null;
             const devAmt = devAmounts[t.id]
@@ -2918,6 +3008,183 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* ── Eingebettete Ausnahme-Serien ── */}
+              {isEdit&&editVorm._seriesId&&!editVorm._isException&&(
+                <div style={{marginBottom:8}}>
+                  {/* Vorhandene Ausnahme-Serien anzeigen */}
+                  {exSeries.length>0&&(
+                    <div style={{marginBottom:6}}>
+                      <div style={{color:T.txt2,fontSize:10,fontWeight:700,marginBottom:4}}>
+                        Eingebettete Ausnahmen:
+                      </div>
+                      {exSeries.map(ex=>{
+                        const [exScopeOpen, setExScopeOpen] = [false, ()=>{}]; // placeholder
+                        const firstD = new Date(ex.first.date);
+                        const lastD  = new Date(ex.last.date);
+                        const pad2 = n=>String(n).padStart(2,"0");
+                        const fmtD = d=>`${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()}`;
+                        const intervalLabel = ex.interval===12?"jährl.":ex.interval===3?"quartl.":"mtl.";
+                        return (
+                          <div key={ex.id} style={{background:"rgba(245,166,35,0.08)",
+                            border:`1px solid ${T.gold}44`,borderRadius:9,
+                            padding:"6px 10px",marginBottom:4,
+                            display:"flex",alignItems:"center",gap:8}}>
+                            <div style={{flex:1}}>
+                              <div style={{color:T.gold,fontSize:10,fontWeight:700}}>
+                                {fmt(ex.amount)} · {intervalLabel} · {ex.items.length}×
+                              </div>
+                              <div style={{color:T.txt2,fontSize:9}}>
+                                {fmtD(firstD)} – {fmtD(lastD)}
+                              </div>
+                            </div>
+                            <button onClick={()=>{
+                              setExEditId(ex.id);
+                              setExAmount(String(ex.amount).replace(".",","));
+                              setExInterval(ex.interval);
+                              setExStartDate(ex.first.date);
+                              setExCount(String(ex.items.length));
+                              setShowExForm(true);
+                            }} style={{background:"rgba(255,255,255,0.08)",border:"none",
+                              color:T.txt2,borderRadius:7,padding:"4px 8px",
+                              fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>
+                              {Li("edit-2",10,T.txt2)} Bearb.
+                            </button>
+                            <button onClick={()=>{
+                              if(window.confirm("Alle Ausnahmen dieser eingebetteten Serie löschen?"))
+                                handleDeleteException(ex.id,"all","");
+                            }} style={{background:`${T.neg}11`,border:"none",
+                              color:T.neg,borderRadius:7,padding:"4px 8px",
+                              fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>
+                              {Li("trash-2",10,T.neg)}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Button neue Ausnahme-Serie */}
+                  {!showExForm&&(
+                    <button onClick={()=>{
+                      setExEditId(null);
+                      setExAmount(""); setExStartDate(editVorm.date||today);
+                      setExCount(""); setExInterval(12);
+                      setShowExForm(true);
+                    }} style={{width:"100%",padding:"7px 10px",borderRadius:9,
+                      border:`1px dashed ${T.gold}66`,
+                      background:"rgba(245,166,35,0.06)",
+                      color:T.gold,fontSize:11,fontWeight:700,
+                      cursor:"pointer",fontFamily:"inherit",
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                      {Li("plus-circle",12,T.gold)} Eingebettete Ausnahme-Serie
+                    </button>
+                  )}
+
+                  {/* Formular für Ausnahme-Serie */}
+                  {showExForm&&(
+                    <div style={{background:"rgba(245,166,35,0.06)",border:`1px solid ${T.gold}44`,
+                      borderRadius:10,padding:"10px 12px",marginBottom:4}}>
+                      <div style={{color:T.gold,fontSize:11,fontWeight:700,marginBottom:8,
+                        display:"flex",alignItems:"center",gap:6}}>
+                        {Li("git-branch",12,T.gold)}
+                        {exEditId ? "Ausnahme-Serie bearbeiten" : "Neue Ausnahme-Serie"}
+                      </div>
+
+                      {/* Betrag */}
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Betrag (Gesamtbetrag)</div>
+                      <input value={exAmount} onChange={e=>setExAmount(e.target.value)}
+                        placeholder="z.B. 4500" inputMode="decimal"
+                        style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
+
+                      {/* Startdatum */}
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Startmonat (erste Ausnahme)</div>
+                      <input type="date" value={exStartDate}
+                        onChange={e=>setExStartDate(e.target.value)}
+                        style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box",
+                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+
+                      {/* Rhythmus */}
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Rhythmus</div>
+                      <div style={{display:"flex",gap:3,marginBottom:8}}>
+                        {[[1,"monatlich"],[3,"quartalsweise"],[12,"jährlich"]].map(([v,l])=>(
+                          <button key={v} onClick={()=>setExInterval(v)}
+                            style={{flex:1,padding:"6px 2px",borderRadius:8,border:"none",
+                              cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,
+                              background:exInterval===v?T.gold:"rgba(255,255,255,0.08)",
+                              color:exInterval===v?T.on_accent:T.txt2}}>
+                            {l}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Anzahl */}
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Anzahl (leer = unbegrenzt)</div>
+                      <input value={exCount} onChange={e=>setExCount(e.target.value)}
+                        placeholder="z.B. 5" inputMode="numeric"
+                        style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
+
+                      {/* Scope bei Bearbeitung */}
+                      {exEditId&&(
+                        <div style={{marginBottom:8}}>
+                          <div style={{color:T.txt2,fontSize:10,marginBottom:4}}>Änderung anwenden auf:</div>
+                          <div style={{display:"flex",gap:3}}>
+                            {[["single","Nur diese"],["from","Ab dieser"],["all","Alle"]].map(([v,l])=>(
+                              <button key={v} onClick={()=>setExEditScope(v)}
+                                style={{flex:1,padding:"6px 4px",borderRadius:8,border:"none",
+                                  cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:700,
+                                  background:exEditScope===v?T.gold:"rgba(255,255,255,0.08)",
+                                  color:exEditScope===v?T.on_accent:T.txt2}}>
+                                {l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Vorschau */}
+                      {exStartDate&&exAmount&&(()=>{
+                        const mainTxs = txs.filter(t=>t._seriesId===editVorm._seriesId&&!t._exSeriesId)
+                          .sort((a,b)=>a.date.localeCompare(b.date));
+                        const n = exCount ? parseInt(exCount)||1 : 99;
+                        const matches = mainTxs.filter(t=>{
+                          if(t.date < exStartDate) return false;
+                          const d=new Date(t.date), s=new Date(exStartDate);
+                          const md=(d.getFullYear()-s.getFullYear())*12+(d.getMonth()-s.getMonth());
+                          return md>=0 && md%exInterval===0;
+                        }).slice(0,n);
+                        if(!matches.length) return <div style={{color:T.neg,fontSize:10,marginBottom:6}}>
+                          Keine passenden Hauptserien-Monate gefunden.
+                        </div>;
+                        const pad2=n=>String(n).padStart(2,"0");
+                        const first=new Date(matches[0].date);
+                        const last=new Date(matches[matches.length-1].date);
+                        return <div style={{background:"rgba(0,0,0,0.2)",borderRadius:7,
+                          padding:"6px 8px",marginBottom:8,fontSize:10,color:T.txt2}}>
+                          <span style={{color:T.gold,fontWeight:700}}>{matches.length} Ausnahme{matches.length!==1?"n":""}</span>
+                          {" · "}{pad2(first.getDate())}.{pad2(first.getMonth()+1)}.{first.getFullYear()}
+                          {matches.length>1&&<> – {pad2(last.getDate())}.{pad2(last.getMonth()+1)}.{last.getFullYear()}</>}
+                        </div>;
+                      })()}
+
+                      <div style={{display:"flex",gap:6}}>
+                        <button onClick={handleSaveException}
+                          style={{flex:1,padding:"8px",borderRadius:9,border:"none",
+                            background:T.gold,color:T.on_accent,fontSize:12,
+                            fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                          {Li("check",12,T.on_accent)} {exEditId?"Aktualisieren":"Einfügen"}
+                        </button>
+                        <button onClick={()=>{setShowExForm(false);setExEditId(null);}}
+                          style={{padding:"8px 12px",borderRadius:9,
+                            border:`1px solid ${T.bd}`,background:"transparent",
+                            color:T.txt2,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                          {Li("x",12,T.txt2)}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -17679,7 +17946,7 @@ Abbrechen = ${remoteName}-Stand laden`
   // ── Pending items per subId+col (for drill-down editing) ────────────────────
   // Returns list of {txId, desc, amount, txRef} for a given year/month/subId/col
   const pendingItemsFor = (y, m, subId, col) => {
-    return txs.filter(tx => {
+    const candidates = txs.filter(tx => {
       if (!tx.pending) return false;
       const d = new Date(tx.date);
       if (d.getFullYear()!==y || d.getMonth()!==m) return false;
@@ -17688,7 +17955,13 @@ Abbrechen = ${remoteName}-Stand laden`
       const day = d.getDate();
       if (col==="M" && day>14) return false;
       return true;
-    }).map(tx => ({
+    });
+    // Wenn Ausnahme-Einträge vorhanden: Haupteinträge derselben Serie ausblenden
+    const exIds = new Set(candidates.filter(t=>t._isException).map(t=>t._seriesId));
+    const filtered = candidates.filter(t=>
+      t._isException || !exIds.has(t._seriesId)
+    );
+    return filtered.map(tx => ({
       txId: tx.id,
       desc: tx.desc,
       amount: (tx.splits||[]).find(sp=>sp.subId===subId)?.amount || tx.totalAmount,
