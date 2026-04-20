@@ -2294,6 +2294,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
 
   // Scope für Bearbeiten
   const [editScope, setEditScope] = useState("single"); // single | from | all
+  const [fromDate,  setFromDate]  = useState(editVorm?.date||today); // "Ab dieser" Datum
 
   // Formular — mit Vorbelegung aus editVorm
   const initSplit = editVorm ? (editVorm.splits||[])[0] : null;
@@ -2338,6 +2339,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const [exEditId,      setExEditId]      = useState(null);  // _exSeriesId beim Bearbeiten
   const [exEditScope,   setExEditScope]   = useState("single");
   const [exLastOfMonth, setExLastOfMonth] = useState(false);
+  const [fromDate,      setFromDate]      = useState(editVorm?.date||today); // "Ab dieser" Datum
 
   // Alle Ausnahme-Serien dieser Hauptserie
   const exSeries = React.useMemo(()=>{
@@ -2534,23 +2536,26 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     if(isEdit) {
       const seriesId = editVorm._seriesId;
       if(typ==="einmalig" || !seriesId || editScope==="single") {
-        // Nur diese eine ändern
-        setTxs(p=>p.map(t=>t.id!==editVorm.id ? t : {
-          ...t, desc:desc.trim(), totalAmount:amt, date:startDate,
+        // Finde die richtige Buchung: bei Serie über fromDate, sonst editVorm.id
+        const targetId = (editScope==="single" && seriesId)
+          ? (txs.find(t=>t._seriesId===seriesId && !t._exSeriesId && t.date>=fromDate && t.pending)?.id || editVorm.id)
+          : editVorm.id;
+        setTxs(p=>p.map(t=>t.id!==targetId ? t : {
+          ...t, desc:desc.trim(), totalAmount:amt, date:startDate||t.date,
           accountId, _csvType:csvType, splits:newSplits, note:note||"",
+          valueDate: valueDate||undefined,
         }));
       } else {
         // Ab dieser / Alle
         setTxs(prevTxs=>{
           const seriesTxs = prevTxs.filter(t=>t._seriesId===seriesId && !t._exSeriesId)
             .sort((a,b)=>a.date.localeCompare(b.date));
-          const thisIdx = seriesTxs.findIndex(t=>t.id===editVorm.id);
-          const toUpdateAll = editScope==="all" ? seriesTxs : seriesTxs.slice(thisIdx);
-          // Bereits zugeordnete Buchungen (pending:false && _linkedTo) nicht überschreiben
-          // — außer es ist explizit "Alle" und die Buchung ist die aktuell bearbeitete
-          const toUpdate = toUpdateAll.filter(t=>
-            t.pending || t.id===editVorm.id
-          );
+          // "Ab dieser": erste Buchung >= fromDate; "Alle": alle
+          const thisIdx = editScope==="all" ? 0
+            : seriesTxs.findIndex(t=>t.date>=fromDate);
+          const startIdx = thisIdx<0 ? seriesTxs.length : thisIdx;
+          const toUpdateAll = seriesTxs.slice(startIdx);
+          const toUpdate = toUpdateAll.filter(t=>t.pending || t.id===editVorm.id);
           // Berechne Verschiebung in Monaten + Tagen
           const origDate = new Date(editVorm.date);
           const newDateD = new Date(startDate);
@@ -2646,8 +2651,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
       if(!window.confirm("Diese und alle folgenden Vormerkungen löschen?")) return;
       setTxs(prevTxs=>{
         const seriesTxs=prevTxs.filter(t=>t._seriesId===seriesId).sort((a,b)=>a.date.localeCompare(b.date));
-        const thisIdx=seriesTxs.findIndex(t=>t.id===editVorm.id);
-        const toDelete=new Set(seriesTxs.slice(thisIdx).map(t=>t.id));
+        const toDelete=new Set(seriesTxs.filter(t=>t.date>=fromDate).map(t=>t.id));
         return prevTxs.filter(t=>!toDelete.has(t.id));
       });
     } else {
@@ -2887,13 +2891,13 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 </div>
               </div>}
 
-              {/* 7. Verursachungsdatum (nur einmalig) */}
-              {typ==="einmalig"&&(
-                <div style={{marginBottom:8}}>
+              {/* 7+8. verursacht + Buchung am / Startdatum nebeneinander */}
+              <div style={{display:"flex",gap:6,marginBottom:8}}>
+                <div style={{flex:1}}>
                   <div style={{color:T.txt2,fontSize:10,marginBottom:3,display:"flex",alignItems:"center",gap:4}}>
-                    {Li("calendar",10,T.txt2)} Verursachungsdatum (optional)
+                    {Li("calendar",10,T.txt2)} verursacht
                   </div>
-                  <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                  <div style={{display:"flex",gap:2,alignItems:"center"}}>
                     <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
                       style={{...INP,marginBottom:0,flex:1,
                         colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
@@ -2902,17 +2906,16 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       {Li("x",11)}
                     </button>}
                   </div>
-                  <div style={{color:T.txt2,fontSize:9,marginTop:2,opacity:0.7}}>Wann ist der Vorgang entstanden (z.B. Bestelldatum)</div>
                 </div>
-              )}
-
-              {/* 8. Buchungsdatum / Startdatum */}
-              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
-                {typ==="einmalig"?"Buchungsdatum":"Startdatum"}
+                <div style={{flex:1}}>
+                  <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
+                    {typ==="einmalig"?"Buchung am":"Startdatum"}
+                  </div>
+                  <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+                    style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
+                      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+                </div>
               </div>
-              <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
-                style={{...INP,marginBottom:8,colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark",
-                  width:"100%",boxSizing:"border-box"}}/>
 
               {/* 9. Kategorie */}
               <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Kategorie (optional)</div>
@@ -2930,11 +2933,16 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 </select>
               </>}
 
-              {/* 10. Beschreibung */}
+              {/* 10. Beschreibung + Notiz zusammen */}
               <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Beschreibung</div>
               <input value={desc} onChange={e=>setDesc(e.target.value)}
                 placeholder="z.B. Miete, Gehalt, Kfz-Steuer…"
-                style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
+                style={{...INP,marginBottom:4,width:"100%",boxSizing:"border-box"}}/>
+              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Notiz (optional)</div>
+              <textarea value={note} onChange={e=>setNote(e.target.value)}
+                placeholder="Notiz…" rows={2}
+                style={{...INP,resize:"none",fontFamily:"inherit",lineHeight:1.4,
+                  marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
 
               {/* 11. Abweichende Erst-/Letztbuchung (Wiederkehrend/Finanzierung) */}
               {typ!=="einmalig"&&(
@@ -2993,9 +3001,9 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
               {isEdit&&editVorm._seriesId&&(
                 <div style={{marginBottom:8}}>
                   <div style={{color:T.txt2,fontSize:10,marginBottom:4}}>Änderung anwenden auf:</div>
-                  <div style={{display:"flex",gap:3}}>
+                  <div style={{display:"flex",gap:3,marginBottom:6}}>
                     {[["single","Nur diese","calendar"],["from","Ab dieser","chevrons-right"],["all","Alle","repeat"]].map(([v,l,icon])=>(
-                      <button key={v} onClick={()=>setEditScope(v)}
+                      <button key={v} onClick={()=>{setEditScope(v); if(v!=="from") setFromDate(editVorm.date||today);}}
                         style={{flex:1,padding:"7px 4px",borderRadius:8,border:"none",cursor:"pointer",
                           fontFamily:"inherit",fontSize:10,fontWeight:editScope===v?700:400,
                           background:editScope===v?T.blue:"rgba(255,255,255,0.08)",
@@ -3004,6 +3012,23 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                         {Li(icon,10,editScope===v?"#fff":T.txt2)} {l}
                       </button>
                     ))}
+                  </div>
+                  {/* Datum-Auswahl: bei "Nur diese" = welche Buchung, bei "Ab dieser" = ab wann */}
+                  <div style={{marginBottom:4}}>
+                    <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
+                      {editScope==="single"?"Welche Buchung:":editScope==="from"?"Änderung ab diesem Datum:":"Startdatum der Serie:"}
+                    </div>
+                    <input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}
+                      disabled={editScope==="all"}
+                      style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
+                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark",
+                        border:`1px solid ${editScope==="all"?T.bd:T.blue}66`,
+                        opacity:editScope==="all"?0.4:1}}/>
+                    <div style={{color:T.txt2,fontSize:9,marginTop:2,opacity:0.7}}>
+                      {editScope==="single"?"Die Buchung in diesem Monat wird geändert"
+                       :editScope==="from"?"Alle offenen Buchungen ab diesem Datum werden geändert"
+                       :"Alle Buchungen der Serie werden geändert"}
+                    </div>
                   </div>
                 </div>
               )}
