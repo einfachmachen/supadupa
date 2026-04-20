@@ -11253,7 +11253,15 @@ function AddTxModal() {
 
         {/* Letzter Tag des Monats (nur wiederkehrend) */}
         {typ==="wiederkehrend"&&(
-          <div onClick={()=>setLastOfMonth(v=>!v)}
+          <div onClick={()=>{
+            const next = !lastOfMonth;
+            setLastOfMonth(next);
+            if(next && startDate) {
+              const [y,m] = startDate.split("-").map(Number);
+              const lastDay = new Date(y, m, 0).getDate();
+              setStartDate(`${y}-${String(m).padStart(2,"0")}-${String(lastDay).padStart(2,"0")}`);
+            }
+          }}
             style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,cursor:"pointer",
               padding:"5px 8px",borderRadius:8,
               background:lastOfMonth?"rgba(74,159,212,0.1)":"rgba(255,255,255,0.03)",
