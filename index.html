@@ -2956,13 +2956,13 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 <div style={{display:"flex",gap:6,marginBottom:8}}>
                   <div style={{flex:1}}>
                     <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Startbetrag (1. Buchung)</div>
-                    <input value={firstAmount} onChange={e=>setFirstAmount(e.target.value)}
+                    <input value={firstAmount} onChange={e=>setFirstAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                       placeholder={amount||"0,00"} inputMode="decimal"
                       style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",border:`1px solid ${T.blue}66`}}/>
                   </div>
                   <div style={{flex:1}}>
                     <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Endbetrag (letzte Buchung)</div>
-                    <input value={lastAmount} onChange={e=>setLastAmount(e.target.value)}
+                    <input value={lastAmount} onChange={e=>setLastAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                       placeholder={amount||"0,00"} inputMode="decimal"
                       style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",border:`1px solid ${T.blue}66`}}/>
                   </div>
@@ -11320,13 +11320,13 @@ function AddTxModal() {
           <div style={{display:"flex",gap:6,marginBottom:8}}>
             <div style={{flex:1}}>
               <Lbl>Startbetrag (1. Buchung)</Lbl>
-              <input value={firstAmount} onChange={e=>setFirstAmount(e.target.value)}
+              <input value={firstAmount} onChange={e=>setFirstAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                 placeholder={amount||"0,00"} inputMode="decimal"
                 style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",border:`1px solid ${T.blue}66`}}/>
             </div>
             <div style={{flex:1}}>
               <Lbl>Endbetrag (letzte Buchung)</Lbl>
-              <input value={lastAmount} onChange={e=>setLastAmount(e.target.value)}
+              <input value={lastAmount} onChange={e=>setLastAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                 placeholder={amount||"0,00"} inputMode="decimal"
                 style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",border:`1px solid ${T.blue}66`}}/>
             </div>
@@ -15976,64 +15976,25 @@ function MobileVormerkenModal({onClose}) {
       {step===2&&<>
         {header("Kategorie",fmt(pn(amount.replace(",","."))),2,()=>setStep(1))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-          {catStep==="cat"&&<>
-            <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:S.gap}}>
-              Kategorie wählen:
-            </div>
-            {shownCats.map(cat=>(
-              <button key={cat.id} onClick={()=>{setSelCat(cat);setCatStep("sub");}}
-                style={{...btnBase,justifyContent:"flex-start",
-                  marginBottom:S.gap/2,
-                  background:"rgba(255,255,255,0.04)",
-                  border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
-                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
-                  {cat.icon&&Li(cat.icon,S.fs+2,cat.color||T.blue)}
-                  <span>{cat.name}</span>
-                </span>
-                <span style={{color:T.txt2,fontWeight:400,fontSize:S.fs,marginLeft:"auto"}}>›</span>
-              </button>
-            ))}
-            <button onClick={()=>{setCatId("");setSubId("");setStep(3);}}
-              style={{...btnBase,marginTop:S.gap,
-                background:"rgba(255,255,255,0.04)",
-                border:`1.5px dashed ${T.bd}`,color:T.txt2,fontWeight:400}}>
-              Ohne Kategorie überspringen
-            </button>
-            <button onClick={()=>setShowNewCat(true)}
-              style={{...btnBase,marginTop:S.gap/2,
-                background:"rgba(74,159,212,0.06)",
-                border:`1.5px dashed ${T.blue}66`,color:T.blue,fontWeight:400}}>
-              {Li("plus",S.fs-4,T.blue)} neue Kategorie anlegen
-            </button>
-          </>}
-
-          {catStep==="sub"&&selCat&&<>
-            <button onClick={()=>setCatStep("cat")}
-              style={{...btnBase,justifyContent:"flex-start",
-                marginBottom:S.gap,padding:`${S.pad}px 0`,
-                background:"none",border:"none",color:T.blue,
-                fontWeight:400,width:"auto"}}>
-              ← {selCat.name}
-            </button>
-            <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:S.gap}}>
-              Unterkategorie:
-            </div>
-            {(selCat.subs||[]).map(sub=>(
-              <button key={sub.id} onClick={()=>{
-                setCatId(selCat.id);setSubId(sub.id);setStep(3);
-              }}
-                style={{...btnBase,justifyContent:"flex-start",
-                  marginBottom:S.gap/2,
-                  background:"rgba(255,255,255,0.04)",
-                  border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
-                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
-                  {sub.icon&&Li(sub.icon,S.fs+2,selCat.color||T.blue)}
-                  <span>{sub.name}</span>
-                </span>
-                <span style={{color:T.txt2,fontWeight:400,fontSize:S.fs,marginLeft:"auto"}}>›</span>
-              </button>
-            ))}
-          </>}
+          <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:S.gap}}>
+            Kategorie wählen — tippe zum Öffnen:
+          </div>
+          <div style={{transform:`scale(1.6)`,transformOrigin:"top left",
+            width:"62%",marginBottom:S.gap*8}}>
+            <CatPicker
+              value={catId+"|"+subId}
+              filterType={csvType==="income"?"income":"expense"}
+              onChange={(cId,sId)=>{setCatId(cId);setSubId(sId);setStep(3);}}
+              placeholder="— Kategorie wählen —"
+            />
+          </div>
+          <button onClick={()=>{setCatId("");setSubId("");setStep(3);}}
+            style={{...btnBase,marginTop:S.gap*2,
+              background:"rgba(255,255,255,0.04)",
+              border:`1.5px dashed ${T.bd}`,color:T.txt2,fontWeight:400,
+              justifyContent:"center"}}>
+            Ohne Kategorie überspringen
+          </button>
         </div>
       </>}
 
@@ -16116,60 +16077,6 @@ function MobileVormerkenModal({onClose}) {
       </>}
 
 
-      {/* Neue Kategorie anlegen */}
-      {showNewCat&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
-          backdropFilter:"blur(8px)",zIndex:10,
-          display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-          <div style={{background:T.surf2,borderRadius:"20px 20px 0 0",
-            padding:S.padL,border:`1px solid ${T.bd}`}}>
-            <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,marginBottom:S.gap}}>
-              neue Kategorie
-            </div>
-            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Name</div>
-            <input type="text" value={newCatName} onChange={e=>setNewCatName(e.target.value)}
-              placeholder="z.B. Essen & Trinken"
-              style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
-                borderRadius:S.radius,border:`2px solid ${newCatName?T.blue:T.bd}`,
-                background:"rgba(255,255,255,0.06)",color:T.txt,
-                fontSize:S.fs,fontFamily:"inherit",outline:"none",marginBottom:S.gap}}/>
-            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Typ</div>
-            <div style={{display:"flex",gap:S.gap/2,marginBottom:S.gap}}>
-              {[["expense","Ausgabe",T.neg],["income","Einnahme",T.pos]].map(([t,l,c])=>(
-                <button key={t} onClick={()=>setNewCatType(t)}
-                  style={{flex:1,padding:`${S.pad}px`,borderRadius:S.radius,
-                    background:newCatType===t?c+"22":"rgba(255,255,255,0.06)",
-                    border:`2px solid ${newCatType===t?c:T.bd}`,
-                    color:newCatType===t?c:T.txt2,fontSize:S.fs,fontWeight:700,
-                    cursor:"pointer",fontFamily:"inherit"}}>
-                  {l}
-                </button>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:S.gap}}>
-              <button onClick={()=>{
-                if(!newCatName.trim()) return;
-                const newId = "cat-"+uid();
-                setCats(p=>[...p,{id:newId,name:newCatName.trim(),
-                  type:newCatType,color:T.blue,icon:"tag",subs:[]}]);
-                setCatId(newId); setSubId("");
-                setNewCatName(""); setShowNewCat(false);
-                setStep(3);
-              }} style={{flex:1,padding:`${S.padL}px`,borderRadius:S.radius,
-                border:"none",background:T.blue,color:"#fff",
-                fontSize:S.fs,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                ✓ Anlegen & wählen
-              </button>
-              <button onClick={()=>{setShowNewCat(false);setNewCatName("");}}
-                style={{padding:`${S.padL}px ${S.padL}px`,borderRadius:S.radius,
-                  border:`1.5px solid ${T.bd}`,background:"transparent",
-                  color:T.txt2,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit"}}>
-                ✕
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -16341,7 +16248,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
           {/* Betrag */}
           {fieldLabel(isFinanz?"Rate (€)":"Betrag (€)")}
           <input type="text" inputMode="decimal" value={amount}
-            onChange={e=>setAmount(e.target.value)} placeholder="0,00"
+            onChange={e=>setAmount(e.target.value.replace(/[^0-9,\.]/g,""))} placeholder="0,00"
             style={{...inp({border:`2px solid ${amount?T.blue:T.bd}`,
               fontWeight:700,textAlign:"right",marginBottom:S.gap})}}/>
 
@@ -16419,14 +16326,14 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
               <div style={{flex:1}}>
                 {fieldLabel(isFinanz?"Anzahlung (1. Rate)":"Erstbetrag")}
                 <input type="text" inputMode="decimal" value={firstAmount}
-                  onChange={e=>setFirstAmount(e.target.value)}
+                  onChange={e=>setFirstAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                   placeholder={amount||"0,00"}
                   style={{...inp({border:`2px solid ${T.blue}66`})}}/>
               </div>
               <div style={{flex:1}}>
                 {fieldLabel(isFinanz?"Schlussrate":"Letztbetrag")}
                 <input type="text" inputMode="decimal" value={lastAmount}
-                  onChange={e=>setLastAmount(e.target.value)}
+                  onChange={e=>setLastAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                   placeholder={amount||"0,00"}
                   style={{...inp({border:`2px solid ${T.blue}66`})}}/>
               </div>
@@ -16455,56 +16362,27 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
       {step===2&&<>
         {header("Kategorie",fmt(amt()),2,()=>setStep(1))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-          {catStep==="cat"&&<>
-            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:S.gap}}>Kategorie wählen:</div>
-            {shownCats.map(cat=>(
-              <button key={cat.id} onClick={()=>{setSelCat(cat);setCatStep("sub");}}
-                style={{...btnBase,marginBottom:S.gap/2,
-                  background:"rgba(255,255,255,0.04)",
-                  border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
-                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
-                  {cat.icon&&Li(cat.icon,S.fs+2,cat.color||T.blue)}
-                  <span>{cat.name}</span>
-                </span>
-                <span style={{color:T.txt2,fontSize:S.fs,marginLeft:"auto"}}>›</span>
-              </button>
-            ))}
-            <button onClick={()=>{setCatId("");setSubId("");setStep(3);}}
-              style={{...btnCenter,marginTop:S.gap,
-                background:"rgba(255,255,255,0.04)",
-                border:`1.5px dashed ${T.bd}`,color:T.txt2,fontWeight:400}}>
-              Ohne Kategorie überspringen
-            </button>
-            <button onClick={()=>setShowNewCat(true)}
-              style={{...btnCenter,marginTop:S.gap/2,
-                background:"rgba(74,159,212,0.06)",
-                border:`1.5px dashed ${T.blue}66`,color:T.blue,fontWeight:400}}>
-              {Li("plus",S.fs-4,T.blue)} neue Kategorie anlegen
-            </button>
-          </>}
-          {catStep==="sub"&&selCat&&<>
-            <button onClick={()=>setCatStep("cat")}
-              style={{...btnBase,justifyContent:"flex-start",marginBottom:S.gap,
-                padding:`${S.pad}px 0`,background:"none",border:"none",
-                color:T.blue,fontWeight:400,width:"auto"}}>
-              ← {selCat.name}
-            </button>
-            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:S.gap}}>Unterkategorie:</div>
-            {(selCat.subs||[]).map(sub=>(
-              <button key={sub.id} onClick={()=>{setCatId(selCat.id);setSubId(sub.id);setStep(3);}}
-                style={{...btnBase,marginBottom:S.gap/2,
-                  background:"rgba(255,255,255,0.04)",
-                  border:`1.5px solid ${T.bd}`,color:T.txt,fontWeight:500}}>
-                <span style={{display:"flex",alignItems:"center",gap:12,fontSize:S.fs}}>
-                  {sub.icon&&Li(sub.icon,S.fs+2,selCat.color||T.blue)}
-                  <span>{sub.name}</span>
-                </span>
-                <span style={{color:T.txt2,fontSize:S.fs,marginLeft:"auto"}}>›</span>
-              </button>
-            ))}
-          </>}
+          <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:S.gap}}>
+            Kategorie wählen — tippe zum Öffnen:
+          </div>
+          <div style={{transform:`scale(1.6)`,transformOrigin:"top left",
+            width:"62%",marginBottom:S.gap*8}}>
+            <CatPicker
+              value={catId+"|"+subId}
+              filterType={csvType==="income"?"income":"expense"}
+              onChange={(cId,sId)=>{setCatId(cId);setSubId(sId);setStep(3);}}
+              placeholder="— Kategorie wählen —"
+            />
+          </div>
+          <button onClick={()=>{setCatId("");setSubId("");setStep(3);}}
+            style={{...btnCenter,marginTop:S.gap*2,
+              background:"rgba(255,255,255,0.04)",
+              border:`1.5px dashed ${T.bd}`,color:T.txt2,fontWeight:400}}>
+            Ohne Kategorie überspringen
+          </button>
         </div>
       </>}
+
 
       {/* ── Schritt 3: Beschreibung, Datum ── */}
       {step===3&&<>
@@ -16620,60 +16498,6 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
         </div>
       </>}
 
-      {/* Neue Kategorie anlegen */}
-      {showNewCat&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
-          backdropFilter:"blur(8px)",zIndex:10,
-          display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-          <div style={{background:T.surf2,borderRadius:"20px 20px 0 0",
-            padding:S.padL,border:`1px solid ${T.bd}`}}>
-            <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,marginBottom:S.gap}}>
-              neue Kategorie
-            </div>
-            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Name</div>
-            <input type="text" value={newCatName} onChange={e=>setNewCatName(e.target.value)}
-              placeholder="z.B. Essen & Trinken"
-              style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
-                borderRadius:S.radius,border:`2px solid ${newCatName?T.blue:T.bd}`,
-                background:"rgba(255,255,255,0.06)",color:T.txt,
-                fontSize:S.fs,fontFamily:"inherit",outline:"none",marginBottom:S.gap}}/>
-            <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6}}>Typ</div>
-            <div style={{display:"flex",gap:S.gap/2,marginBottom:S.gap}}>
-              {[["expense","Ausgabe",T.neg],["income","Einnahme",T.pos]].map(([t,l,c])=>(
-                <button key={t} onClick={()=>setNewCatType(t)}
-                  style={{flex:1,padding:`${S.pad}px`,borderRadius:S.radius,
-                    background:newCatType===t?c+"22":"rgba(255,255,255,0.06)",
-                    border:`2px solid ${newCatType===t?c:T.bd}`,
-                    color:newCatType===t?c:T.txt2,fontSize:S.fs,fontWeight:700,
-                    cursor:"pointer",fontFamily:"inherit"}}>
-                  {l}
-                </button>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:S.gap}}>
-              <button onClick={()=>{
-                if(!newCatName.trim()) return;
-                const newId = "cat-"+uid();
-                setCats(p=>[...p,{id:newId,name:newCatName.trim(),
-                  type:newCatType,color:T.blue,icon:"tag",subs:[]}]);
-                setCatId(newId); setSubId("");
-                setNewCatName(""); setShowNewCat(false);
-                setStep(3);
-              }} style={{flex:1,padding:`${S.padL}px`,borderRadius:S.radius,
-                border:"none",background:T.blue,color:"#fff",
-                fontSize:S.fs,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                ✓ Anlegen & wählen
-              </button>
-              <button onClick={()=>{setShowNewCat(false);setNewCatName("");}}
-                style={{padding:`${S.padL}px ${S.padL}px`,borderRadius:S.radius,
-                  border:`1.5px solid ${T.bd}`,background:"transparent",
-                  color:T.txt2,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit"}}>
-                ✕
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
