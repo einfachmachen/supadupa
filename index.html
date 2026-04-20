@@ -2337,6 +2337,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const [exCount,       setExCount]       = useState("");
   const [exEditId,      setExEditId]      = useState(null);  // _exSeriesId beim Bearbeiten
   const [exEditScope,   setExEditScope]   = useState("single");
+  const [exLastOfMonth, setExLastOfMonth] = useState(false);
 
   // Alle Ausnahme-Serien dieser Hauptserie
   const exSeries = React.useMemo(()=>{
@@ -2393,6 +2394,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
         splits: catId ? [{id:uid(),catId,subId:subId||"",amount:amt}] : t.splits,
         _exSeriesId: exId,
         _exInterval: exInterval,
+        _exLastOfMonth: exLastOfMonth||undefined,
         _isException: true,
       }));
 
@@ -2764,13 +2766,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 <VormHubSegBtn v="finanzierung"  l="Finanzierung"  icon="credit-card"   cur={typ} set={setTyp} clearCount={()=>setCount("")} clearEnd={()=>setEndDate("")}/>
               </div>
 
-              {/* Beschreibung */}
-              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Beschreibung</div>
-              <input value={desc} onChange={e=>setDesc(e.target.value)}
-                placeholder="z.B. Miete, Gehalt, Kfz-Steuer…"
-                style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
-
-              {/* Betrag + Art — große Toggle-Buttons wie in Neue Buchung */}
+              {/* 1. Ausgabe / Einnahme */}
               <div style={{display:"flex",gap:4,marginBottom:8}}>
                 {[["expense","− Ausgabe",T.neg],["income","+ Einnahme",T.pos]].map(([val,label,col])=>{
                   const active = csvType===val;
@@ -2786,57 +2782,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 })}
               </div>
 
-              <div style={{display:"flex",gap:6,marginBottom:customFirstLast&&typ!=="einmalig"?4:8}}>
-                <div style={{flex:1}}>
-                  <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
-                    {customFirstLast&&typ!=="einmalig" ? "Regelmäßiger Betrag (€)" : "Betrag (€)"}
-                  </div>
-                  <input value={amount} onChange={e=>setAmount(e.target.value)}
-                    placeholder="0,00" inputMode="decimal"
-                    style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box"}}/>
-                </div>
-              </div>
-
-              {/* Toggle: abweichende Erst-/Letztbuchung */}
-              {typ!=="einmalig"&&(
-                <div onClick={()=>{setCustomFirstLast(v=>!v);setFirstAmount("");setLastAmount("");}}
-                  style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
-                    cursor:"pointer",padding:"5px 8px",borderRadius:8,
-                    background:customFirstLast?"rgba(74,159,212,0.1)":"rgba(255,255,255,0.03)",
-                    border:`1px solid ${customFirstLast?T.blue:T.bd}`}}>
-                  <div style={{width:34,height:20,borderRadius:10,position:"relative",flexShrink:0,
-                    background:customFirstLast?T.blue:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
-                    <div style={{position:"absolute",top:2,left:customFirstLast?14:2,width:16,height:16,
-                      borderRadius:"50%",background:"#fff",transition:"left 0.2s",
-                      boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
-                  </div>
-                  <span style={{color:customFirstLast?T.txt:T.txt2,fontSize:10}}>
-                    Abweichende Erst- und/oder Letztbuchung
-                  </span>
-                </div>
-              )}
-
-              {/* Erst- / Letztbetrag */}
-              {customFirstLast&&typ!=="einmalig"&&(
-                <div style={{display:"flex",gap:6,marginBottom:8}}>
-                  <div style={{flex:1}}>
-                    <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Startbetrag (1. Buchung)</div>
-                    <input value={firstAmount} onChange={e=>setFirstAmount(e.target.value)}
-                      placeholder={amount||"0,00"} inputMode="decimal"
-                      style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
-                        border:`1px solid ${T.blue}66`}}/>
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Endbetrag (letzte Buchung)</div>
-                    <input value={lastAmount} onChange={e=>setLastAmount(e.target.value)}
-                      placeholder={amount||"0,00"} inputMode="decimal"
-                      style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
-                        border:`1px solid ${T.blue}66`}}/>
-                  </div>
-                </div>
-              )}
-
-              {/* Konto — mit Icons wie in Neue Buchung */}
+              {/* 2. Zahlungsart */}
               {accounts.length>0&&<>
                 <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Zahlungsart</div>
                 <div style={{display:"flex",gap:6,marginBottom:8}}>
@@ -2856,68 +2802,55 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 </div>
               </>}
 
-              {/* Kategorie */}
-              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Kategorie (optional)</div>
-              <select value={catId} onChange={e=>{setCatId(e.target.value);setSubId("");}}
-                style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}>
-                <option value="">— keine —</option>
-                {catOpts.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              {catId&&subOpts.length>0&&<>
-                <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Unterkategorie</div>
-                <select value={subId} onChange={e=>setSubId(e.target.value)}
-                  style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}>
-                  <option value="">— keine —</option>
-                  {subOpts.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+              {/* 3. Betrag */}
+              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
+                {customFirstLast&&typ!=="einmalig" ? "Regelmäßiger Betrag (€)" : "Betrag (€)"}
+              </div>
+              <input value={amount} onChange={e=>setAmount(e.target.value)}
+                placeholder="0,00" inputMode="decimal"
+                style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
+
+              {/* 4. Intervall (Wiederkehrend/Finanzierung) */}
+              {typ!=="einmalig"&&<>
+                <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Intervall</div>
+                <div style={{display:"flex",gap:3,marginBottom:8}}>
+                  {[[1,"mtl."],[3,"quartl."],[6,"halb."],[12,"jährl."]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setInterval_(v)}
+                      style={{flex:1,padding:"7px 2px",borderRadius:8,border:"none",
+                        cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,
+                        background:interval_===v?T.blue:"rgba(255,255,255,0.08)",
+                        color:interval_===v?"#fff":T.txt2}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
               </>}
 
-              {/* Datum / Intervall */}
-              <div style={{display:"flex",gap:6,marginBottom:8}}>
-                <div style={{flex:1}}>
-                  <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
-                    {typ==="einmalig"?"Datum":"Startdatum"}
-                  </div>
-                  <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
-                    style={{...INP,marginBottom:0,colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark",
-                      width:"100%",boxSizing:"border-box"}}/>
-                </div>
-                {typ!=="einmalig"&&<div style={{flex:1}}>
-                  <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Intervall</div>
-                  <div style={{display:"flex",gap:3}}>
-                    {[[1,"mtl."],[3,"quartl."],[12,"jährl."]].map(([v,l])=>(
-                      <button key={v} onClick={()=>setInterval_(v)}
-                        style={{flex:1,padding:"7px 2px",borderRadius:8,border:"none",
-                          cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,
-                          background:interval_===v?T.blue:"rgba(255,255,255,0.08)",
-                          color:interval_===v?"#fff":T.txt2}}>
-                        {l}
-                      </button>
-                    ))}
-                  </div>
-                </div>}
-              </div>
-
-              {/* Immer letzter Tag des Monats */}
+              {/* 5. Letzter Tag (Wiederkehrend/Finanzierung) */}
               {typ!=="einmalig"&&(
-                <div onClick={()=>setLastOfMonth(v=>!v)}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",
-                    borderRadius:8,cursor:"pointer",marginBottom:8,
-                    background:lastOfMonth?"rgba(74,159,212,0.1)":"rgba(255,255,255,0.03)",
-                    border:`1px solid ${lastOfMonth?T.blue:T.bd}`}}>
+                <div onClick={()=>{
+                  const next = !lastOfMonth;
+                  setLastOfMonth(next);
+                  if(next && startDate) {
+                    const [y,m] = startDate.split("-").map(Number);
+                    const lastDay = new Date(y, m, 0).getDate();
+                    setStartDate(`${y}-${String(m).padStart(2,"0")}-${String(lastDay).padStart(2,"0")}`);
+                  }
+                }} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",
+                  borderRadius:8,cursor:"pointer",marginBottom:8,
+                  background:lastOfMonth?"rgba(74,159,212,0.1)":"rgba(255,255,255,0.03)",
+                  border:`1px solid ${lastOfMonth?T.blue:T.bd}`}}>
                   <div style={{width:28,height:18,borderRadius:9,position:"relative",flexShrink:0,
                     background:lastOfMonth?T.blue:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
                     <div style={{position:"absolute",top:2,left:lastOfMonth?11:2,width:14,height:14,
                       borderRadius:"50%",background:"#fff",transition:"left 0.2s",
                       boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
                   </div>
-                  <span style={{color:lastOfMonth?T.txt:T.txt2,fontSize:10}}>
-                    Immer letzter Tag des Monats
-                  </span>
+                  <span style={{color:lastOfMonth?T.txt:T.txt2,fontSize:10}}>Immer letzter Tag des Monats</span>
                 </div>
               )}
 
-              {/* Anzahl / Enddatum */}
+              {/* 6. Anzahl / Enddatum (Wiederkehrend/Finanzierung) */}
               {typ!=="einmalig"&&<div style={{display:"flex",gap:6,marginBottom:8}}>
                 <div style={{flex:1}}>
                   <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
@@ -2954,33 +2887,88 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 </div>
               </div>}
 
-              {/* Verursachungsdatum — optional, nur einmalig sichtbar */}
+              {/* 7. Verursachungsdatum (nur einmalig) */}
               {typ==="einmalig"&&(
                 <div style={{marginBottom:8}}>
-                  <div style={{color:T.txt2,fontSize:10,marginBottom:3,
-                    display:"flex",alignItems:"center",gap:4}}>
+                  <div style={{color:T.txt2,fontSize:10,marginBottom:3,display:"flex",alignItems:"center",gap:4}}>
                     {Li("calendar",10,T.txt2)} Verursachungsdatum (optional)
                   </div>
                   <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                    <input type="date" value={valueDate}
-                      onChange={e=>setValueDate(e.target.value)}
+                    <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
                       style={{...INP,marginBottom:0,flex:1,
                         colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
-                    {valueDate&&(
-                      <button onClick={()=>setValueDate("")}
-                        style={{background:"none",border:"none",color:T.txt2,
-                          cursor:"pointer",padding:"4px",flexShrink:0}}>
-                        {Li("x",11)}
-                      </button>
-                    )}
+                    {valueDate&&<button onClick={()=>setValueDate("")}
+                      style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:"4px",flexShrink:0}}>
+                      {Li("x",11)}
+                    </button>}
                   </div>
-                  <div style={{color:T.txt2,fontSize:9,marginTop:2,opacity:0.7}}>
-                    Wann ist der Vorgang entstanden (z.B. Bestelldatum)
+                  <div style={{color:T.txt2,fontSize:9,marginTop:2,opacity:0.7}}>Wann ist der Vorgang entstanden (z.B. Bestelldatum)</div>
+                </div>
+              )}
+
+              {/* 8. Buchungsdatum / Startdatum */}
+              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
+                {typ==="einmalig"?"Buchungsdatum":"Startdatum"}
+              </div>
+              <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+                style={{...INP,marginBottom:8,colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark",
+                  width:"100%",boxSizing:"border-box"}}/>
+
+              {/* 9. Kategorie */}
+              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Kategorie (optional)</div>
+              <select value={catId} onChange={e=>{setCatId(e.target.value);setSubId("");}}
+                style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}>
+                <option value="">— keine —</option>
+                {catOpts.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {catId&&subOpts.length>0&&<>
+                <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Unterkategorie</div>
+                <select value={subId} onChange={e=>setSubId(e.target.value)}
+                  style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}>
+                  <option value="">— keine —</option>
+                  {subOpts.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </>}
+
+              {/* 10. Beschreibung */}
+              <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Beschreibung</div>
+              <input value={desc} onChange={e=>setDesc(e.target.value)}
+                placeholder="z.B. Miete, Gehalt, Kfz-Steuer…"
+                style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
+
+              {/* 11. Abweichende Erst-/Letztbuchung (Wiederkehrend/Finanzierung) */}
+              {typ!=="einmalig"&&(
+                <div onClick={()=>{setCustomFirstLast(v=>!v);setFirstAmount("");setLastAmount("");}}
+                  style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
+                    cursor:"pointer",padding:"5px 8px",borderRadius:8,
+                    background:customFirstLast?"rgba(74,159,212,0.1)":"rgba(255,255,255,0.03)",
+                    border:`1px solid ${customFirstLast?T.blue:T.bd}`}}>
+                  <div style={{width:34,height:20,borderRadius:10,position:"relative",flexShrink:0,
+                    background:customFirstLast?T.blue:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
+                    <div style={{position:"absolute",top:2,left:customFirstLast?14:2,width:16,height:16,
+                      borderRadius:"50%",background:"#fff",transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
+                  </div>
+                  <span style={{color:customFirstLast?T.txt:T.txt2,fontSize:10}}>Abweichende Erst- und/oder Letztbuchung</span>
+                </div>
+              )}
+              {customFirstLast&&typ!=="einmalig"&&(
+                <div style={{display:"flex",gap:6,marginBottom:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Startbetrag (1. Buchung)</div>
+                    <input value={firstAmount} onChange={e=>setFirstAmount(e.target.value)}
+                      placeholder={amount||"0,00"} inputMode="decimal"
+                      style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",border:`1px solid ${T.blue}66`}}/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Endbetrag (letzte Buchung)</div>
+                    <input value={lastAmount} onChange={e=>setLastAmount(e.target.value)}
+                      placeholder={amount||"0,00"} inputMode="decimal"
+                      style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",border:`1px solid ${T.blue}66`}}/>
                   </div>
                 </div>
               )}
 
-              {/* Vorschau */}
+              {/* 12. Vorschau (Wiederkehrend/Finanzierung) */}
               {typ!=="einmalig"&&(
                 <div style={{background:"rgba(0,0,0,0.2)",borderRadius:9,padding:"8px 10px",
                   marginBottom:10,fontSize:10,color:T.txt2,lineHeight:1.6}}>
@@ -2990,19 +2978,9 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       : totalCount>=84&&!count?"Unbegrenzt (7 Jahre)"
                       : `${totalCount} ${typ==="finanzierung"?"Rate":"Buchung"}${totalCount!==1?"n":""}`}
                   </span>
-                  {startDate&&<>
-                    {" · "}Start: {(()=>{const d=new Date(startDate);
-                      return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;})()}
-                  </>}
-                  {endPreview&&<>
-                    {" · "}Ende: {endPreview}
-                  </>}
-                  {totalCount>1&&<>
-                    {" · "}Erste 3: {preview.map(d=>{
-                      const dt=new Date(d);
-                      return `${pad(dt.getDate())}.${pad(dt.getMonth()+1)}`;
-                    }).join(", ")+( totalCount>3?"…":"") }
-                  </>}
+                  {startDate&&<>{" · "}Start: {(()=>{const d=new Date(startDate);return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;})()}</>}
+                  {endPreview&&<>{" · "}Ende: {endPreview}</>}
+                  {totalCount>1&&<>{" · "}Erste 3: {preview.map(d=>{const dt=new Date(d);return `${pad(dt.getDate())}.${pad(dt.getMonth()+1)}`;}).join(", ")+(totalCount>3?"…":"")}</>}
                 </div>
               )}
 
@@ -3137,6 +3115,29 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                             {l}
                           </button>
                         ))}
+                      </div>
+
+                      {/* Letzter Tag des Monats */}
+                      <div onClick={()=>{
+                        const next = !exLastOfMonth;
+                        setExLastOfMonth(next);
+                        if(next && exStartDate) {
+                          const [y,m] = exStartDate.split("-").map(Number);
+                          const lastDay = new Date(y, m, 0).getDate();
+                          setExStartDate(`${y}-${String(m).padStart(2,"0")}-${String(lastDay).padStart(2,"0")}`);
+                        }
+                      }} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 8px",
+                        borderRadius:8,cursor:"pointer",marginBottom:8,
+                        background:exLastOfMonth?"rgba(245,166,35,0.1)":"rgba(255,255,255,0.03)",
+                        border:`1px solid ${exLastOfMonth?T.gold:T.bd}`}}>
+                        <div style={{width:28,height:18,borderRadius:9,position:"relative",flexShrink:0,
+                          background:exLastOfMonth?T.gold:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
+                          <div style={{position:"absolute",top:2,left:exLastOfMonth?11:2,width:14,height:14,
+                            borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+                        </div>
+                        <span style={{color:exLastOfMonth?T.txt:T.txt2,fontSize:10}}>
+                          Immer letzter Tag des Monats
+                        </span>
                       </div>
 
                       {/* Anzahl */}
