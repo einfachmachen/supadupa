@@ -16207,10 +16207,6 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
   const [firstIsStart, setFirstIsStart] = useState(false);
   const [giltFuer,     setGiltFuer]     = useState("all");
   const [giltFuerDate, setGiltFuerDate] = useState(today);
-  const [valueDate,    setValueDate]    = useState("");
-  const [firstIsStart, setFirstIsStart] = useState(false);
-  const [giltFuer,     setGiltFuer]     = useState("all");
-  const [giltFuerDate, setGiltFuerDate] = useState(today);
   const [saved,        setSaved]        = useState(false);
 
   const shownCats = cats.filter(c=>csvType==="income"?c.type==="income":c.type!=="income");
