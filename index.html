@@ -2339,7 +2339,6 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const [exEditId,      setExEditId]      = useState(null);  // _exSeriesId beim Bearbeiten
   const [exEditScope,   setExEditScope]   = useState("single");
   const [exLastOfMonth, setExLastOfMonth] = useState(false);
-  const [fromDate,      setFromDate]      = useState(editVorm?.date||today); // "Ab dieser" Datum
 
   // Alle Ausnahme-Serien dieser Hauptserie
   const exSeries = React.useMemo(()=>{
