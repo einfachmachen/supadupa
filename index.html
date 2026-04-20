@@ -15887,7 +15887,7 @@ function MobileVormerkenModal({onClose}) {
   return (
     <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,zIndex:300,
       display:"flex",flexDirection:"column",overflowY:"auto",
-      "--mob-fs": S.fs+"px", position:"relative"}}>
+      "--mob-fs": S.fs+"px"}}>
 
       {/* ── Schritt 1: Betrag ── */}
       {step===1&&<>
@@ -16118,7 +16118,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* Neue Kategorie anlegen */}
       {showNewCat&&(
-        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
           backdropFilter:"blur(8px)",zIndex:10,
           display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div style={{background:T.surf2,borderRadius:"20px 20px 0 0",
@@ -16299,7 +16299,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
 
   return (
     <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,
-      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px",position:"relative"}}>
+      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px"}}>
 
       {/* ── Schritt 1: Betrag & Rhythmus ── */}
       {step===1&&<>
@@ -16622,7 +16622,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
 
       {/* Neue Kategorie anlegen */}
       {showNewCat&&(
-        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
           backdropFilter:"blur(8px)",zIndex:10,
           display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div style={{background:T.surf2,borderRadius:"20px 20px 0 0",
