@@ -91,6 +91,7 @@
   .mobile-modal { font-size: 18px; top: 44px !important; height: calc(100vh - 44px) !important; }
   .mobile-modal button { min-height: 48px; font-size: 18px !important; }
   .mobile-modal label, .mobile-modal span, .mobile-modal div { font-size: inherit; }
+  .mobile-modal textarea { font-size: var(--mob-fs) !important; line-height: 1.5 !important; }
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(1.3); }
@@ -16152,14 +16153,20 @@ function MobileVormerkenModal({onClose}) {
                   color:accId===acc.id?(acc.color||T.blue):T.txt2,
                   cursor:"pointer",fontFamily:"inherit",
                   display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                {Li(acc.icon||"landmark",S.fs+4,accId===acc.id?(acc.color||T.blue):T.txt2)}
-                <span style={{fontSize:S.fs-6,fontWeight:accId===acc.id?700:400}}>
-                  {acc.name||acc.id}
-                </span>
-                {acc.delayDays>0&&<span style={{fontSize:S.fs-10,color:T.gold,fontWeight:700,
-                  background:T.gold+"22",borderRadius:4,padding:"1px 4px",marginTop:2}}>
-                  +{acc.delayDays}d
-                </span>}
+                {acc.delayDays>0 ? (
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    {Li(acc.icon||"landmark",S.fs+4,accId===acc.id?(acc.color||T.blue):T.txt2)}
+                    <span style={{fontSize:S.fs-8,color:T.gold,fontWeight:700,
+                      background:T.gold+"22",borderRadius:4,padding:"1px 5px"}}>
+                      +{acc.delayDays}
+                    </span>
+                  </div>
+                ) : <>
+                  {Li(acc.icon||"landmark",S.fs+4,accId===acc.id?(acc.color||T.blue):T.txt2)}
+                  <span style={{fontSize:S.fs-6,fontWeight:accId===acc.id?700:400}}>
+                    {acc.name||acc.id}
+                  </span>
+                </>}
               </button>
             ))}
             <button onClick={()=>setShowNewAcc(true)}
@@ -16173,43 +16180,69 @@ function MobileVormerkenModal({onClose}) {
             </button>
           </div>
 
-          {/* Betrag — Placeholder statt Label */}
-          <input
-            type="text" inputMode="decimal" value={amount}
-            onChange={e=>setAmount(e.target.value.replace(/[^0-9,.]/g,""))}
-            placeholder="Betrag €"
-            style={{width:"100%",boxSizing:"border-box",
-              padding:`${S.padL}px`,borderRadius:S.radius,
-              border:`2px solid ${amount?T.blue:T.bd}`,
-              background:"rgba(255,255,255,0.06)",color:T.txt,
-              fontSize:S.fs,fontWeight:700,fontFamily:"monospace",
-              textAlign:"right",outline:"none",marginBottom:S.gap}}
-          />
+          {/* Betrag — Placeholder statt Label, € nach Eingabe */}
+          <div style={{position:"relative",marginBottom:S.gap}}>
+            <input
+              type="text" inputMode="decimal" value={amount}
+              onChange={e=>setAmount(e.target.value.replace(/[^0-9,.]/g,""))}
+              placeholder="Betrag €"
+              style={{width:"100%",boxSizing:"border-box",
+                padding:`${S.padL}px`,paddingRight:`${S.padL+S.fs}px`,
+                borderRadius:S.radius,
+                border:`2px solid ${amount?T.blue:T.bd}`,
+                background:"rgba(255,255,255,0.06)",color:T.txt,
+                fontSize:S.fs,fontWeight:700,fontFamily:"monospace",
+                textAlign:"right",outline:"none"}}
+            />
+            {amount&&<span style={{position:"absolute",right:S.padL,top:"50%",
+              transform:"translateY(-50%)",color:T.txt2,fontSize:S.fs,
+              pointerEvents:"none",fontWeight:700}}>€</span>}
+          </div>
 
-          {/* verursacht + Buchung am nebeneinander — Placeholder statt Labels */}
-          <div style={{display:"flex",gap:S.gap,marginBottom:S.gap}}>
-            <div style={{flex:1,position:"relative"}}>
-              {!valueDate&&<div style={{position:"absolute",left:S.padL,top:"50%",transform:"translateY(-50%)",
-                color:T.txt2,fontSize:S.fs-6,pointerEvents:"none",whiteSpace:"nowrap"}}>
-                verursacht (optional)
-              </div>}
-              <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
-                style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
-                  borderRadius:S.radius,border:`2px solid ${valueDate?T.blue:T.bd}`,
-                  background:"rgba(255,255,255,0.06)",color:valueDate?T.txt:"transparent",
-                  fontSize:S.fs,fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
-            </div>
-            <div style={{flex:1,position:"relative"}}>
-              {!date&&<div style={{position:"absolute",left:S.padL,top:"50%",transform:"translateY(-50%)",
-                color:T.txt2,fontSize:S.fs-6,pointerEvents:"none",whiteSpace:"nowrap"}}>
-                Buchung am
-              </div>}
-              <input type="date" value={date} onChange={e=>setDate(e.target.value)}
-                style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
-                  borderRadius:S.radius,border:`2px solid ${date?T.blue:T.bd}`,
-                  background:"rgba(255,255,255,0.06)",color:date?T.txt:"transparent",
-                  fontSize:S.fs,fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
-            </div>
+          {/* verursacht — Klick füllt heute, eigene Zeile */}
+          <div style={{position:"relative",marginBottom:S.gap}}>
+            {!valueDate&&<div onClick={()=>setValueDate(today)}
+              style={{position:"absolute",inset:0,display:"flex",alignItems:"center",
+                paddingLeft:S.padL,color:T.txt2,fontSize:S.fs-4,
+                cursor:"pointer",borderRadius:S.radius,zIndex:1}}>
+              {Li("calendar",S.fs-4,T.txt2)}
+              <span style={{marginLeft:8}}>verursacht (optional) — tippe für heute</span>
+            </div>}
+            <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
+              style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
+                borderRadius:S.radius,border:`2px solid ${valueDate?T.blue:T.bd}`,
+                background:"rgba(255,255,255,0.06)",
+                color:valueDate?T.txt:"transparent",
+                fontSize:S.fs,fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
+            {valueDate&&<button onClick={()=>setValueDate("")}
+              style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
+                background:"none",border:"none",color:T.txt2,cursor:"pointer",
+                fontSize:S.fs,padding:4}}>✕</button>}
+          </div>
+
+          {/* Buchung am — nächster Banktag als Default */}
+          <div style={{position:"relative",marginBottom:S.gap}}>
+            {!date&&<div onClick={()=>{
+              // Nächster Banktag: Mo-Fr, kein Wochenende
+              const d=new Date(); d.setDate(d.getDate()+1);
+              while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
+              setDate(d.toISOString().split("T")[0]);
+            }} style={{position:"absolute",inset:0,display:"flex",alignItems:"center",
+                paddingLeft:S.padL,color:T.txt2,fontSize:S.fs-4,
+                cursor:"pointer",borderRadius:S.radius,zIndex:1}}>
+              {Li("calendar",S.fs-4,T.txt2)}
+              <span style={{marginLeft:8}}>Buchung am — tippe für nächsten Banktag</span>
+            </div>}
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)}
+              style={{width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
+                borderRadius:S.radius,border:`2px solid ${date?T.blue:T.bd}`,
+                background:"rgba(255,255,255,0.06)",
+                color:date?T.txt:"transparent",
+                fontSize:S.fs,fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
+            {date&&<button onClick={()=>setDate("")}
+              style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
+                background:"none",border:"none",color:T.txt2,cursor:"pointer",
+                fontSize:S.fs,padding:4}}>✕</button>}
           </div>
 
           <button onClick={()=>{ const a=pn(amount.replace(",",".")); if(a>0) setStep(2); }}
@@ -16256,8 +16289,8 @@ function MobileVormerkenModal({onClose}) {
               border:`2px solid ${desc?T.blue:T.neg}`,
               background:"rgba(255,255,255,0.06)",color:T.txt,
               fontSize:S.fs,fontFamily:"inherit",outline:"none",resize:"none",
-              lineHeight:1.4,overflow:"hidden",marginBottom:S.gap,
-              minHeight:S.fs*2+S.padL*2}}
+              lineHeight:1.5,overflow:"hidden",marginBottom:S.gap,
+              minHeight:S.fs*1.5+S.padL*2}}
             onInput={e=>{e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}}
           />
 
@@ -16270,8 +16303,8 @@ function MobileVormerkenModal({onClose}) {
               border:`2px solid ${note?T.blue:T.bd}`,
               background:"rgba(255,255,255,0.06)",color:T.txt,
               fontSize:S.fs,fontFamily:"inherit",outline:"none",resize:"none",
-              lineHeight:1.4,overflow:"hidden",marginBottom:S.gap,
-              minHeight:S.fs*2+S.padL*2}}
+              lineHeight:1.5,overflow:"hidden",marginBottom:S.gap,
+              minHeight:S.fs*1.5+S.padL*2}}
             onInput={e=>{e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}}
           />
 
@@ -16492,14 +16525,20 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
                   color:accId===acc.id?(acc.color||T.blue):T.txt2,
                   cursor:"pointer",fontFamily:"inherit",
                   display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                {Li(acc.icon||"landmark",S.fs+4,accId===acc.id?(acc.color||T.blue):T.txt2)}
-                <span style={{fontSize:S.fs-6,fontWeight:accId===acc.id?700:400}}>
-                  {acc.name||acc.id}
-                </span>
-                {acc.delayDays>0&&<span style={{fontSize:S.fs-10,color:T.gold,fontWeight:700,
-                  background:T.gold+"22",borderRadius:4,padding:"1px 4px",marginTop:2}}>
-                  +{acc.delayDays}d
-                </span>}
+                {acc.delayDays>0 ? (
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    {Li(acc.icon||"landmark",S.fs+4,accId===acc.id?(acc.color||T.blue):T.txt2)}
+                    <span style={{fontSize:S.fs-8,color:T.gold,fontWeight:700,
+                      background:T.gold+"22",borderRadius:4,padding:"1px 5px"}}>
+                      +{acc.delayDays}
+                    </span>
+                  </div>
+                ) : <>
+                  {Li(acc.icon||"landmark",S.fs+4,accId===acc.id?(acc.color||T.blue):T.txt2)}
+                  <span style={{fontSize:S.fs-6,fontWeight:accId===acc.id?700:400}}>
+                    {acc.name||acc.id}
+                  </span>
+                </>}
               </button>
             ))}
             <button onClick={()=>setShowNewAcc(true)}
@@ -16659,8 +16698,8 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
               borderRadius:S.radius,border:`2px solid ${desc?T.blue:T.neg}`,
               background:"rgba(255,255,255,0.06)",color:T.txt,
               fontSize:S.fs,fontFamily:"inherit",outline:"none",resize:"none",
-              lineHeight:1.4,overflow:"hidden",marginBottom:S.gap,
-              minHeight:S.fs*2+S.padL*2}}
+              lineHeight:1.5,overflow:"hidden",marginBottom:S.gap,
+              minHeight:S.fs*1.5+S.padL*2}}
             onInput={e=>{e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}}
           />
 
@@ -16672,29 +16711,37 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
               borderRadius:S.radius,border:`2px solid ${note?T.blue:T.bd}`,
               background:"rgba(255,255,255,0.06)",color:T.txt,
               fontSize:S.fs,fontFamily:"inherit",outline:"none",resize:"none",
-              lineHeight:1.4,overflow:"hidden",marginBottom:S.gap,
-              minHeight:S.fs*2+S.padL*2}}
+              lineHeight:1.5,overflow:"hidden",marginBottom:S.gap,
+              minHeight:S.fs*1.5+S.padL*2}}
             onInput={e=>{e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}}
           />
 
-          {/* verursacht + Startdatum nebeneinander — Placeholder statt Labels */}
-          <div style={{display:"flex",gap:S.gap,marginBottom:S.gap}}>
-            <div style={{flex:1,position:"relative"}}>
-              {!valueDate&&<div style={{position:"absolute",left:S.padL,top:"50%",
-                transform:"translateY(-50%)",color:T.txt2,fontSize:S.fs-6,
-                pointerEvents:"none",whiteSpace:"nowrap"}}>verursacht</div>}
-              <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
-                style={{...inp({colorScheme:"dark",marginBottom:0,
-                  color:valueDate?T.txt:"transparent"})}}/>
-            </div>
-            <div style={{flex:1,position:"relative"}}>
-              {!startDate&&<div style={{position:"absolute",left:S.padL,top:"50%",
-                transform:"translateY(-50%)",color:T.txt2,fontSize:S.fs-6,
-                pointerEvents:"none",whiteSpace:"nowrap"}}>Startdatum</div>}
-              <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
-                style={{...inp({colorScheme:"dark",marginBottom:0,
-                  color:startDate?T.txt:"transparent"})}}/>
-            </div>
+          {/* verursacht — Klick füllt heute */}
+          <div style={{position:"relative",marginBottom:S.gap}}>
+            {!valueDate&&<div onClick={()=>setValueDate(today)}
+              style={{position:"absolute",inset:0,display:"flex",alignItems:"center",
+                paddingLeft:S.padL,color:T.txt2,fontSize:S.fs-4,
+                cursor:"pointer",borderRadius:S.radius,zIndex:1}}>
+              {Li("calendar",S.fs-4,T.txt2)}
+              <span style={{marginLeft:8}}>verursacht (optional) — tippe für heute</span>
+            </div>}
+            <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
+              style={{...inp({colorScheme:"dark",marginBottom:0,
+                color:valueDate?T.txt:"transparent"})}}/>
+            {valueDate&&<button onClick={()=>setValueDate("")}
+              style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
+                background:"none",border:"none",color:T.txt2,cursor:"pointer",
+                fontSize:S.fs,padding:4}}>✕</button>}
+          </div>
+
+          {/* Startdatum */}
+          <div style={{position:"relative",marginBottom:S.gap}}>
+            {!startDate&&<div style={{position:"absolute",left:S.padL,top:"50%",
+              transform:"translateY(-50%)",color:T.txt2,fontSize:S.fs-4,
+              pointerEvents:"none"}}>Startdatum</div>}
+            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+              style={{...inp({colorScheme:"dark",marginBottom:0,
+                color:startDate?T.txt:"transparent"})}}/>
           </div>
 
           {/* Erste Buchung = Startdatum Toggle */}
