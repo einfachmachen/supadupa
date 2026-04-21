@@ -88,7 +88,7 @@
   .mobile-modal input { font-size: var(--mob-fs) !important; }
   .mobile-modal input[type="date"] { font-size: var(--mob-fs) !important; }
   /* Mobile mode — alle Texte und Buttons größer */
-  .mobile-modal { font-size: 18px; }
+  .mobile-modal { font-size: 18px; top: 44px !important; height: calc(100vh - 44px) !important; }
   .mobile-modal button { min-height: 48px; font-size: 18px !important; }
   .mobile-modal label, .mobile-modal span, .mobile-modal div { font-size: inherit; }
   @keyframes pulse {
@@ -1368,7 +1368,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
   const wrapStyle = embedded
     ? {display:"flex",flexDirection:"column",maxHeight:"65vh",overflow:"hidden",
        fontFamily:"'SF Pro Text',sans-serif",background:T.surf2,borderRadius:12}
-    : {position:"fixed",inset:0,background:T.bg,zIndex:70,display:"flex",flexDirection:"column",
+    : {position:"fixed",inset:0,top:44,background:T.bg,zIndex:15,display:"flex",flexDirection:"column",
        fontFamily:"'SF Pro Text',-apple-system,sans-serif"};
 
   return (
@@ -2673,9 +2673,9 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     <div onClick={mobileMode?null:onClose}
       className={mobileMode?"mobile-modal":""}
       style={mobileMode
-        ? {position:"fixed",inset:0,background:T.bg,zIndex:300,display:"flex",flexDirection:"column"}
-        : {position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
-            backdropFilter:"blur(8px)",zIndex:70,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+        ? {position:"fixed",inset:0,top:44,background:T.bg,zIndex:300,display:"flex",flexDirection:"column"}
+        : {position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.7)",
+            backdropFilter:"blur(8px)",zIndex:15,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={mobileMode
         ? {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}
         : {background:T.surf2,borderRadius:"24px 24px 0 0",
@@ -3415,7 +3415,7 @@ function MatchingScreen({onClose}) {
   });
 
   return (
-    <div style={{position:"fixed",inset:0,background:T.bg,zIndex:70,display:"flex",
+    <div style={{position:"fixed",inset:0,top:44,background:T.bg,zIndex:15,display:"flex",
       flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif"}}>
       {/* Header */}
       <div style={{background:T.surf,borderBottom:`1px solid ${T.bds}`,
@@ -4889,7 +4889,7 @@ function EditPopup() {
     const diff = pn(editTx.totalAmount) - editSplitTotal;
     return (
       <div onClick={()=>setEditTx(null)}
-        style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(8px)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(8px)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <div onClick={e=>e.stopPropagation()}
           style={{background:T.surf,borderRadius:20,padding:"20px 18px",width:"100%",maxWidth:480,
             border:`1px solid ${T.bds}`,boxShadow:"0 8px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(170,204,0,0.08)",maxHeight:"85vh",overflowY:"auto"}}>
@@ -6622,7 +6622,7 @@ function DashboardScreen() {
         {/* Drilldown Overlay */}
         {dashDrill&&(
           <div onClick={()=>setDashDrill(null)}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",
+            style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",
               zIndex:65,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
             <div onClick={e=>e.stopPropagation()}
               style={{background:T.surf2,borderRadius:20,width:"100%",maxWidth:480,
@@ -7652,7 +7652,7 @@ function TransactionsScreen() {
         const type = txType(tx);
         return (
           <div onClick={()=>setActiveCatTxId(null)}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",
+            style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.6)",
               backdropFilter:"blur(8px)",zIndex:200,
               display:"flex",alignItems:"flex-start",justifyContent:"center",
               paddingTop:60}}>
@@ -7699,7 +7699,7 @@ function TransactionsScreen() {
 // BudgetEditorModal — wiederverwendbar in AddTxModal und MonatScreen
 // sub: {id, name}  cat: {id, color}
 function BudgetEditorModal({sub, cat, onClose}) {
-  const { budgets, setBudgets, txs, setTxs, year, month, accounts } = useContext(AppCtx);
+  const { budgets, setBudgets, txs, setTxs, year, setYear, month, setMonth, accounts } = useContext(AppCtx);
   const pad = n => String(n).padStart(2,"0");
   const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper";
   const goldBg = isLight?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)";
@@ -7840,7 +7840,7 @@ function BudgetEditorModal({sub, cat, onClose}) {
   const hasBudget = !!budgets[sub.id] || txs.some(t=>t.pending&&t._budgetSubId===sub.id);
 
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",
+    <div onClick={onClose} style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.65)",
       backdropFilter:"blur(8px)",zIndex:90,display:"flex",alignItems:"center",
       justifyContent:"center",padding:16}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:20,
@@ -8197,7 +8197,7 @@ function SubRow({sub, si, arr, cat}) {
             color:budgets[sub.id]?T.gold:T.txt2,cursor:"pointer",borderRadius:7,padding:"3px 5px",flexShrink:0,display:"flex",alignItems:"center"}}>
           {Li("target",13,budgets[sub.id]?T.gold:T.txt2)}
         </button>
-        <button onClick={()=>deleteSub(cat.id,sub.id)} style={{background:"none",border:"none",color:T.neg,opacity:0.55,cursor:"pointer",fontSize:15,flexShrink:0,display:"flex",alignItems:"center"}}>{Li("trash-2",14)}</button>
+        <button onClick={()=>{if(window.confirm(`"${sub.name}" wirklich löschen?`)) deleteSub(cat.id,sub.id);}} style={{background:"none",border:"none",color:T.neg,opacity:0.55,cursor:"pointer",fontSize:15,flexShrink:0,display:"flex",alignItems:"center"}}>{Li("trash-2",14)}</button>
       </div>
       {subEdit==="budget"&&(
         <div style={{borderTop:`1px solid ${T.bd}`,padding:"10px 10px 12px",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}}>
@@ -8427,7 +8427,7 @@ function ReviewQueueModal({queue, setQueue}) {
 
   return (
     <div onClick={e=>e.stopPropagation()}
-      style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(8px)",
+      style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(8px)",
         zIndex:90,display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
       <div style={{background:T.surf2,borderRadius:20,width:"100%",maxWidth:440,
         display:"flex",flexDirection:"column",
@@ -8854,6 +8854,7 @@ function StartBalanceEditor() {
   };
 
   const deleteAnchor = (anchor) => {
+    if(!window.confirm("Anker-Kontostand wirklich löschen?")) return;
     const newSB = JSON.parse(JSON.stringify(startBalances||{}));
     if(anchor.month === -1) {
       // Altes Format löschen
@@ -9679,6 +9680,7 @@ function CustomThemeEditor() {
   };
 
   const deleteTheme = (key) => {
+    if(!window.confirm("Theme wirklich löschen?")) return;
     delete THEMES[key];
     const next = { ...saved };
     delete next[key];
@@ -9752,7 +9754,7 @@ function CustomThemeEditor() {
 
       {/* Full-screen editor modal */}
       {open && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.82)",backdropFilter:"blur(12px)",
+        <div style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.82)",backdropFilter:"blur(12px)",
           zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}>
           <div style={{background:T.surf,borderRadius:20,width:"100%",maxWidth:520,
             maxHeight:"92vh",display:"flex",flexDirection:"column",
@@ -10680,7 +10682,7 @@ function ManagementScreen({activeTab="kategorien"}) {
                 </select>
               )}
               {!["grp-tg","grp-ein","grp-aus"].includes(grp.id)&&(_cats).filter(c=>c.type===grp.type).length===0&&(
-                <button onClick={()=>setGroups(p=>p.filter(g=>g.id!==grp.id))}
+                <button onClick={()=>{if(window.confirm(`Gruppe "${grp.label}" wirklich löschen?`)) setGroups(p=>p.filter(g=>g.id!==grp.id));}}
                   style={{background:"none",border:"none",color:T.neg,opacity:0.5,cursor:"pointer"}}>{Li("trash-2",14)}</button>
               )}
               <button onClick={()=>{ setInlineNewCat(inlineNewCat===grp.id?null:grp.id); setInlineCatName(""); }}
@@ -11445,7 +11447,7 @@ function QuickNewDialog({onClose, onSave}) {
   // icons paginiert via PagedIconGrid
 
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.8)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:20,padding:"16px 14px 28px",width:"100%",maxWidth:480,maxHeight:"85vh",display:"flex",flexDirection:"column",gap:10,overflowY:"auto"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <span style={{color:T.blue,fontSize:15,fontWeight:700}}>Schnellwahl anlegen</span>
@@ -11809,7 +11811,7 @@ function IconPickerDialog({selectedIcon, selectedColor, onSelect, onClose}) {
   const [nav, setNav] = React.useState({page:0,totalPages:1,prev:()=>{},next:()=>{}});
   const activeCat = ICON_CATEGORIES[catIdx] || ICON_CATEGORIES[0];
   const content = (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:99999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.8)",zIndex:99999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:20,padding:"14px 12px 12px",width:"100%",maxWidth:480,height:"70vh",display:"flex",flexDirection:"column",gap:10}}>
         {/* Titelzeile: Titel | Kategorie-Dropdown | Seitennavigation | ✕ */}
         <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
@@ -12378,7 +12380,7 @@ function MonatScreen() {
         {/* Budget-Picker wenn pickMode */}
         {budgetEditSub?.pickMode&&(
           <div onClick={()=>setBudgetEditSub(null)}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(8px)",
+            style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(8px)",
               zIndex:90,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
             <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:20,
               padding:"16px",width:"100%",maxWidth:400,maxHeight:"80vh",overflowY:"auto",
@@ -12832,7 +12834,7 @@ function MonatScreen() {
         const type = txType(tx);
         return (
           <div onClick={()=>setActiveCatTxId(null)}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",
+            style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.6)",
               backdropFilter:"blur(8px)",zIndex:200,
               display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:60}}>
             <div onClick={e=>e.stopPropagation()}
@@ -13211,7 +13213,7 @@ function JahrScreen({forceSingle=false}) {
         {/* Popup editor */}
         {popup&&(
           <div onClick={()=>setPopup(null)}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",zIndex:60,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",zIndex:60,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <div onClick={e=>e.stopPropagation()}
               style={{background:T.surf,borderRadius:18,padding:"14px 14px 12px",width:280,
                 border:`1px solid ${T.bds}`,boxShadow:"0 8px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(170,204,0,0.08)"}}>
@@ -13286,7 +13288,7 @@ function JahrScreen({forceSingle=false}) {
         {/* ── Drilldown: Einzelbuchungen einer Summenzelle ── */}
         {drilldown&&(
           <div onClick={()=>setDrilldown(null)}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",
+            style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",
               zIndex:65,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
             <div onClick={e=>e.stopPropagation()}
               style={{background:T.surf2,borderRadius:20,width:"100%",maxWidth:480,
@@ -13880,7 +13882,7 @@ function DataManagerDialog({onClose}) {
 
   return (
     <div onClick={onClose}
-      style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",
+      style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",
         zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}>
       <div onClick={e=>e.stopPropagation()}
         style={{background:T.surf,borderRadius:20,width:"100%",maxWidth:480,
@@ -14077,7 +14079,7 @@ function ExportDialog({title, defaultName, data, onClose, onDone=()=>{}}) {
   };
 
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",
+    <div onClick={onClose} style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.7)",
       backdropFilter:"blur(8px)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surf,borderRadius:18,
         width:"100%",maxWidth:420,maxHeight:"80vh",display:"flex",flexDirection:"column",
@@ -14578,6 +14580,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   const MFS = mobileMode ? 22 : 13; // mobile font size base
   const MFSl = mobileMode ? 18 : 11; // mobile font size small
   const MPad = mobileMode ? "14px 16px" : "8px 12px"; // mobile padding
+  const S = {fs:26, pad:10, padL:14, radius:16, gap:14}; // für mobile Konto-Kacheln
   const [csvText, setCsvText]       = useState("");
   const [csvSources, setCsvSources] = useState([]); // Dateinamen der importierten CSVs
   const [parsed,  setParsed]        = useState(null);
@@ -14823,7 +14826,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   return (
     <div className={mobileMode?"mobile-modal":""} style={embedded
       ? {display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif",minHeight:300}
-      : {position:"fixed",inset:0,background:T.bg,zIndex:70,display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif"}}>
+      : {position:"fixed",inset:0,top:44,background:T.bg,zIndex:15,display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif"}}>
       {/* Header */}
       {!embedded&&<div style={{background:T.surf,borderBottom:`1px solid ${T.bds}`,padding:MPad,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
         <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt,borderRadius:10,width:mobileMode?44:34,height:mobileMode?44:34,cursor:"pointer",fontSize:18}}>{Li("arrow-left",mobileMode?20:13)}</button>
@@ -14841,24 +14844,43 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           "--csv-fs": mobileMode?"18px":"12px",
           "--csv-fs-s": mobileMode?"15px":"11px",
           "--csv-fs-l": mobileMode?"22px":"14px"}}>
-          <div style={{color:T.txt2,fontSize:12,marginBottom:8,lineHeight:1.5}}>
+          <div style={{color:T.txt2,fontSize:MFSl,marginBottom:8,lineHeight:1.5}}>
             CSV-Export aus deiner Banking-App hier einfügen oder Datei laden:
           </div>
           {/* Kontoauswahl */}
           {accounts.length>0&&(
             <div style={{marginBottom:12}}>
-              <div style={{color:T.txt2,fontSize:11,fontWeight:700,marginBottom:6,
+              <div style={{color:T.txt2,fontSize:mobileMode?S.fs-4:11,fontWeight:700,marginBottom:6,
                 }}>Zielkonto / Zahlungsmittel</div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              <div style={{display:"flex",flexWrap:"wrap",gap:mobileMode?S.gap/2:6}}>
                 {accounts.map(acc=>(
                   <button key={acc.id} onClick={()=>setSelAccId(acc.id)}
-                    style={{display:"flex",alignItems:"center",gap:6,padding:"7px 12px",
-                      borderRadius:10,cursor:"pointer",fontSize:12,fontWeight:600,
+                    style={mobileMode ? {
+                      flex:"1 1 auto",padding:`${S.pad}px`,borderRadius:S.radius,
+                      background:selAccId===acc.id?acc.color+"22":"rgba(255,255,255,0.06)",
+                      border:`2px solid ${selAccId===acc.id?(acc.color||T.blue):T.bd}`,
+                      color:selAccId===acc.id?(acc.color||T.blue):T.txt2,
+                      cursor:"pointer",fontFamily:"inherit",
+                      display:"flex",flexDirection:"column",alignItems:"center",gap:4
+                    } : {
+                      display:"flex",alignItems:"center",gap:6,padding:"7px 12px",
+                      borderRadius:10,cursor:"pointer",fontSize:MFSl,fontWeight:600,
                       border:`2px solid ${selAccId===acc.id?acc.color:T.bd}`,
                       background:selAccId===acc.id?acc.color+"22":"rgba(255,255,255,0.04)",
                       color:selAccId===acc.id?acc.color:T.txt2}}>
-                    <span>{Li(acc.icon,16,T.txt2)}</span>
-                    <span>{acc.name}{acc.delayDays>0&&<span style={{color:T.gold,fontSize:"0.8em",fontWeight:700,marginLeft:2}}>+{acc.delayDays}d</span>}</span>
+                    {mobileMode ? <>
+                      {Li(acc.icon||"landmark",S.fs+4,selAccId===acc.id?(acc.color||T.blue):T.txt2)}
+                      <span style={{fontSize:S.fs-6,fontWeight:selAccId===acc.id?700:400}}>
+                        {acc.name||acc.id}
+                      </span>
+                      {acc.delayDays>0&&<span style={{fontSize:S.fs-10,color:T.gold,fontWeight:700,
+                        background:T.gold+"22",borderRadius:4,padding:"1px 4px"}}>
+                        +{acc.delayDays}d
+                      </span>}
+                    </> : <>
+                      <span>{Li(acc.icon,16,T.txt2)}</span>
+                      <span>{acc.name}{acc.delayDays>0&&<span style={{color:T.gold,fontSize:"0.8em",fontWeight:700,marginLeft:2}}>+{acc.delayDays}d</span>}</span>
+                    </>}
                   </button>
                 ))}
               </div>
@@ -14869,7 +14891,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           )}
           {/* Auto-Gruppierung Toggle */}
           <div onClick={()=>setAutoGroup(v=>!v)}
-            style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+            style={{display:"flex",alignItems:"center",gap:10,padding:MPad,
               borderRadius:11,border:`1px solid ${autoGroup?T.blue+"66":T.bd}`,
               background:autoGroup?"rgba(137,196,244,0.06)":"rgba(255,255,255,0.03)",
               cursor:"pointer",marginBottom:8}}>
@@ -14879,7 +14901,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                 borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
             </div>
             <div>
-              <div style={{color:autoGroup?T.blue:T.txt2,fontSize:12,fontWeight:700}}>
+              <div style={{color:autoGroup?T.blue:T.txt2,fontSize:MFSl,fontWeight:700}}>
                 Zusammengehörige Zeilen automatisch gruppieren
               </div>
               <div style={{color:T.txt2,fontSize:10,lineHeight:1.4}}>
@@ -14896,14 +14918,14 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
               background:linkToGiro?"rgba(245,166,35,0.06)":"rgba(255,255,255,0.03)",overflow:"hidden"}}>
               {/* Toggle-Zeile */}
               <div onClick={()=>setLinkToGiro(v=>!v)}
-                style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",cursor:"pointer"}}>
+                style={{display:"flex",alignItems:"center",gap:10,padding:MPad,cursor:"pointer"}}>
                 <div style={{width:36,height:22,borderRadius:11,position:"relative",flexShrink:0,
                   background:linkToGiro?T.warn:"rgba(255,255,255,0.1)",transition:"background 0.2s"}}>
                   <div style={{position:"absolute",top:3,left:linkToGiro?16:3,width:16,height:16,
                     borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
                 </div>
                 <div>
-                  <div style={{color:linkToGiro?T.gold:T.txt2,fontSize:12,fontWeight:700}}>
+                  <div style={{color:linkToGiro?T.gold:T.txt2,fontSize:MFSl,fontWeight:700}}>
                     Mit Giro-Buchungen verknüpfen
                   </div>
                   <div style={{color:T.txt2,fontSize:10}}>
@@ -14916,7 +14938,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                 <div style={{padding:"0 14px 12px",borderTop:`1px solid ${T.gold}22`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,marginTop:8}}>
                     <span style={{color:T.txt2,fontSize:10}}>Zeitspanne</span>
-                    <span style={{color:T.gold,fontSize:12,fontWeight:700}}>{linkDays} Tage</span>
+                    <span style={{color:T.gold,fontSize:MFSl,fontWeight:700}}>{linkDays} Tage</span>
                   </div>
                   <input type="range" min={1} max={90} value={linkDays}
                     onChange={e=>setLinkDays(Number(e.target.value))}
@@ -14941,7 +14963,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
             </div>
           )}
           <label style={{display:"block",padding:"11px 14px",borderRadius:11,border:`1px solid ${T.bds}`,
-            background:"rgba(137,196,244,0.08)",color:T.blue,fontSize:13,fontWeight:600,
+            background:"rgba(137,196,244,0.08)",color:T.blue,fontSize:MFS,fontWeight:600,
             cursor:"pointer",marginBottom:10,textAlign:"left"}}>
             {Li("folder-open",14)} CSV-Datei(en) auswählen
             <input type="file" accept=".csv,.txt,text/csv" multiple style={{display:"none"}}
@@ -14987,7 +15009,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           <button onClick={doParse} disabled={!csvText.trim()}
             style={{width:"100%",padding:"10px",borderRadius:11,border:"none",
               background:csvText.trim()?"linear-gradient(135deg,#2C6E9E,#5BA3D0)":T.disabled,
-              color:"#fff",fontSize:14,fontWeight:700,cursor:csvText.trim()?"pointer":"default",
+              color:"#fff",fontSize:MFS,fontWeight:700,cursor:csvText.trim()?"pointer":"default",
               opacity:csvText.trim()?1:0.4}}>
             CSV analysieren →
           </button>
@@ -15020,7 +15042,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
               </div>
             )}
             <div style={{flex:1}}/>
-            <div style={{color:T.txt2,fontSize:11,alignSelf:"center",marginRight:8}}>
+            <div style={{color:T.txt2,fontSize:MFSl,alignSelf:"center",marginRight:8}}>
               {parsed.format}
               {(()=>{const a=accounts.find(x=>x.id===selAccId)||accounts[0]; return a?(
                 <span style={{marginLeft:8,background:a.color+"22",color:a.color,
@@ -15032,7 +15054,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
             {/* Toggle: Auto-Vorschläge Vergleich */}
             {(parsed.autoSuggestions||[]).length>0&&(
               <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                <span style={{color:T.gold,fontSize:11}}>
+                <span style={{color:T.gold,fontSize:MFSl}}>
                   {Li("git-compare",12,T.gold)} {parsed.autoSuggestions.length} Vorschläge
                 </span>
                 <div onClick={()=>setShowAutoSugg(v=>!v)}
@@ -15047,7 +15069,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
             )}
             {/* Toggle: Jetzt kategorisieren */}
             <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-              <span style={{color:T.txt2,fontSize:11}}>Kategorisieren</span>
+              <span style={{color:T.txt2,fontSize:MFSl}}>Kategorisieren</span>
               <div onClick={()=>setShowCatAssign(v=>!v)}
                 style={{width:40,height:24,borderRadius:12,cursor:"pointer",
                   background:showCatAssign?T.blue:"rgba(255,255,255,0.12)",
@@ -15063,7 +15085,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           {showAutoSugg&&(parsed.autoSuggestions||[]).length>0&&(
             <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderBottom:`1px solid ${T.gold}33`,
               padding:"10px 16px",flexShrink:0,maxHeight:220,overflowY:"auto"}}>
-              <div style={{color:T.gold,fontSize:11,fontWeight:700,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+              <div style={{color:T.gold,fontSize:MFSl,fontWeight:700,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
                 {Li("git-compare",13,T.gold)} Automatische Verknüpfungsvorschläge — nur zur Ansicht, nichts wird automatisch übernommen
               </div>
               {parsed.autoSuggestions.map((s,si)=>{
@@ -15074,7 +15096,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                     borderBottom:`1px solid rgba(255,255,255,0.05)`}}>
                     {/* PayPal-Seite */}
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{color:T.txt,fontSize:11,fontWeight:600,overflow:"hidden",
+                      <div style={{color:T.txt,fontSize:MFSl,fontWeight:600,overflow:"hidden",
                         textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.desc}</div>
                       <div style={{color:T.txt2,fontSize:9}}>{r.isoDate}</div>
                     </div>
@@ -15086,7 +15108,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                     </div>
                     {/* Giro-Seite */}
                     <div style={{flex:1,minWidth:0,textAlign:"right"}}>
-                      <div style={{color:T.txt,fontSize:11,fontWeight:600,overflow:"hidden",
+                      <div style={{color:T.txt,fontSize:MFSl,fontWeight:600,overflow:"hidden",
                         textOverflow:"ellipsis",whiteSpace:"nowrap",direction:"rtl"}}>{s.giroTx.desc}</div>
                       <div style={{color:T.txt2,fontSize:9}}>{s.giroTx.date} · {fmt(s.giroTx.totalAmount)}</div>
                     </div>
@@ -15114,9 +15136,9 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           {parsed.newRows.length===0?(
             <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:24}}>
               {Li("check-circle",40,T.pos)}
-              <div style={{color:T.blue,fontSize:16,fontWeight:700}}>Alles bereits importiert</div>
-              <div style={{color:T.txt2,fontSize:13,textAlign:"center"}}>Alle {parsed.dupRows.length} Buchungen sind bereits in deiner App vorhanden.</div>
-              <button onClick={onClose} style={{padding:"12px 32px",borderRadius:11,border:"none",background:T.blue,color:T.on_accent,fontSize:14,fontWeight:700,cursor:"pointer",marginTop:8,fontFamily:"inherit"}}>Schließen</button>
+              <div style={{color:T.blue,fontSize:MFS,fontWeight:700}}>Alles bereits importiert</div>
+              <div style={{color:T.txt2,fontSize:MFS,textAlign:"center"}}>Alle {parsed.dupRows.length} Buchungen sind bereits in deiner App vorhanden.</div>
+              <button onClick={onClose} style={{padding:"12px 32px",borderRadius:11,border:"none",background:T.blue,color:T.on_accent,fontSize:MFS,fontWeight:700,cursor:"pointer",marginTop:8,fontFamily:"inherit"}}>Schließen</button>
             </div>
           ):(
             <>
@@ -15126,10 +15148,10 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                   value={search} onChange={e=>setSearch(e.target.value)}
                   placeholder="Suchen (Empfänger, Verwendungszweck…)"
                   style={{flex:1,background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,
-                    borderRadius:9,padding:"7px 11px",color:T.txt,fontSize:12,outline:"none"}}
+                    borderRadius:9,padding:"7px 11px",color:T.txt,fontSize:MFSl,outline:"none"}}
                 />
                 {search&&<button onClick={()=>setSearch("")}
-                  style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",fontSize:14,flexShrink:0}}>{Li("x",13)}</button>}
+                  style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",fontSize:MFS,flexShrink:0}}>{Li("x",13)}</button>}
               </div>}
               {/* Massenauswahl für gefilterte Zeilen */}
               {search&&(()=>{
@@ -15145,7 +15167,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                 return (
                   <div style={{padding:"6px 16px 8px",flexShrink:0,background:"rgba(74,159,212,0.08)",
                     borderBottom:`1px solid ${T.bd}`,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                    <span style={{color:T.blue,fontSize:12,fontWeight:600,flexShrink:0}}>
+                    <span style={{color:T.blue,fontSize:MFSl,fontWeight:600,flexShrink:0}}>
                       {matchIdx.length} Treffer – alle auf einmal:
                     </span>
                     <div style={{flex:1,minWidth:120}}>
@@ -15173,14 +15195,14 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                       }}
                       style={{background:bulkCat.catId?T.blue:T.disabled,
                         border:"none",borderRadius:8,padding:"6px 14px",color:"#fff",
-                        fontSize:12,fontWeight:700,cursor:bulkCat.catId?"pointer":"default",
+                        fontSize:MFSl,fontWeight:700,cursor:bulkCat.catId?"pointer":"default",
                         opacity:bulkCat.catId?1:0.4,flexShrink:0}}>
                       Alle zuweisen ✓
                     </button>
                   </div>
                 );
               })()}
-              <div style={{color:T.txt2,fontSize:11,padding:"6px 16px 4px",flexShrink:0}}>
+              <div style={{color:T.txt2,fontSize:MFSl,padding:"6px 16px 4px",flexShrink:0}}>
                 {showCatAssign
                   ? (search
                       ? `${parsed.newRows.filter(r=>matchSearch(r.desc,search)).length} von ${parsed.newRows.length} Buchungen`
@@ -15202,7 +15224,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                     <div key={origIdx} style={{padding:"8px 16px",borderBottom:`1px solid ${T.bd}`,background:origIdx%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                       <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:showCatAssign?4:0}}>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{color:T.txt,fontSize:12,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.desc}</div>
+                          <div style={{color:T.txt,fontSize:MFSl,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.desc}</div>
                           <div style={{color:T.txt2,fontSize:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                             <span>{r.isoDate}</span>
                             {r._paypalRows>1&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
@@ -15215,7 +15237,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                             </span>}
                           </div>
                         </div>
-                        <div style={{color:isPos?T.pos:T.neg,fontSize:13,fontWeight:700,fontFamily:"monospace",flexShrink:0,whiteSpace:"nowrap"}}>
+                        <div style={{color:isPos?T.pos:T.neg,fontSize:MFS,fontWeight:700,fontFamily:"monospace",flexShrink:0,whiteSpace:"nowrap"}}>
                           {isPos?"+ ":"− "}{Math.abs(r.amount).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €
                         </div>
                       </div>
@@ -15231,12 +15253,12 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
               </div>
               <div style={{padding:"12px 16px",flexShrink:0,borderTop:`1px solid ${T.bd}`,display:"flex",gap:8}}>
                 <button onClick={()=>setStep("input")}
-                  style={{flex:1,padding:"12px",borderRadius:11,border:`1px solid ${T.bds}`,background:"transparent",color:T.txt2,fontSize:13,cursor:"pointer"}}>
+                  style={{flex:1,padding:"12px",borderRadius:11,border:`1px solid ${T.bds}`,background:"transparent",color:T.txt2,fontSize:MFS,cursor:"pointer"}}>
                   ← Zurück
                 </button>
                 <button onClick={doImport}
                   style={{flex:2,padding:"12px",borderRadius:11,border:"none",
-                    background:T.pos,color:T.on_accent,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                    background:T.pos,color:T.on_accent,fontSize:MFS,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                   {parsed.newRows.length} Buchungen importieren {showCatAssign?"mit Kategorien ✓":"→"}
                 </button>
               </div>
@@ -15250,16 +15272,16 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
         <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:24,overflowY:"auto"}}>
           {Li("check-circle",48,T.pos)}
           <div style={{color:T.txt,fontSize:20,fontWeight:800}}>{doneCount} Buchungen importiert!</div>
-          <div style={{color:T.txt2,fontSize:13,textAlign:"center"}}>Die Buchungen sind jetzt in deiner App. Kategorieregeln wurden für zukünftige Importe gespeichert.</div>
+          <div style={{color:T.txt2,fontSize:MFS,textAlign:"center"}}>Die Buchungen sind jetzt in deiner App. Kategorieregeln wurden für zukünftige Importe gespeichert.</div>
 
           {/* Erkannter Kontostand wurde als Ankerpunkt gesetzt */}
           {parsed?.detectedBalance?.date && (
             <div style={{background:"rgba(170,204,0,0.10)",border:"1px solid rgba(170,204,0,0.35)",
-              borderRadius:11,padding:"10px 14px",width:"100%",maxWidth:380,display:"flex",gap:10,alignItems:"flex-start"}}>
+              borderRadius:11,padding:MPad,width:"100%",maxWidth:380,display:"flex",gap:10,alignItems:"flex-start"}}>
               {Li("landmark",16,T.pos)}
               <div style={{flex:1}}>
-                <div style={{color:T.pos,fontSize:12,fontWeight:700,marginBottom:2}}>Kontostand-Ankerpunkt gesetzt</div>
-                <div style={{color:T.txt2,fontSize:11,lineHeight:1.5}}>
+                <div style={{color:T.pos,fontSize:MFSl,fontWeight:700,marginBottom:2}}>Kontostand-Ankerpunkt gesetzt</div>
+                <div style={{color:T.txt2,fontSize:MFSl,lineHeight:1.5}}>
                   Aus der CSV wurde der Kontostand vom{" "}
                   <span style={{color:T.txt,fontWeight:700}}>
                     {parsed.detectedBalance.date.split("-").reverse().join(".")}
@@ -15275,11 +15297,11 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           {/* Warnung: Vormonat-Ankerpunkt fehlt */}
           {anchorWarning && (
             <div style={{background:"rgba(245,166,35,0.10)",border:"1px solid rgba(245,166,35,0.4)",
-              borderRadius:11,padding:"10px 14px",width:"100%",maxWidth:380,display:"flex",gap:10,alignItems:"flex-start"}}>
+              borderRadius:11,padding:MPad,width:"100%",maxWidth:380,display:"flex",gap:10,alignItems:"flex-start"}}>
               {Li("alert-triangle",16,T.gold)}
               <div style={{flex:1}}>
-                <div style={{color:T.gold,fontSize:12,fontWeight:700,marginBottom:3}}>Kontostand für Vormonat fehlt</div>
-                <div style={{color:T.txt2,fontSize:11,lineHeight:1.6}}>
+                <div style={{color:T.gold,fontSize:MFSl,fontWeight:700,marginBottom:3}}>Kontostand für Vormonat fehlt</div>
+                <div style={{color:T.txt2,fontSize:MFSl,lineHeight:1.6}}>
                   Die früheste importierte Buchung stammt aus{" "}
                   <span style={{color:T.txt,fontWeight:700}}>
                     {["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][anchorWarning.firstMonth]} {anchorWarning.firstYear}
@@ -15316,11 +15338,11 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           )}
 
           <button onClick={()=>{setCsvText("");setParsed(null);setStep("input");setAnchorWarning(null);}}
-            style={{padding:"12px 24px",borderRadius:11,border:`1px solid ${T.bds}`,background:"transparent",color:T.blue,fontSize:13,fontWeight:600,cursor:"pointer"}}>
+            style={{padding:"12px 24px",borderRadius:11,border:`1px solid ${T.bds}`,background:"transparent",color:T.blue,fontSize:MFS,fontWeight:600,cursor:"pointer"}}>
             Weiteren Import
           </button>
           <button onClick={onClose}
-            style={{padding:"12px 32px",borderRadius:11,border:"none",background:T.blue,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+            style={{padding:"12px 32px",borderRadius:11,border:"none",background:T.blue,color:"#fff",fontSize:MFS,fontWeight:700,cursor:"pointer"}}>
             Fertig
           </button>
         </div>
@@ -15355,7 +15377,7 @@ function QuickPicker({onClose}) {
   const delBtn = () => { setQuickBtns(p=>p.filter(b=>b.id!==editBtn.id)); setEditBtn(null); };
 
   if(editBtn!==null) return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.75)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:20,padding:"16px 14px 28px",width:"100%",maxWidth:480,maxHeight:"88vh",display:"flex",flexDirection:"column",gap:10,overflowY:"auto"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <span style={{color:T.blue,fontSize:15,fontWeight:700}}>{editBtn==="new"?"Schnellwahl anlegen":"Schnellwahl bearbeiten"}</span>
@@ -15431,7 +15453,7 @@ function QuickPicker({onClose}) {
 
   // Main view: show existing quickBtns + add button
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.75)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:20,padding:"16px 14px 28px",width:"100%",maxWidth:480}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
           <span style={{color:T.blue,fontSize:15,fontWeight:700}}>Schnellwahlen</span>
@@ -15541,7 +15563,7 @@ function ModalTestScreen({onClose}) {
   );
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",
+    <div style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.85)",
       backdropFilter:"blur(12px)",zIndex:300,
       display:"flex",flexDirection:"column"}}>
 
@@ -15870,8 +15892,7 @@ function MobileActionPicker({onClose, onSelect}) {
     {id:"vormerken",    label:"Vormerken",      icon:"calendar",     color:T.gold,  sub:"Neue Buchung vormerken"},
     {id:"wiederkehrend",label:"Wiederkehrende", icon:"repeat",       color:T.blue,  sub:"Regelmäßige Buchungen"},
     {id:"finanzierung", label:"Finanzierungen", icon:"credit-card",  color:T.txt2,  sub:"Kredit, Ratenkauf"},
-    {id:"budget",       label:"Budget",         icon:"target",       color:T.gold,  sub:"Budgets festlegen"},
-    {id:"kategorien",   label:"Kategorien",     icon:"tag",          color:T.blue,  sub:"Kategorien verwalten"},
+    {id:"kategorien",   label:"Kategorien & Budget", icon:"tag", color:T.blue,  sub:"Kategorien & Budgets verwalten"},
   ];
 
   return (
@@ -16001,7 +16022,7 @@ function MobileVormerkenModal({onClose}) {
   };
 
   if(saved) return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",
+    <div style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.85)",
       zIndex:300,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{textAlign:"center"}}>
         <div style={{fontSize:64,marginBottom:16}}>✓</div>
@@ -16048,6 +16069,10 @@ function MobileVormerkenModal({onClose}) {
                 <span style={{fontSize:S.fs-6,fontWeight:accId===acc.id?700:400}}>
                   {acc.name||acc.id}
                 </span>
+                {acc.delayDays>0&&<span style={{fontSize:S.fs-10,color:T.gold,fontWeight:700,
+                  background:T.gold+"22",borderRadius:4,padding:"1px 4px",marginTop:2}}>
+                  +{acc.delayDays}d
+                </span>}
               </button>
             ))}
           </div>
@@ -16317,7 +16342,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
   };
 
   if(saved) return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:300,
+    <div style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.85)",zIndex:300,
       display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
       <div style={{fontSize:64,marginBottom:16}}>✓</div>
       <div style={{color:T.pos,fontSize:24,fontWeight:700}}>{totalCount}× gespeichert!</div>
@@ -16361,6 +16386,10 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
                 <span style={{fontSize:S.fs-6,fontWeight:accId===acc.id?700:400}}>
                   {acc.name||acc.id}
                 </span>
+                {acc.delayDays>0&&<span style={{fontSize:S.fs-10,color:T.gold,fontWeight:700,
+                  background:T.gold+"22",borderRadius:4,padding:"1px 4px",marginTop:2}}>
+                  +{acc.delayDays}d
+                </span>}
               </button>
             ))}
           </div>
@@ -16616,6 +16645,401 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
   );
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// MobileBudgetModal — Budget setzen für iPhone
+// ══════════════════════════════════════════════════════════════════════
+// MobileKategorienModal — Kategorien & Budget kombiniert
+function MobileKategorienModal({onClose}) {
+  const { cats, setCats, groups, setGroups, budgets, setBudgets, txs, setTxs, accounts,
+    getBudgetForMonth, year, setYear, month, setMonth } = useContext(AppCtx);
+  const S = {fs:26, pad:10, padL:14, radius:16, gap:14};
+  const MONTHS = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+
+  const [view,     setView]     = useState("list"); // list|newCat|newSub|editCat
+  const [selCat,   setSelCat]   = useState(null);
+  const [newName,  setNewName]  = useState("");
+  const [newType,  setNewType]  = useState("expense");
+  const [newColor, setNewColor] = useState(T.blue);
+  const [editName, setEditName] = useState(""); // für Kategorie bearbeiten
+  const [editColor,setEditColor]= useState(T.blue);
+  const [budgetOpen, setBudgetOpen]  = useState({}); // {subId: bool}
+  const [budgetEdits, setBudgetEdits] = useState({});
+  const [budgetScope, setBudgetScope] = useState({});
+
+  const btnBase = {width:"100%",padding:`${S.padL}px`,borderRadius:S.radius,
+    border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:S.fs,fontWeight:700,
+    display:"flex",alignItems:"center",justifyContent:"flex-start",gap:10,textAlign:"left"};
+  const btnCenter = {...btnBase,justifyContent:"center"};
+  const inp = (extra={}) => ({width:"100%",boxSizing:"border-box",padding:`${S.padL}px`,
+    borderRadius:S.radius,background:"rgba(255,255,255,0.06)",color:T.txt,
+    fontSize:S.fs,fontFamily:"inherit",outline:"none",
+    border:`2px solid ${T.blue}`,...extra});
+
+  const COLORS = [T.blue,T.pos,T.neg,T.gold,"#9b59b6","#1abc9c","#e67e22","#e91e63","#00bcd4","#ff5722"];
+
+  const header = (title, onBack) => (
+    <div style={{background:T.surf,borderBottom:`1px solid ${T.bd}`,
+      padding:`12px ${S.padL}px`,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+      <button onClick={onBack||onClose}
+        style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
+          width:44,height:44,borderRadius:S.radius,cursor:"pointer",fontSize:20,
+          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>←</button>
+      <div style={{color:T.txt,fontSize:S.fs+2,fontWeight:700,flex:1}}>{title}</div>
+    </div>
+  );
+
+
+  // ── Kategorie bearbeiten ──
+  if(view==="editCat"&&selCat) return (
+    <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,
+      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px"}}>
+      {header(`bearbeiten: ${selCat.name}`,()=>setView("list"))}
+      <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
+        <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6,fontWeight:600}}>Name</div>
+        <input value={editName} onChange={e=>setEditName(e.target.value)}
+          autoFocus style={{...inp(),marginBottom:S.gap}}/>
+        <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6,fontWeight:600}}>Farbe</div>
+        <div style={{display:"flex",gap:S.gap/2,flexWrap:"wrap",marginBottom:S.gap*1.5}}>
+          {COLORS.map(c=>(
+            <div key={c} onClick={()=>setEditColor(c)}
+              style={{width:44,height:44,borderRadius:S.radius/2,background:c,
+                cursor:"pointer",border:`3px solid ${editColor===c?"#fff":"transparent"}`,flexShrink:0}}/>
+          ))}
+        </div>
+        <button onClick={()=>{
+          if(!editName.trim()) return;
+          setCats(p=>p.map(c=>c.id===selCat.id
+            ?{...c,name:editName.trim(),color:editColor}:c));
+          setView("list");
+        }} style={{...btnCenter,background:editName.trim()?T.blue:"rgba(255,255,255,0.1)",
+          color:editName.trim()?"#fff":T.txt2,marginBottom:S.gap}}>
+          ✓ Speichern
+        </button>
+        <button onClick={()=>{
+          if(window.confirm(`"${selCat.name}" wirklich löschen?`)) {
+            setCats(p=>p.filter(c=>c.id!==selCat.id));
+            setView("list");
+          }
+        }} style={{...btnCenter,background:"transparent",
+          border:`1.5px solid ${T.neg}44`,color:T.neg,fontWeight:400}}>
+          {Li("trash-2",S.fs-4,T.neg)} Kategorie löschen
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Neue Kategorie ──
+  if(view==="newCat") return (
+    <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,
+      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px"}}>
+      {header("neue Kategorie",()=>setView("list"))}
+      <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
+        <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6,fontWeight:600}}>Name</div>
+        <input value={newName} onChange={e=>setNewName(e.target.value)}
+          placeholder="z.B. Freizeit" autoFocus style={{...inp(),marginBottom:S.gap}}/>
+        <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6,fontWeight:600}}>Typ</div>
+        <div style={{display:"flex",gap:S.gap/2,marginBottom:S.gap}}>
+          {[["expense","Ausgabe",T.neg],["income","Einnahme",T.pos]].map(([t,l,c])=>(
+            <button key={t} onClick={()=>setNewType(t)}
+              style={{flex:1,padding:`${S.pad}px`,borderRadius:S.radius,
+                background:newType===t?c+"22":"rgba(255,255,255,0.06)",
+                border:`2px solid ${newType===t?c:T.bd}`,
+                color:newType===t?c:T.txt2,fontSize:S.fs,fontWeight:700,
+                cursor:"pointer",fontFamily:"inherit"}}>
+              {l}
+            </button>
+          ))}
+        </div>
+        <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6,fontWeight:600}}>Farbe</div>
+        <div style={{display:"flex",gap:S.gap/2,flexWrap:"wrap",marginBottom:S.gap*1.5}}>
+          {COLORS.map(c=>(
+            <div key={c} onClick={()=>setNewColor(c)}
+              style={{width:44,height:44,borderRadius:S.radius/2,background:c,
+                cursor:"pointer",border:`3px solid ${newColor===c?"#fff":"transparent"}`,flexShrink:0}}/>
+          ))}
+        </div>
+        <button onClick={()=>{
+          if(!newName.trim()) return;
+          setCats(p=>[...p,{id:"cat-"+uid(),name:newName.trim(),
+            icon:"tag",color:newColor,type:newType,subs:[]}]);
+          setNewName(""); setView("list");
+        }} style={{...btnCenter,background:newName.trim()?T.pos:"rgba(255,255,255,0.1)",
+          color:newName.trim()?"#fff":T.txt2}}>
+          ✓ Kategorie anlegen
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Neue Unterkategorie ──
+  if(view==="newSub"&&selCat) return (
+    <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,
+      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px"}}>
+      {header(`neue Unterkategorie`,()=>setView("list"))}
+      <div style={{flex:1,padding:S.padL,overflowY:"auto"}}>
+        <div style={{color:T.txt2,fontSize:S.fs-6,marginBottom:S.gap,
+          display:"flex",alignItems:"center",gap:8}}>
+          {Li(selCat.icon||"tag",S.fs,selCat.color||T.blue)}
+          <span style={{color:selCat.color||T.blue,fontWeight:700}}>{selCat.name}</span>
+        </div>
+        <div style={{color:T.txt2,fontSize:S.fs-4,marginBottom:6,fontWeight:600}}>Name</div>
+        <input value={newName} onChange={e=>setNewName(e.target.value)}
+          placeholder="z.B. Restaurant" autoFocus style={{...inp(),marginBottom:S.gap}}/>
+        <button onClick={()=>{
+          if(!newName.trim()) return;
+          setCats(p=>p.map(c=>c.id===selCat.id
+            ?{...c,subs:[...(c.subs||[]),{id:"sub-"+uid(),name:newName.trim(),icon:""}]}:c));
+          setNewName(""); setView("list");
+        }} style={{...btnCenter,background:newName.trim()?T.pos:"rgba(255,255,255,0.1)",
+          color:newName.trim()?"#fff":T.txt2}}>
+          ✓ Unterkategorie anlegen
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Hauptliste ──
+  return (
+    <div className="mobile-modal" style={{position:"fixed",inset:0,background:T.bg,
+      zIndex:300,display:"flex",flexDirection:"column","--mob-fs":S.fs+"px"}}>
+      {header("Kategorien & Budget")}
+      <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",
+        padding:`${S.gap}px ${S.padL}px ${S.padL}px`}}>
+
+        <button onClick={()=>{setNewName("");setNewColor(T.blue);setView("newCat");}}
+          style={{...btnCenter,background:"rgba(74,159,212,0.1)",
+            border:`2px dashed ${T.blue}`,color:T.blue,marginBottom:S.gap}}>
+          {Li("plus",S.fs,T.blue)} neue Kategorie
+        </button>
+
+        {cats.map(cat=>(
+          <div key={cat.id} style={{marginBottom:S.gap*1.5}}>
+
+            {/* Kategorie-Header */}
+            <div style={{display:"flex",alignItems:"center",gap:10,
+              padding:`${S.pad}px ${S.padL}px`,borderRadius:S.radius,
+              background:cat.color+"18",border:`2px solid ${cat.color}44`,
+              marginBottom:S.gap/2}}>
+              {Li(cat.icon||"tag",S.fs,cat.color||T.blue)}
+              <span style={{flex:1,color:T.txt,fontSize:S.fs,fontWeight:700}}>{cat.name}</span>
+              <span style={{color:T.txt2,fontSize:S.fs-8,
+                background:"rgba(255,255,255,0.08)",borderRadius:8,padding:"2px 10px"}}>
+                {cat.type==="income"?"Einnahme":"Ausgabe"}
+              </span>
+              <button onClick={()=>{
+                setSelCat(cat);
+                setEditName(cat.name);
+                setEditColor(cat.color||T.blue);
+                setView("editCat");
+              }} style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bd}`,
+                borderRadius:S.radius/2,color:T.txt2,cursor:"pointer",
+                padding:"4px 10px",flexShrink:0}}>
+                {Li("edit-2",S.fs-6,T.txt2)}
+              </button>
+            </div>
+
+            {/* Unterkategorien mit Budget */}
+            {(cat.subs||[]).map(sub=>{
+              const pad2 = n=>String(n).padStart(2,"0");
+              const initPrefix = `${year}-${pad2(month+1)}-`;
+              // getBudgetForMonth gibt bereits Mitte+Ende zurück
+              const curGesamt = getBudgetForMonth(sub.id, year, month);
+              // Mitte separat aus txs
+              const curMitte = txs.filter(t=>t.pending&&t._budgetSubId===sub.id+"_mitte"&&t.date.startsWith(initPrefix))
+                .reduce((s,t)=>s+Math.abs(t.totalAmount),0);
+              const curE = curGesamt - curMitte; // Ende = Gesamt - Mitte
+              const editing = !!budgetOpen[sub.id];
+              const scope = budgetScope[sub.id]||"month";
+              const eKey = sub.id;
+              const mKey = sub.id+"_mitte";
+              const gVal = budgetEdits[sub.id+"_G"];
+              const mVal = budgetEdits[sub.id+"_M"];
+              const amtM = mVal ? pn(mVal.replace(",",".")) : curMitte;
+              const amtG = gVal ? pn(gVal.replace(",",".")) : curGesamt;
+              const amtE = Math.max(0, amtG - amtM);
+              const isRenamingSub = !!budgetOpen[sub.id+"_rename"];
+
+              const doSaveBudget = () => {
+                const acc = accounts?.[0];
+                const pfx = `${year}-${pad2(month+1)}-`;
+                if(scope==="single") {
+                  setTxs(p=>{
+                    const rest = p.filter(t=>!(t.pending&&(t._budgetSubId===eKey||t._budgetSubId===mKey)&&t.date.startsWith(pfx)));
+                    const add=[];
+                    if(amtE>0) add.push({id:uid(),date:`${year}-${pad2(month+1)}-28`,
+                      desc:sub.name,totalAmount:amtE,pending:true,_budgetSubId:eKey,
+                      accountId:acc?.id||"",splits:[{id:uid(),catId:cat.id,subId:sub.id,amount:amtE}],_csvType:"expense"});
+                    if(amtM>0) add.push({id:uid(),date:`${year}-${pad2(month+1)}-14`,
+                      desc:sub.name,totalAmount:amtM,pending:true,_budgetSubId:mKey,
+                      accountId:acc?.id||"",splits:[{id:uid(),catId:cat.id,subId:sub.id,amount:amtM}],_csvType:"expense"});
+                    return [...rest,...add];
+                  });
+                } else if(scope==="from") {
+                  const fromIso = `${year}-${pad2(month+1)}-01`;
+                  setTxs(p=>p.map(t=>{
+                    if(!t.pending) return t;
+                    if(t._budgetSubId===eKey&&t.date>=fromIso)
+                      return {...t,totalAmount:amtE,splits:[{...((t.splits||[])[0]||{}),amount:amtE}]};
+                    if(t._budgetSubId===mKey&&t.date>=fromIso)
+                      return amtM>0?{...t,totalAmount:amtM,splits:[{...((t.splits||[])[0]||{}),amount:amtM}]}:null;
+                    return t;
+                  }).filter(Boolean));
+                  setBudgets(p=>({...p,[eKey]:{amount:amtE,months:1},
+                    ...(amtM>0?{[mKey]:{amount:amtM,months:1}}:{})}));
+                } else {
+                  setBudgets(p=>({...p,[eKey]:{amount:amtE,months:1},
+                    ...(amtM>0?{[mKey]:{amount:amtM,months:1}}:{})}));
+                }
+                setBudgetOpen(p=>({...p,[sub.id]:false}));
+                setBudgetEdits(p=>{const n={...p};delete n[sub.id+"_G"];delete n[sub.id+"_M"];return n;});
+              };
+
+              const doDeleteBudget = () => {
+                if(!window.confirm("Budget löschen?")) return;
+                setBudgets(p=>{const n={...p};delete n[eKey];delete n[mKey];return n;});
+                setTxs(p=>p.filter(t=>t._budgetSubId!==eKey&&t._budgetSubId!==mKey));
+                setBudgetOpen(p=>({...p,[sub.id]:false}));
+              };
+
+              return (
+                <div key={sub.id} style={{marginLeft:S.padL,marginBottom:4,
+                  borderRadius:S.radius,background:"rgba(255,255,255,0.03)",
+                  border:`1px solid ${T.bd}`,overflow:"hidden"}}>
+
+                  {/* Sub-Zeile */}
+                  <div style={{display:"flex",alignItems:"center",
+                    padding:`${S.pad}px ${S.padL}px`,gap:8}}>
+                    {/* Name / Rename */}
+                    {isRenamingSub ? (
+                      <input autoFocus value={budgetEdits[sub.id+"_name"]||sub.name}
+                        onChange={e=>setBudgetEdits(p=>({...p,[sub.id+"_name"]:e.target.value}))}
+                        onBlur={()=>{
+                          const n=budgetEdits[sub.id+"_name"]||sub.name;
+                          if(n.trim()) setCats(p=>p.map(c=>c.id===cat.id?{...c,subs:c.subs.map(s=>s.id===sub.id?{...s,name:n.trim()}:s)}:c));
+                          setBudgetOpen(p=>({...p,[sub.id+"_rename"]:false}));
+                        }}
+                        style={{flex:1,background:"rgba(255,255,255,0.08)",
+                          border:`2px solid ${T.blue}`,borderRadius:8,
+                          color:T.txt,fontSize:S.fs-2,padding:"4px 8px",
+                          fontFamily:"inherit",outline:"none"}}/>
+                    ) : (
+                      <span style={{flex:1,color:T.txt,fontSize:S.fs}}>{sub.name}</span>
+                    )}
+                    {/* Budget-Anzeige */}
+                    {curGesamt>0&&!editing&&(
+                      <div style={{textAlign:"right",flexShrink:0}}>
+                        <div style={{color:T.gold,fontSize:S.fs-4,fontWeight:700}}>{fmt(curGesamt)}</div>
+                        {curMitte>0&&<div style={{color:T.txt2,fontSize:S.fs-8}}>Mitte: {fmt(curMitte)}</div>}
+                      </div>
+                    )}
+                    {/* Stift */}
+                    <button onClick={()=>setBudgetOpen(p=>({...p,[sub.id+"_rename"]:!p[sub.id+"_rename"]}))}
+                      style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bd}`,
+                        borderRadius:S.radius/2,color:T.txt2,cursor:"pointer",padding:"4px 8px"}}>
+                      {Li("edit-2",S.fs-8,T.txt2)}
+                    </button>
+                    {/* Zielscheibe */}
+                    <button onClick={()=>{
+                      const next=!editing;
+                      setBudgetOpen(p=>({...p,[sub.id]:next}));
+                      if(next) setBudgetEdits(p=>({...p,
+                        [sub.id+"_G"]:curGesamt?String(curGesamt).replace(".",","):"",
+                        [sub.id+"_M"]:curMitte?String(curMitte).replace(".",","):""}));
+                    }} style={{background:editing?"rgba(74,159,212,0.15)":"rgba(255,255,255,0.06)",
+                      border:`1px solid ${editing?T.blue:T.bd}`,
+                      borderRadius:S.radius/2,color:editing?T.blue:T.txt2,
+                      cursor:"pointer",padding:"4px 8px"}}>
+                      {editing?"✕":Li("target",S.fs-8,T.gold)}
+                    </button>
+                    {/* Löschen */}
+                    <button onClick={()=>{
+                      if(window.confirm(`"${sub.name}" löschen?`))
+                        setCats(p=>p.map(c=>c.id===cat.id
+                          ?{...c,subs:c.subs.filter(s=>s.id!==sub.id)}:c));
+                    }} style={{background:"none",border:"none",color:T.neg,
+                      cursor:"pointer",padding:"4px"}}>
+                      {Li("x",S.fs-8,T.neg)}
+                    </button>
+                  </div>
+
+                  {/* Budget-Editor */}
+                  {editing&&(
+                    <div style={{padding:`0 ${S.padL}px ${S.padL}px`,borderTop:`1px solid ${T.bd}`}}>
+                      <div style={{color:T.txt2,fontSize:S.fs-6,margin:`${S.gap/2}px 0 4px`}}>
+                        Budget {MONTHS[month]} {year}
+                      </div>
+                      {/* Mitte / Gesamt */}
+                      <div style={{display:"flex",gap:S.gap,marginBottom:4}}>
+                        <div style={{flex:1}}>
+                          <div style={{color:T.txt2,fontSize:S.fs-8,marginBottom:3}}>Mitte (bis 14.)</div>
+                          <input type="text" inputMode="decimal"
+                            value={budgetEdits[sub.id+"_M"]||""}
+                            onChange={e=>setBudgetEdits(p=>({...p,[sub.id+"_M"]:e.target.value.replace(/[^0-9,.]/g,"")}))}
+                            placeholder="0,00"
+                            style={{...inp({fontWeight:700,textAlign:"right",fontFamily:"monospace",marginBottom:0})}}/>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{color:T.txt2,fontSize:S.fs-8,marginBottom:3}}>Gesamt</div>
+                          <input type="text" inputMode="decimal"
+                            value={budgetEdits[sub.id+"_G"]||""}
+                            onChange={e=>setBudgetEdits(p=>({...p,[sub.id+"_G"]:e.target.value.replace(/[^0-9,.]/g,"")}))}
+                            placeholder="0,00"
+                            style={{...inp({fontWeight:700,textAlign:"right",fontFamily:"monospace",marginBottom:0})}}/>
+                        </div>
+                      </div>
+                      {amtG>0&&<div style={{color:T.txt2,fontSize:S.fs-8,marginBottom:S.gap/2,textAlign:"right"}}>
+                        2. Hälfte: {fmt(amtE)}
+                      </div>}
+                      {/* Scope */}
+                      <div style={{display:"flex",gap:4,marginBottom:S.gap/2}}>
+                        {[["month","nur "+MONTHS[month]],["from","ab "+MONTHS[month]],["all","immer"]].map(([v,l])=>(
+                          <button key={v} onClick={()=>setBudgetScope(p=>({...p,[sub.id]:v}))}
+                            style={{flex:1,padding:"6px 2px",borderRadius:8,border:"none",
+                              cursor:"pointer",fontFamily:"inherit",fontSize:S.fs-8,fontWeight:700,
+                              background:scope===v?T.blue:"rgba(255,255,255,0.08)",
+                              color:scope===v?"#fff":T.txt2}}>
+                            {l}
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{display:"flex",gap:S.gap/2}}>
+                        <button onClick={doSaveBudget}
+                          style={{flex:1,...btnCenter,background:amtG>0?T.pos:"rgba(255,255,255,0.1)",
+                            color:amtG>0?"#fff":T.txt2,padding:`${S.pad}px`}}>
+                          ✓ Budget setzen
+                        </button>
+                        {(curGesamt>0||curMitte>0)&&(
+                          <button onClick={doDeleteBudget}
+                            style={{padding:`${S.pad}px ${S.padL}px`,borderRadius:S.radius,
+                              border:`1px solid ${T.neg}44`,background:`${T.neg}11`,
+                              color:T.neg,cursor:"pointer",fontFamily:"inherit",fontSize:S.fs-4}}>
+                            {Li("trash-2",S.fs-6,T.neg)}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Neue Unterkategorie */}
+            <button onClick={()=>{setSelCat(cat);setNewName("");setView("newSub");}}
+              style={{...btnBase,marginLeft:S.padL,width:`calc(100% - ${S.padL}px)`,
+                background:"rgba(255,255,255,0.02)",
+                border:`1px dashed ${T.bd}`,color:T.txt2,fontWeight:400,
+                fontSize:S.fs-4,padding:`${S.pad}px ${S.padL}px`}}>
+              {Li("plus",S.fs-6,T.txt2)} Unterkategorie hinzufügen
+            </button>
+          </div>
+        ))}
+        <div style={{height:40}}/>
+      </div>
+    </div>
+  );
+}
+
+
 window.FinanzApp = function FinanzApp() {
   const [mainTab,       setMainTab]      = useState("erfassen"); // erfassen|buchungen|struktur|mehr
   const [activeStructurTab, setActiveStructurTab] = useState("einstellungen");
@@ -16665,6 +17089,8 @@ window.FinanzApp = function FinanzApp() {
   const [showMobileWiederkehrend, setShowMobileWiederkehrend] = useState(false);
   const [showMobileWiederkehrendTyp, setShowMobileWiederkehrendTyp] = useState("wiederkehrend");
   const [showMobilePicker, setShowMobilePicker] = useState(false);
+  const [showMobileBudget, setShowMobileBudget] = useState(false);
+  const [showMobileKategorien, setShowMobileKategorien] = useState(false);
   const [reviewQueue,   setReviewQueue]  = useState(null);
   const [customIcons,   setCustomIconsRaw] = useState(()=>{
     try { return JSON.parse(localStorage.getItem("mbt_custom_icons")||"[]"); } catch{ return []; }
@@ -18350,7 +18776,7 @@ Abbrechen = ${remoteName}-Stand laden`
     setEditTx(null);
   };
 
-  const deleteFromEdit = () => { setTxs(p=>p.filter(x=>x.id!==editTx.id)); setEditTx(null); };
+  const deleteFromEdit = () => { if(!window.confirm("Diese Buchung wirklich löschen?")) return; setTxs(p=>p.filter(x=>x.id!==editTx.id)); setEditTx(null); };
   const updEditSplit = (sid,f,v) => setEditTx(p=>({...p, splits:p.splits.map(s=>s.id===sid?{...s,[f]:v,...(f==="catId"?{subId:""}:{})}:s)}));
 
   const buildRows = (cs, gs=groups) => {
@@ -18442,7 +18868,7 @@ Abbrechen = ${remoteName}-Stand laden`
   // ── Category CRUD ─────────────────────────────────────────────────────────
   const saveNewCat  = () => { if(!newCat.name.trim())return; setCats(p=>[...p,{...newCat,id:"cat-"+uid(),subs:[]}]); setNewCat({name:"",icon:"",type:"expense",color:"#FFA07A"}); };
   const saveNewSub  = cid=> { if(!newSubName.trim())return; setCats(p=>p.map(c=>c.id===cid?{...c,subs:[...c.subs,{id:"sub-"+uid(),name:newSubName.trim()}]}:c)); setNewSubName(""); };
-  const deleteCat   = id => { setCats(p=>p.filter(c=>c.id!==id)); setTxs(p=>p.map(t=>({...t,splits:(t.splits||[]).filter(s=>s.catId!==id)}))); setMgmtCat(null); };
+  const deleteCat   = id => { if(!window.confirm("Kategorie wirklich löschen? Alle zugehörigen Buchungszuweisungen werden entfernt.")) return; setCats(p=>p.filter(c=>c.id!==id)); setTxs(p=>p.map(t=>({...t,splits:(t.splits||[]).filter(s=>s.catId!==id)}))); setMgmtCat(null); };
   const deleteSub   = (cid,sid)=> { setCats(p=>p.map(c=>c.id===cid?{...c,subs:(c.subs||[]).filter(s=>s.id!==sid)}:c)); };
   const renameCat   = (id,name) => setCats(p=>p.map(c=>c.id===id?{...c,name}:c));
   const renameSub   = (cid,sid,name) => setCats(p=>p.map(c=>c.id===cid?{...c,subs:(c.subs||[]).map(s=>s.id===sid?{...s,name}:s)}:c));
@@ -18595,8 +19021,13 @@ Abbrechen = ${remoteName}-Stand laden`
     mainTab==="struktur"                   ? "mehr"  :
     mainTab==="mehr"                       ? "mehr"  :
     "home";
-  const showMonthPicker = activeNavTab==="home"||activeNavTab==="monat"||
-                          activeNavTab==="buchungen"||activeNavTab==="jahr";
+  const anyMobileModalOpen = showMobileVormerken||showMobileWiederkehrend||
+    showMobilePicker||showMobileKategorien||showMobileBudget||
+    showCsv||showVormHub||showRecurring||showMatching||!!modal;
+
+  const showMonthPicker = anyMobileModalOpen ||
+    activeNavTab==="home"||activeNavTab==="monat"||
+    activeNavTab==="buchungen"||activeNavTab==="jahr";
 
   return (
   <AppCtx.Provider value={cx}>
@@ -18610,7 +19041,10 @@ Abbrechen = ${remoteName}-Stand laden`
       {/* ── HEADER ── */}
       <div style={{
         background:T.surf,borderBottom:`1px solid ${T.bds}`,
-        padding:"0 12px",flexShrink:0,zIndex:20,
+        padding:"0 12px",flexShrink:0,
+        zIndex:anyMobileModalOpen?400:20,
+        position:"relative",
+        boxShadow:anyMobileModalOpen?`0 2px 20px rgba(0,0,0,0.8)`:"none",
         display:"flex",alignItems:"flex-end",gap:8,paddingBottom:0}} className="nav-top">
         <div style={{display:"flex",alignItems:"center",gap:8,width:"100%",height:44,paddingBottom:2}}>
         <div style={{display:"flex",alignItems:"center",gap:7,flexShrink:0}}>
@@ -18645,9 +19079,18 @@ Abbrechen = ${remoteName}-Stand laden`
 
           {/* Monatspicker */}
           {showMonthPicker&&(
-            <MonthPicker month={month} year={year}
-              onMonth={m=>setMonth(m)} onYear={y=>setYear(y)}
-              yearOnly={activeNavTab==="jahr"}/>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              {anyMobileModalOpen&&(
+                <div style={{fontSize:9,color:T.gold,fontWeight:700,
+                  background:`${T.gold}22`,borderRadius:6,
+                  padding:"2px 6px",whiteSpace:"nowrap"}}>
+                  aktiv
+                </div>
+              )}
+              <MonthPicker month={month} year={year}
+                onMonth={m=>setMonth(m)} onYear={y=>setYear(y)}
+                yearOnly={activeNavTab==="jahr"&&!anyMobileModalOpen}/>
+            </div>
           )}
 
           {/* Cloud-Sync Button mit Dropdown */}
@@ -18969,6 +19412,8 @@ Abbrechen = ${remoteName}-Stand laden`
       {showModalTest&&<ModalTestScreen onClose={()=>setShowModalTest(false)}/>}
       {showMobileVormerken&&<MobileVormerkenModal onClose={()=>setShowMobileVormerken(false)}/>}
       {showMobileWiederkehrend&&<MobileWiederkehrendModal typ={showMobileWiederkehrendTyp} onClose={()=>setShowMobileWiederkehrend(false)}/>}
+      {showMobileBudget&&<MobileBudgetModal onClose={()=>setShowMobileBudget(false)}/>}
+      {showMobileKategorien&&<MobileKategorienModal onClose={()=>setShowMobileKategorien(false)}/>}
       {showMobilePicker&&<MobileActionPicker
         onClose={()=>setShowMobilePicker(false)}
         onSelect={(action)=>{
@@ -18977,8 +19422,8 @@ Abbrechen = ${remoteName}-Stand laden`
           else if(action==="csv") setShowCsv(true);
           else if(action==="wiederkehrend") { setShowMobileWiederkehrendTyp("wiederkehrend"); setShowMobileWiederkehrend(true); }
           else if(action==="finanzierung")  { setShowMobileWiederkehrendTyp("finanzierung");  setShowMobileWiederkehrend(true); }
-          else if(action==="kategorien") { setMainTab("struktur"); setActiveStructurTab("kategorien"); }
-          else setModal("addTx"); // fallback für budget, finanzierung
+          else if(action==="kategorien"||action==="budget") setShowMobileKategorien(true);
+          else setModal("addTx");
         }}
       />}
 
@@ -18991,7 +19436,7 @@ Abbrechen = ${remoteName}-Stand laden`
       {showKategorisieren&&<RecurringDetectionScreen initialTab="kategorisieren" onClose={()=>setShowKategorisieren(false)}/>}
       {showSettings&&(
         <div onClick={()=>setShowSettings(false)}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={e=>e.stopPropagation()}
             style={{background:T.surf,borderRadius:20,padding:"20px",width:"100%",maxWidth:400,
               border:`1px solid ${T.bds}`,boxShadow:"0 20px 60px rgba(0,0,0,0.8)",maxHeight:"85vh",overflowY:"auto"}}>
@@ -19007,7 +19452,7 @@ Abbrechen = ${remoteName}-Stand laden`
       )}
       {showJsonImport&&(
         <div onClick={()=>setShowJsonImport(false)}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={e=>e.stopPropagation()}
             style={{background:T.surf,borderRadius:20,padding:"20px 18px",width:"100%",maxWidth:480,
               border:`1px solid ${T.bds}`,boxShadow:"0 20px 60px rgba(0,0,0,0.8)",maxHeight:"85vh",display:"flex",flexDirection:"column"}}>
@@ -19049,7 +19494,7 @@ Abbrechen = ${remoteName}-Stand laden`
       )}
       {exportModal&&(
         <div onClick={()=>setExportModal(null)}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(10px)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(10px)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={e=>e.stopPropagation()}
             style={{background:T.surf,borderRadius:20,padding:"20px 18px 22px",width:"100%",maxWidth:480,
               border:`1px solid ${T.bds}`,boxShadow:"0 20px 60px rgba(0,0,0,0.8)",maxHeight:"80vh",display:"flex",flexDirection:"column"}}>
