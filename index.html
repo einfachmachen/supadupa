@@ -72,6 +72,18 @@
   #root {
     overflow-x: hidden;
   }
+  /* ── Randlos-Modus ── */
+  .no-borders * {
+    border-color: transparent !important;
+    outline-color: transparent !important;
+  }
+  .no-borders input, .no-borders select, .no-borders textarea {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .no-borders button {
+    border: none !important;
+  }
   /* Safe area — iOS PWA verwaltet das selbst */
   .nav-top {
     height: 44px !important;
@@ -528,9 +540,112 @@ const THEMES = {
     name:"Papier",
   },
 
+  // ── DKB Banking App (hell, wie die echte App) ────────────────────────────
+  dkb: {
+    bg:"#E8EEF4",        // Entsättigtes Hellblau — DKB App Hintergrund
+    surf:"#FFFFFF",      // Weiße Karten / Hero-Cards
+    surf2:"#D8E4EE",     // Info-Hero: etwas dunkleres entsättigtes Hellblau
+    surf3:"#EDF2F7",     // Leicht abgehobene Fläche
+    bd:"#DDE6EF",        // Klare helle Rahmen
+    bds:"#B8CAD8",       // Stärkerer Rahmen
+    txt:"#0D1520",       // Fast Schwarz für Haupttext
+    txt2:"#5A6E80",      // Hellgrau für Sekundärtext
+    blue:"#003F7E",      // DKB-Primärblau
+    pos:"#1A5C2A",       // Dunkelgrün
+    neg:"#C0311A",       // Gedämpftes Rot
+    gold:"#8A6800",      // Gedämpftes Amber
+    lbl:"#7A8E9E",
+    vorm_bg:"#FFF8E0",   vorm_bd:"#C8960A",
+    cf:"#003F7E",        mid:"#1A5C2A",
+    on_accent:"#FFFFFF", disabled:"#C0CDD8",
+    warn:"#8A6800",      override:"#6A4E00",
+    cell_inc:"#1A5C2A",  cell_inc_bg:"#D4EAD8", cell_inc_bd:"#8EC89A",
+    tab_exp:"#FAEAE8",   tab_inc:"#E0EED8",    tab_pend:"#FFF3D0",
+    err:"#C0311A",
+    pal_inc_bg:"#E0EED8", pal_inc_bd:"#9EC8AA", pal_inc_hdr:"#1A5C2A", pal_inc_fld:"#D0E8D8", pal_inc_val:"#0D3818",
+    pal_exp_bg:"#FAEAE8", pal_exp_bd:"#E8B0A8", pal_exp_fld:"#F4D8D4",
+    pal_tg_bg:"#DCE8F4",  pal_tg_bd:"#98BAD8",  pal_tg_hdr:"#003F7E",  pal_tg_fld:"#CCE0EE",  pal_tg_val:"#00285A",
+    hero_bg:"linear-gradient(135deg,#D8E4EE,#E8EEF4)", logo_c1:"#003F7E", logo_c2:"#0060C0", err_bg:"#FAE0DC",
+    cond_neg:"#C0311A", cond_warn:"#8A6800", cond_gold:"#A07800", cond_pos:"#1A5C2A",
+    name:"DKB Hell",
+  },
+
+  // ── Obsidian — Tiefes Dunkel, elektrische Akzente, maximale Lesbarkeit ───────
+  obsidian: {
+    name:"Obsidian",
+    bg:"#0F1117",        // Fast-Schwarz mit Blauton
+    surf:"#1C1F2E",      // Erhöhte Fläche — Mitternachtsblau
+    surf2:"#252840",     // Noch höher — tiefes Blauviolett
+    surf3:"#161927",     // Tiefer als bg
+    bd:"#2E3356",        // Klare Trennlinie, kein Alpha
+    bds:"#3D4470",       // Stärkere Trennlinie
+    txt:"#F0F2FF",       // Fast-Weiß mit Kühle
+    txt2:"#7B82B0",      // Gedimmtes Blaugrau
+    lbl:"#5A6090",
+    // Akzentfarbe: elektrisches Indigo
+    blue:"#6C63FF",
+    // Einnahmen: Smaragd
+    pos:"#00D68F",
+    cell_inc:"#00D68F",  cell_inc_bg:"#00200F", cell_inc_bd:"#005030",
+    // Ausgaben: Koralle
+    neg:"#FF5370",
+    // Gold/Warn: Bernstein
+    gold:"#FFB547",
+    warn:"#FFB547",      override:"#CC8800",
+    // Buttons
+    on_accent:"#FFFFFF", disabled:"#252840",
+    // Vormerkungen: tiefes Bernstein
+    vorm_bg:"#1F1500",   vorm_bd:"#CC8800",
+    // Halbmonat-Label
+    cf:"#6C63FF",        mid:"#00D68F",
+    // Tabs
+    tab_exp:"#2A0A10",   tab_inc:"#001F12",    tab_pend:"#1A1000",
+    // Panels
+    pal_inc_bg:"#001912", pal_inc_bd:"#005030", pal_inc_hdr:"#00D68F", pal_inc_fld:"#001510", pal_inc_val:"#33FFB8",
+    pal_exp_bg:"#1A0810", pal_exp_bd:"#5A1030", pal_exp_fld:"#150508",
+    pal_tg_bg:"#0D1030",  pal_tg_bd:"#2E3356",  pal_tg_hdr:"#6C63FF",  pal_tg_fld:"#0A0D25",  pal_tg_val:"#A09CFF",
+    // Hero
+    hero_bg:"linear-gradient(135deg,#0F1117,#1C1F2E)",
+    logo_c1:"#4A42CC",   logo_c2:"#6C63FF",
+    err:"#FF5370",       err_bg:"#250510",
+    cond_neg:"#FF5370",  cond_warn:"#FFB547",  cond_gold:"#FFD166",  cond_pos:"#00D68F",
+  },
+
+  // ── Sand — Warmes Hellthema, erdige Töne, maximale Lesbarkeit ────────────────
+  sand: {
+    name:"Sand",
+    bg:"#F5F0E8",        // Warmes Off-White
+    surf:"#FFFFFF",      // Karten: reines Weiß
+    surf2:"#EDE8DF",     // Leicht vertieft
+    surf3:"#F9F6F0",
+    bd:"#DDD5C8",        // Warmer Sandton
+    bds:"#C4B8A8",
+    txt:"#1A1410",       // Tiefes Warmbraun
+    txt2:"#7A6E62",      // Gedimmtes Braun
+    lbl:"#9A8E82",
+    blue:"#6B4FBF",      // Tiefes Violett — Akzent
+    pos:"#1A7A4A",       // Sattgrün
+    cell_inc:"#1A7A4A",  cell_inc_bg:"#E8F5EE", cell_inc_bd:"#A0CEB4",
+    neg:"#C0391A",       // Terrakotta-Rot
+    gold:"#8A5A00",      // Dunkles Amber
+    warn:"#8A5A00",      override:"#5A3A00",
+    on_accent:"#FFFFFF", disabled:"#D8D0C4",
+    vorm_bg:"#FFF3D8",   vorm_bd:"#B07800",
+    cf:"#6B4FBF",        mid:"#1A7A4A",
+    tab_exp:"#FAE8E0",   tab_inc:"#E8F5EE",    tab_pend:"#FFF3D8",
+    pal_inc_bg:"#E8F5EE", pal_inc_bd:"#A0CEB4", pal_inc_hdr:"#1A7A4A", pal_inc_fld:"#D8EEE4", pal_inc_val:"#0D4A2A",
+    pal_exp_bg:"#FAE8E0", pal_exp_bd:"#D4A090", pal_exp_fld:"#F5DDD5",
+    pal_tg_bg:"#EDE8F8",  pal_tg_bd:"#B4A0DC",  pal_tg_hdr:"#6B4FBF",  pal_tg_fld:"#E4DEFC",  pal_tg_val:"#4A30A0",
+    hero_bg:"linear-gradient(135deg,#EDE8DF,#F5F0E8)",
+    logo_c1:"#4A30A0",   logo_c2:"#6B4FBF",
+    err:"#C0391A",       err_bg:"#FAE8E0",
+    cond_neg:"#C0391A",  cond_warn:"#8A5A00",  cond_gold:"#A07000",  cond_pos:"#1A7A4A",
+  },
+
 };
 // Globales T — wird von getAppTheme() überschrieben, initialisiert mit dark
 let T = THEMES.dark;
+
 function getTheme(name) {
   const t = THEMES[name] || THEMES.dark;
   if (!t.lbl)         t.lbl         = t.txt2;
@@ -562,7 +677,7 @@ function getTheme(name) {
   return t;
 }
 // INP: live getter damit Theme-Wechsel wirkt
-const _INP_BASE = ()=>({width:"100%",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.05)",border:`1px solid ${T.bd}`,borderRadius:11,padding:"6px 10px",color:T.txt,fontSize:14,outline:"none",marginBottom:9,boxSizing:"border-box"});
+const _INP_BASE = ()=>({width:"100%",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.05)",border:`1px solid ${T.bd}`,borderRadius:11,padding:"6px 10px",color:T.txt,fontSize:14,outline:"none",marginBottom:9,boxSizing:"border-box"});
 const INP = new Proxy({}, { get:(_,k)=>_INP_BASE()[k] });
 
 
@@ -706,11 +821,11 @@ const Li = (name, size=16, color="currentColor") => {
 // ─── Shared UI components (defined outside app to avoid recreation) ───────────
 const Overlay = ({onClose,children}) => (
   <div onClick={onClose} style={{position:"fixed",inset:0,
-    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.45)":"rgba(0,0,0,0.78)",
+    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.45)":"rgba(0,0,0,0.78)",
     backdropFilter:"blur(12px)",zIndex:50,display:"flex",alignItems:"flex-start",justifyContent:"center",
     padding:"16px",paddingTop:"20px",overflowY:"auto"}}>
     <div onClick={e=>e.stopPropagation()} style={{
-      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"#F5F7F2":T.surf2,
+      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"#F5F7F2":T.surf2,
       borderRadius:20,padding:"20px 18px",width:"100%",maxWidth:480,maxHeight:"calc(100vh - 32px)",overflowY:"auto",boxSizing:"border-box",
       boxShadow:"0 20px 60px rgba(0,0,0,0.5)",border:`1px solid ${T.bds}`}}>
       {children}
@@ -759,7 +874,7 @@ function MonthPicker({month, year, onMonth, onYear, yearOnly=false}) {
   const prevM = ()=>{ if(month>0){onMonth(month-1);}else{onMonth(11);onYear(year-1);} };
   const nextM = ()=>{ if(month<11){onMonth(month+1);}else{onMonth(0);onYear(year+1);} };
 
-  const isLightTheme = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper");
+  const isLightTheme = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand");
   const btnS = {
     background: isLightTheme?"#fff":T.surf3,
     border: isLightTheme?`1px solid ${T.bds}`:"none",
@@ -790,10 +905,10 @@ function MonthPicker({month, year, onMonth, onYear, yearOnly=false}) {
       {/* Dropdown — öffnet nach unten (jetzt in der Titelleiste) */}
       {open&&(
         <div style={{position:"absolute",top:"110%",right:0,zIndex:200,
-          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"#fff":T.surf2,
+          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"#fff":T.surf2,
           border:`1px solid ${T.bds}`,borderRadius:14,
           padding:12,
-          boxShadow:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"0 -4px 24px rgba(0,0,0,0.15)":"0 -8px 32px rgba(0,0,0,0.6)",
+          boxShadow:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"0 -4px 24px rgba(0,0,0,0.15)":"0 -8px 32px rgba(0,0,0,0.6)",
           minWidth:200}}>
           {/* Jahr-Wähler */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
@@ -1534,7 +1649,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
                       <div style={{color:T.txt,fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                         {v.shortDesc}
                         {hasInterval&&<span style={{marginLeft:6,color:T.gold,fontSize:9,fontWeight:700,
-                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"1px 5px"}}>
+                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"1px 5px"}}>
                           {v.interval}
                         </span>}
                         {v.hasExistingVorm&&<span style={{marginLeft:4,color:T.blue,fontSize:9,fontWeight:700,
@@ -1598,7 +1713,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
                               const isManual = !!manualIntervals[v.vendor];
                               return (<>
                                 {effInterval&&<span style={{color:isManual?T.blue:T.gold,fontSize:9,
-                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
+                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
                                   borderRadius:4,padding:"1px 5px",fontWeight:700}}>
                                   {isManual?"✎ ":""}{effInterval}
                                 </span>}
@@ -2030,7 +2145,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
                               const isManual = !!manualIntervals[v.vendor];
                               return (<>
                                 {effInterval&&<span style={{color:isManual?T.blue:T.gold,fontSize:9,
-                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
+                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
                                   borderRadius:4,padding:"1px 5px",fontWeight:700}}>
                                   {isManual?"✎ ":""}{effInterval}
                                 </span>}
@@ -2189,7 +2304,7 @@ function VormHubSecToggle({label, icon, active, onToggle, accent}) {
   return (
     <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",
       padding:"11px 14px",borderBottom:`1px solid ${T.bd}`,userSelect:"none",
-      background:active?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(170,204,0,0.06)":"rgba(170,204,0,0.04)"):"transparent"}}>
+      background:active?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(170,204,0,0.06)":"rgba(170,204,0,0.04)"):"transparent"}}>
       <div style={{width:28,height:28,borderRadius:9,
         background:active?`${accent||T.pos}22`:"rgba(255,255,255,0.06)",
         display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -2296,6 +2411,40 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   // Scope für Bearbeiten
   const [editScope, setEditScope] = useState("single"); // single | from | all
   const [fromDate,  setFromDate]  = useState(editVorm?.date||today); // "Ab dieser" Datum
+  const [fromDateManual, setFromDateManual] = useState(false); // User hat manuell geändert
+  const [lastOfMonth, setLastOfMonth] = useState(editVorm?._lastOfMonth||false);
+
+  // Berechnet das korrekte fromDate für einen Monat
+  const _calcFromDate = (lom, m, y) => {
+    const pad2 = n=>String(n).padStart(2,"0");
+    if(lom) {
+      const lastDay = new Date(y, m+1, 0).getDate();
+      return `${y}-${pad2(m+1)}-${pad2(lastDay)}`;
+    }
+    const origDay = editVorm?.date ? parseInt(editVorm.date.split("-")[2]) : 1;
+    const day = Math.min(origDay, new Date(y, m+1, 0).getDate());
+    return `${y}-${pad2(m+1)}-${pad2(day)}`;
+  };
+
+  // Monat/Jahr wechselt → fromDate nachziehen (nur wenn nicht manuell)
+  React.useEffect(()=>{
+    if(fromDateManual) return;
+    const pad2 = n=>String(n).padStart(2,"0");
+    if(editScope==="from") {
+      setFromDate(_calcFromDate(lastOfMonth, month, year));
+    } else if(editScope==="single" && editVorm?._seriesId) {
+      const found = txs.find(t=>t._seriesId===editVorm._seriesId
+        && !t._exSeriesId && t.date.startsWith(`${year}-${pad2(month+1)}`));
+      if(found) setFromDate(found.date);
+      else setFromDate(_calcFromDate(lastOfMonth, month, year));
+    }
+    // Im Bearbeiten-Modus: Startdatum auf die Buchung im gewählten Monat setzen
+    if(isEdit && editVorm?._seriesId) {
+      const found = txs.find(t=>t._seriesId===editVorm._seriesId
+        && !t._exSeriesId && t.date.startsWith(`${year}-${pad2(month+1)}`));
+      if(found) setStartDate(found.date);
+    }
+  }, [month, year, editScope]);
 
   // Formular — mit Vorbelegung aus editVorm
   const initSplit = editVorm ? (editVorm.splits||[])[0] : null;
@@ -2306,7 +2455,12 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const [subId,     setSubId]     = useState(initSplit?.subId||"");
   const [accountId, setAccountId] = useState(editVorm?.accountId||accounts[0]?.id||"");
   const [note,      setNote]      = useState(editVorm?.note||"");
-  const [startDate, setStartDate] = useState(editVorm?.date||today);
+  const [startDate, setStartDate] = useState(()=>{
+    if(editVorm?.date) return editVorm.date;
+    // Neu-Anlegen: erster Tag des aktiven Monats als Default
+    const pad2 = n=>String(n).padStart(2,"0");
+    return `${year}-${pad2(month+1)}-01`;
+  });
   const [endDate,   setEndDate]   = useState("");
   const [valueDate, setValueDate] = useState(editVorm?.valueDate||"");
   const [interval,  setInterval_] = useState(()=>{
@@ -2321,7 +2475,6 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     if(!editVorm || !editVorm._seriesId) return "";
     return "";
   });
-  const [lastOfMonth, setLastOfMonth] = useState(editVorm?._lastOfMonth||false);
   const [customFirstLast, setCustomFirstLast] = useState(()=>{
     // Auto-aktivieren wenn erste/letzte Buchung abweicht — wird nach mount per Effect gesetzt
     return false;
@@ -2336,6 +2489,17 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const [exAmount,      setExAmount]      = useState("");
   const [exInterval,    setExInterval]    = useState(12); // jährlich
   const [exStartDate,   setExStartDate]   = useState("");
+
+  // Wenn Monat/Jahr wechselt und Ausnahme-Formular offen: Startdatum nachziehen
+  React.useEffect(()=>{
+    if(!showExForm || !editVorm?._seriesId || exEditId) return;
+    const pad2 = n=>String(n).padStart(2,"0");
+    const monthStr = `${year}-${pad2(month+1)}`;
+    const found = txs.find(t=>t._seriesId===editVorm._seriesId
+      && !t._exSeriesId && t.date.startsWith(monthStr));
+    if(found) setExStartDate(found.date);
+    else setExStartDate(_calcFromDate(lastOfMonth, month, year));
+  }, [month, year, showExForm]);
   const [exCount,       setExCount]       = useState("");
   const [exEditId,      setExEditId]      = useState(null);  // _exSeriesId beim Bearbeiten
   const [exEditScope,   setExEditScope]   = useState("single");
@@ -2363,24 +2527,14 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     const seriesId = editVorm._seriesId;
     if(!seriesId) return;
 
-    // Alle Hauptserien-Buchungen ab exStartDate mit passendem Intervall
-    const mainTxs = txs.filter(t=>t._seriesId===seriesId && !t._exSeriesId)
-      .sort((a,b)=>a.date.localeCompare(b.date));
-
     const exId = exEditId || ("ex-"+uid());
     const n = exCount ? parseInt(exCount)||1 : 99;
-    let created = 0;
 
     setTxs(prev=>{
-      const next = [...prev];
-      // Entferne alte Ausnahmen dieser exSeriesId wenn Bearbeitung
-      const filtered = exEditId
-        ? next.filter(t=>!(t._exSeriesId===exEditId && (exEditScope==="all" ||
-            (exEditScope==="from" && t.date>=exStartDate) ||
-            (exEditScope==="single" && t.date===exStartDate))))
-        : next;
+      // Hauptserien-Buchungen ab exStartDate mit passendem Intervall
+      const mainTxs = prev.filter(t=>t._seriesId===seriesId && !t._exSeriesId)
+        .sort((a,b)=>a.date.localeCompare(b.date));
 
-      // Finde passende Hauptserien-Monate
       const matches = mainTxs.filter(t=>{
         if(t.date < exStartDate) return false;
         const d = new Date(t.date);
@@ -2389,18 +2543,28 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
         return monthDiff >= 0 && monthDiff % exInterval === 0;
       }).slice(0, n);
 
-      const newExTxs = matches.map((t,i)=>({
-        ...t,
-        id: uid(),
-        totalAmount: amt,
-        splits: catId ? [{id:uid(),catId,subId:subId||"",amount:amt}] : t.splits,
-        _exSeriesId: exId,
-        _exInterval: exInterval,
-        _exLastOfMonth: exLastOfMonth||undefined,
-        _isException: true,
-      }));
+      const matchIds = new Set(matches.map(t=>t.id));
 
-      return [...filtered, ...newExTxs];
+      // Bearbeitung: zuerst vorherige Ausnahmen dieser exId zurücksetzen
+      const withReset = exEditId ? prev.map(t=>{
+        if(t._exSeriesId!==exEditId) return t;
+        // Betrag auf regularAmt zurücksetzen
+        const regAmt = seriesAmtInfo.regularAmt;
+        return regAmt ? {...t, totalAmount:regAmt, _exSeriesId:undefined, _isException:undefined} : t;
+      }) : prev;
+
+      // Jetzt passende Buchungen mit neuem Betrag + exSeriesId markieren
+      return withReset.map(t=>{
+        if(!matchIds.has(t.id)) return t;
+        return {
+          ...t,
+          totalAmount: amt,
+          splits: t.splits?.length ? t.splits.map(s=>({...s,amount:amt/t.splits.length})) : t.splits,
+          _exSeriesId: exId,
+          _exInterval: exInterval,
+          _isException: true,
+        };
+      });
     });
 
     setShowExForm(false);
@@ -2408,12 +2572,23 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   };
 
   const handleDeleteException = (exId, scope, fromDate) => {
-    setTxs(prev=>prev.filter(t=>{
-      if(t._exSeriesId!==exId) return true;
-      if(scope==="all") return false;
-      if(scope==="from") return t.date < fromDate;
-      if(scope==="single") return t.date !== fromDate;
-      return true;
+    const regAmt = seriesAmtInfo.regularAmt;
+    setTxs(prev=>prev.map(t=>{
+      if(t._exSeriesId!==exId) return t;
+      if(scope==="all" ||
+         (scope==="from" && t.date>=fromDate) ||
+         (scope==="single" && t.date===fromDate)) {
+        // Betrag auf regulären Wert zurücksetzen
+        const restored = regAmt ? regAmt : t.totalAmount;
+        return {
+          ...t,
+          totalAmount: restored,
+          splits: t.splits?.length ? t.splits.map(s=>({...s,amount:restored/t.splits.length})) : t.splits,
+          _exSeriesId: undefined,
+          _isException: undefined,
+        };
+      }
+      return t;
     }));
   };
 
@@ -2426,20 +2601,21 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   // Abweichende Beträge in der Serie erkennen
   const seriesAmtInfo = React.useMemo(()=>{
     if(!isEdit || !editVorm?._seriesId) return {deviations:[],regularAmt:0,firstDev:null,lastDev:null};
-    // Nur Hauptserien-Buchungen (keine Ausnahmen) für regulären Betrag
+    // Nur Hauptserien-Buchungen ohne Ausnahme-Markierung für regulären Betrag
     const sorted = txs.filter(t=>t._seriesId===editVorm._seriesId && !t._isException)
       .sort((a,b)=>a.date.localeCompare(b.date));
-    if(sorted.length<2) return {deviations:[],regularAmt:0,firstDev:null,lastDev:null};
+    if(sorted.length<2) return {deviations:[],regularAmt:sorted[0]?.totalAmount||0,firstDev:null,lastDev:null};
     // Häufigster Betrag = "regulär"
     const amtCounts = {};
     sorted.forEach(t=>{const k=Math.round(t.totalAmount*100)/100; amtCounts[k]=(amtCounts[k]||0)+1;});
     const regularAmt = Number(Object.entries(amtCounts).sort((a,b)=>b[1]-a[1])[0][0]);
+    // Abweichungen = Buchungen mit anderem Betrag (das sind echte Betragsänderungen, nicht Ausnahmen)
     const allDev = sorted
       .map((t,i)=>({idx:i, date:t.date, amt:t.totalAmount, id:t.id, n:sorted.length}))
       .filter(e=>Math.round(e.amt*100)/100 !== regularAmt);
+    // Für Finanzierung: erste/letzte abweichende
     const firstDev = allDev.find(e=>e.idx===0)||null;
     const lastDev  = allDev.find(e=>e.idx===sorted.length-1)||null;
-    // Nur "mittendrin" abweichende (weder erste noch letzte)
     const deviations = allDev.filter(e=>e.idx!==0 && e.idx!==sorted.length-1);
     return {deviations, regularAmt, firstDev, lastDev};
   }, [isEdit, editVorm, txs]);
@@ -2469,8 +2645,9 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     setAmount(String(seriesAmtInfo.regularAmt).replace(".",","));
   }, [seriesAmtInfo.regularAmt]);
 
-  // Auto-aktiviere Toggle wenn erste/letzte Buchung abweicht
+  // Auto-aktiviere Toggle nur für Finanzierung wenn erste/letzte Buchung abweicht
   React.useEffect(()=>{
+    if(typ!=="finanzierung") return;
     const {firstDev, lastDev} = seriesAmtInfo;
     if(firstDev||lastDev) {
       setCustomFirstLast(true);
@@ -2512,10 +2689,10 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
       return Math.max(1, Math.ceil(months/interval_));
     }
     if(typ==="finanzierung") return 1;
-    // "unbegrenzt" = vom Startdatum bis Dezember (aktuelles Jahr + 6)
-    const endYear = new Date().getFullYear() + 6;
-    const endDec = new Date(endYear, 11, 31); // 31. Dez
+    // "unbegrenzt" = vom Startdatum bis Dezember (Startjahr + 6)
     const start = new Date(startDate||today);
+    const endYear = start.getFullYear() + 6;
+    const endDec = new Date(endYear, 11, 31); // 31. Dez
     const totalMonths = (endDec.getFullYear()-start.getFullYear())*12+(endDec.getMonth()-start.getMonth())+1;
     return Math.max(1, Math.ceil(totalMonths/interval_));
   };
@@ -2536,9 +2713,12 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     if(isEdit) {
       const seriesId = editVorm._seriesId;
       if(typ==="einmalig" || !seriesId || editScope==="single") {
-        // Finde die richtige Buchung: bei Serie über fromDate, sonst editVorm.id
+        // Finde die Buchung im gewählten Monat (year/month aus Monatswähler)
+        const pad2 = n=>String(n).padStart(2,"0");
+        const monthStr = `${year}-${pad2(month+1)}`;
         const targetId = (editScope==="single" && seriesId)
-          ? (txs.find(t=>t._seriesId===seriesId && !t._exSeriesId && t.date>=fromDate && t.pending)?.id || editVorm.id)
+          ? (txs.find(t=>t._seriesId===seriesId && !t._exSeriesId
+              && t.date.startsWith(monthStr))?.id || editVorm.id)
           : editVorm.id;
         setTxs(p=>p.map(t=>t.id!==targetId ? t : {
           ...t, desc:desc.trim(), totalAmount:amt, date:startDate||t.date,
@@ -2550,40 +2730,44 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
         setTxs(prevTxs=>{
           const seriesTxs = prevTxs.filter(t=>t._seriesId===seriesId && !t._exSeriesId)
             .sort((a,b)=>a.date.localeCompare(b.date));
-          // "Ab dieser": erste Buchung >= fromDate; "Alle": alle
+          // fromDate frisch berechnen beim Speichern
+          const effectiveFromDate = editScope==="from"
+            ? _calcFromDate(lastOfMonth, month, year)
+            : fromDate;
+          // "Ab dieser": alle Buchungen >= effectiveFromDate; "Alle": alle
           const thisIdx = editScope==="all" ? 0
-            : seriesTxs.findIndex(t=>t.date>=fromDate);
+            : seriesTxs.findIndex(t=>t.date>=effectiveFromDate);
           const startIdx = thisIdx<0 ? seriesTxs.length : thisIdx;
           const toUpdateAll = seriesTxs.slice(startIdx);
-          const toUpdate = toUpdateAll.filter(t=>t.pending || t.id===editVorm.id);
-          // Berechne Verschiebung in Monaten + Tagen
+          // Alle Buchungen ab fromDate updaten (pending UND bereits gebuchte)
+          const toUpdateIds = new Set(toUpdateAll.map(t=>t.id));
+          // Datums-Verschiebung nur wenn startDate explizit geändert wurde
           const origDate = new Date(editVorm.date);
           const newDateD = new Date(startDate);
           const monthOffset = (newDateD.getFullYear()-origDate.getFullYear())*12
             + (newDateD.getMonth()-origDate.getMonth());
           const dayOffset = newDateD.getDate() - origDate.getDate();
+          const dateChanged = monthOffset!==0 || dayOffset!==0;
           return prevTxs.map(t=>{
-            if(!toUpdate.find(u=>u.id===t.id)) return t;
+            if(!toUpdateIds.has(t.id)) return t;
+            // Datum: nur ändern wenn explizit vom User geändert, sonst behalten
             let newDate = t.date;
             if(lastOfMonth) {
               const [ty,tm]=t.date.split("-").map(Number);
               const maxD=new Date(ty,tm,0).getDate();
               newDate=`${ty}-${String(tm).padStart(2,"0")}-${String(maxD).padStart(2,"0")}`;
-            } else if(monthOffset!==0 || dayOffset!==0) {
+            } else if(dateChanged) {
               const shifted = isoAddMonths(t.date, monthOffset);
               const [y,m,d]=shifted.split("-").map(Number);
               const maxD=new Date(y,m,0).getDate();
               newDate=`${y}-${String(m).padStart(2,"0")}-${String(Math.min(Math.max(1,d+dayOffset),maxD)).padStart(2,"0")}`;
             }
-            // Abweichender Betrag: erst/letzte Buchung aus der Gesamtliste erkennen
             const seriesIdxSorted = toUpdateAll.findIndex(u=>u.id===t.id);
             const isFirstTx = seriesIdxSorted===0;
             const isLastTx  = seriesIdxSorted===toUpdateAll.length-1;
             const firstAmt2 = customFirstLast&&firstAmount ? pn(firstAmount.replace(",",".")) : null;
             const lastAmt2  = customFirstLast&&lastAmount  ? pn(lastAmount.replace(",","."))  : null;
-            const devAmt = devAmounts[t.id]
-              ? pn(devAmounts[t.id].replace(",","."))
-              : null;
+            const devAmt = devAmounts[t.id] ? pn(devAmounts[t.id].replace(",",".")) : null;
             const txAmt = (isFirstTx&&firstAmt2) ? firstAmt2
                         : (isLastTx &&lastAmt2)  ? lastAmt2
                         : devAmt || amt;
@@ -2718,8 +2902,8 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
           {secNeu&&(
             <div style={{padding:"12px 14px",borderBottom:`1px solid ${T.bd}`}}>
 
-              {/* Abweichende Beträge im Edit-Modus — direkt bearbeitbar */}
-              {isEdit&&seriesDeviations.length>0&&(
+              {/* Abweichende Beträge nur für Finanzierung */}
+              {isEdit&&seriesDeviations.length>0&&typ==="finanzierung"&&(
                 <div style={{background:"rgba(74,159,212,0.08)",border:`1px solid ${T.blue}44`,
                   borderRadius:9,padding:"8px 10px",marginBottom:10}}>
                   <div style={{color:T.blue,fontSize:10,fontWeight:700,marginBottom:6,
@@ -2778,7 +2962,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                     <button key={val} onClick={()=>{setCsvType(val);setCatId("");setSubId("");}}
                       style={{flex:1,padding:"8px",borderRadius:10,cursor:"pointer",fontSize:13,fontWeight:700,
                         border:`2px solid ${active?col:T.bd}`,
-                        background:active?col:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
+                        background:active?col:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
                         color:active?"#fff":T.txt2,fontFamily:"inherit",transition:"all 0.15s"}}>
                       {label}
                     </button>
@@ -2808,7 +2992,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
 
               {/* 3. Betrag */}
               <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
-                {customFirstLast&&typ!=="einmalig" ? "Regelmäßiger Betrag (€)" : "Betrag (€)"}
+                {typ==="finanzierung"&&customFirstLast ? "Regelmäßiger Betrag (€)" : "Betrag (€)"}
               </div>
               <input value={amount} onChange={e=>setAmount(e.target.value)}
                 placeholder="0,00" inputMode="decimal"
@@ -2839,6 +3023,10 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                     const [y,m] = startDate.split("-").map(Number);
                     const lastDay = new Date(y, m, 0).getDate();
                     setStartDate(`${y}-${String(m).padStart(2,"0")}-${String(lastDay).padStart(2,"0")}`);
+                  }
+                  // fromDate immer mitaktualisieren wenn nicht manuell gesetzt
+                  if(!fromDateManual) {
+                    setFromDate(_calcFromDate(next, month, year));
                   }
                 }} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",
                   borderRadius:8,cursor:"pointer",marginBottom:8,
@@ -2872,7 +3060,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       <input type="date" value={endDate}
                         onChange={e=>{setEndDate(e.target.value);if(e.target.value)setCount("");}}
                         style={{...INP,marginBottom:0,flex:1,
-                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
                       <button onClick={()=>setEndDate("")}
                         style={{background:"none",border:"none",color:T.neg,cursor:"pointer",padding:"4px"}}>
                         {Li("x",10)}
@@ -2900,7 +3088,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                   <div style={{display:"flex",gap:2,alignItems:"center"}}>
                     <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
                       style={{...INP,marginBottom:0,flex:1,
-                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
                     {valueDate&&<button onClick={()=>setValueDate("")}
                       style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:"4px",flexShrink:0}}>
                       {Li("x",11)}
@@ -2913,7 +3101,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                   </div>
                   <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
                     style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
-                      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+                      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
                 </div>
               </div>
 
@@ -2938,8 +3126,8 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
               <input value={desc} onChange={e=>setDesc(e.target.value)}
                 placeholder="z.B. Miete, Gehalt, Kfz-Steuer…"
                 style={{...INP,marginBottom:4,width:"100%",boxSizing:"border-box"}}/>
-              {/* 11. Abweichende Erst-/Letztbuchung (Wiederkehrend/Finanzierung) */}
-              {typ!=="einmalig"&&(
+              {/* 11. Abweichende Erst-/Letztbuchung (nur Finanzierung) */}
+              {typ==="finanzierung"&&(
                 <div onClick={()=>{setCustomFirstLast(v=>!v);setFirstAmount("");setLastAmount("");}}
                   style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
                     cursor:"pointer",padding:"5px 8px",borderRadius:8,
@@ -2950,10 +3138,10 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                     <div style={{position:"absolute",top:2,left:customFirstLast?14:2,width:16,height:16,
                       borderRadius:"50%",background:"#fff",transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
                   </div>
-                  <span style={{color:customFirstLast?T.txt:T.txt2,fontSize:10}}>Abweichende Erst- und/oder Letztbuchung</span>
+                  <span style={{color:customFirstLast?T.txt:T.txt2,fontSize:10}}>Abweichende Anzahlung / Schlussrate</span>
                 </div>
               )}
-              {customFirstLast&&typ!=="einmalig"&&(
+              {customFirstLast&&typ==="finanzierung"&&(
                 <div style={{display:"flex",gap:6,marginBottom:8}}>
                   <div style={{flex:1}}>
                     <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Startbetrag (1. Buchung)</div>
@@ -2986,6 +3174,80 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 </div>
               )}
 
+              {/* 13. Betrags-Abschnittsliste (nur Wiederkehrend im Bearbeiten-Modus) */}
+              {isEdit&&editVorm._seriesId&&typ==="wiederkehrend"&&(()=>{
+                const MONTHS_DE = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+                const allSorted = txs.filter(t=>t._seriesId===editVorm._seriesId)
+                  .sort((a,b)=>a.date.localeCompare(b.date));
+                // Hauptbuchungen (keine Ausnahme-Markierung)
+                const mainSorted = allSorted.filter(t=>!t._isException);
+                if(mainSorted.length<1) return null;
+                const total = mainSorted.length;
+                // Betrags-Abschnitte aus Hauptbuchungen
+                const sections = [];
+                let cur = null;
+                mainSorted.forEach(t=>{
+                  const a = Math.round(t.totalAmount*100)/100;
+                  if(!cur || cur.amt!==a) {
+                    if(cur) sections.push(cur);
+                    cur = {amt:a, from:t.date, to:t.date, count:1};
+                  } else {
+                    cur.to = t.date; cur.count++;
+                  }
+                });
+                if(cur) sections.push(cur);
+                // Ausnahmen (isException-Markierung)
+                const exSorted = allSorted.filter(t=>t._isException);
+                // Gruppiere Ausnahmen nach exSeriesId
+                const exGroups = {};
+                exSorted.forEach(t=>{
+                  const k = t._exSeriesId||t.id;
+                  if(!exGroups[k]) exGroups[k]={id:k,amt:t.totalAmount,dates:[]};
+                  exGroups[k].dates.push(t.date);
+                });
+                const fmtMY = iso => {
+                  const d=new Date(iso); return `${MONTHS_DE[d.getMonth()]} ${d.getFullYear()}`;
+                };
+                return (
+                  <div style={{marginBottom:8,background:"rgba(0,0,0,0.15)",borderRadius:9,
+                    padding:"8px 10px",fontSize:10}}>
+                    <div style={{color:T.txt2,fontWeight:700,marginBottom:6}}>
+                      {total}× insgesamt
+                    </div>
+                    {sections.map((s,i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",
+                        padding:"3px 0",borderBottom:`1px solid ${T.bd}`,alignItems:"center"}}>
+                        <span style={{color:T.txt2}}>
+                          {s.count===total
+                            ? `${fmtMY(s.from)} – ${fmtMY(s.to)}`
+                            : s.count===1 ? fmtMY(s.from)
+                            : `${fmtMY(s.from)} – ${fmtMY(s.to)}`}
+                          {s.count>1&&sections.length>1&&
+                            <span style={{color:T.txt2,opacity:0.6}}> ({s.count}×)</span>}
+                        </span>
+                        <span style={{color:T.pos,fontWeight:700,fontFamily:"monospace"}}>
+                          {fmt(s.amt)} €
+                        </span>
+                      </div>
+                    ))}
+                    {Object.values(exGroups).map(ex=>(
+                      <div key={ex.id} style={{display:"flex",justifyContent:"space-between",
+                        padding:"3px 0",borderBottom:`1px solid ${T.bd}`,alignItems:"center"}}>
+                        <span style={{color:T.gold,display:"flex",alignItems:"center",gap:4}}>
+                          {Li("star",9,T.gold)}
+                          {ex.dates.length===1
+                            ? fmtMY(ex.dates[0])
+                            : `${fmtMY(ex.dates[0])} · ${ex.dates.length}×`}
+                        </span>
+                        <span style={{color:T.gold,fontWeight:700,fontFamily:"monospace"}}>
+                          {fmt(ex.amt)} €
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {error&&<div style={{color:T.neg,fontSize:10,marginBottom:8}}>{error}</div>}
 
               {/* ── Verknüpfen: Vormerkung → Buchung ── */}
@@ -2997,7 +3259,17 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                   <div style={{color:T.txt2,fontSize:10,marginBottom:4}}>Änderung anwenden auf:</div>
                   <div style={{display:"flex",gap:3,marginBottom:6}}>
                     {[["single","Nur diese","calendar"],["from","Ab dieser","chevrons-right"],["all","Alle","repeat"]].map(([v,l,icon])=>(
-                      <button key={v} onClick={()=>{setEditScope(v); if(v!=="from") setFromDate(editVorm.date||today);}}
+                      <button key={v} onClick={()=>{
+                        setEditScope(v);
+                        setFromDateManual(false);
+                        if(v==="from") setFromDate(_calcFromDate(lastOfMonth, month, year));
+                        else if(v==="single" && editVorm?._seriesId) {
+                          const pad2 = n=>String(n).padStart(2,"0");
+                          const monthStr = `${year}-${pad2(month+1)}`;
+                          const found = txs.find(t=>t._seriesId===editVorm._seriesId && !t._exSeriesId && t.date.startsWith(monthStr));
+                          if(found) setFromDate(found.date); else setFromDate(editVorm.date||today);
+                        } else setFromDate(editVorm.date||today);
+                      }}
                         style={{flex:1,padding:"7px 4px",borderRadius:8,border:"none",cursor:"pointer",
                           fontFamily:"inherit",fontSize:10,fontWeight:editScope===v?700:400,
                           background:editScope===v?T.blue:"rgba(255,255,255,0.08)",
@@ -3012,10 +3284,11 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                     <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
                       {editScope==="single"?"Welche Buchung:":editScope==="from"?"Änderung ab diesem Datum:":"Startdatum der Serie:"}
                     </div>
-                    <input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}
+                    <input type="date" value={fromDate}
+                      onChange={e=>{setFromDate(e.target.value);setFromDateManual(true);}}
                       disabled={editScope==="all"}
                       style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
-                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark",
+                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark",
                         border:`1px solid ${editScope==="all"?T.bd:T.blue}66`,
                         opacity:editScope==="all"?0.4:1}}/>
                     <div style={{color:T.txt2,fontSize:9,marginTop:2,opacity:0.7}}>
@@ -3086,7 +3359,13 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                   {!showExForm&&(
                     <button onClick={()=>{
                       setExEditId(null);
-                      setExAmount(""); setExStartDate(editVorm.date||today);
+                      setExAmount("");
+                      // Startdatum = passende Buchung im aktiven Monat
+                      const pad2 = n=>String(n).padStart(2,"0");
+                      const monthStr = `${year}-${pad2(month+1)}`;
+                      const found = txs.find(t=>t._seriesId===editVorm._seriesId
+                        && !t._exSeriesId && t.date.startsWith(monthStr));
+                      setExStartDate(found?.date || _calcFromDate(lastOfMonth, month, year));
                       setExCount(""); setExInterval(12);
                       setShowExForm(true);
                     }} style={{width:"100%",padding:"7px 10px",borderRadius:9,
@@ -3106,26 +3385,26 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       <div style={{color:T.gold,fontSize:11,fontWeight:700,marginBottom:8,
                         display:"flex",alignItems:"center",gap:6}}>
                         {Li("git-branch",12,T.gold)}
-                        {exEditId ? "Ausnahme-Serie bearbeiten" : "Neue Ausnahme-Serie"}
+                        {exEditId ? "Ausnahme bearbeiten" : "Abweichenden Betrag setzen"}
                       </div>
 
                       {/* Betrag */}
-                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Betrag (Gesamtbetrag)</div>
-                      <input value={exAmount} onChange={e=>setExAmount(e.target.value)}
-                        placeholder="z.B. 4500" inputMode="decimal"
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Betrag für Ausnahme-Monate</div>
+                      <input value={exAmount} onChange={e=>setExAmount(e.target.value.replace(/[^0-9,.]/g,""))}
+                        placeholder="z.B. 4172,58" inputMode="decimal"
                         style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
 
                       {/* Startdatum */}
-                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Startmonat (erste Ausnahme)</div>
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Erster Ausnahme-Monat</div>
                       <input type="date" value={exStartDate}
                         onChange={e=>setExStartDate(e.target.value)}
                         style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box",
-                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
 
                       {/* Rhythmus */}
                       <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Rhythmus</div>
                       <div style={{display:"flex",gap:3,marginBottom:8}}>
-                        {[[1,"monatlich"],[3,"quartalsweise"],[12,"jährlich"]].map(([v,l])=>(
+                        {[[1,"monatlich"],[3,"quartalsw."],[12,"jährlich"]].map(([v,l])=>(
                           <button key={v} onClick={()=>setExInterval(v)}
                             style={{flex:1,padding:"6px 2px",borderRadius:8,border:"none",
                               cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,
@@ -3136,52 +3415,11 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                         ))}
                       </div>
 
-                      {/* Letzter Tag des Monats */}
-                      <div onClick={()=>{
-                        const next = !exLastOfMonth;
-                        setExLastOfMonth(next);
-                        if(next && exStartDate) {
-                          const [y,m] = exStartDate.split("-").map(Number);
-                          const lastDay = new Date(y, m, 0).getDate();
-                          setExStartDate(`${y}-${String(m).padStart(2,"0")}-${String(lastDay).padStart(2,"0")}`);
-                        }
-                      }} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 8px",
-                        borderRadius:8,cursor:"pointer",marginBottom:8,
-                        background:exLastOfMonth?"rgba(245,166,35,0.1)":"rgba(255,255,255,0.03)",
-                        border:`1px solid ${exLastOfMonth?T.gold:T.bd}`}}>
-                        <div style={{width:28,height:18,borderRadius:9,position:"relative",flexShrink:0,
-                          background:exLastOfMonth?T.gold:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
-                          <div style={{position:"absolute",top:2,left:exLastOfMonth?11:2,width:14,height:14,
-                            borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
-                        </div>
-                        <span style={{color:exLastOfMonth?T.txt:T.txt2,fontSize:10}}>
-                          Immer letzter Tag des Monats
-                        </span>
-                      </div>
-
                       {/* Anzahl */}
-                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Anzahl (leer = unbegrenzt)</div>
-                      <input value={exCount} onChange={e=>setExCount(e.target.value)}
-                        placeholder="z.B. 5" inputMode="numeric"
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Anzahl (leer = alle passenden)</div>
+                      <input value={exCount} onChange={e=>setExCount(e.target.value.replace(/[^0-9]/g,""))}
+                        placeholder={`z.B. ${Math.ceil(81/exInterval)}`} inputMode="numeric"
                         style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box"}}/>
-
-                      {/* Scope bei Bearbeitung */}
-                      {exEditId&&(
-                        <div style={{marginBottom:8}}>
-                          <div style={{color:T.txt2,fontSize:10,marginBottom:4}}>Änderung anwenden auf:</div>
-                          <div style={{display:"flex",gap:3}}>
-                            {[["single","Nur diese"],["from","Ab dieser"],["all","Alle"]].map(([v,l])=>(
-                              <button key={v} onClick={()=>setExEditScope(v)}
-                                style={{flex:1,padding:"6px 4px",borderRadius:8,border:"none",
-                                  cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:700,
-                                  background:exEditScope===v?T.gold:"rgba(255,255,255,0.08)",
-                                  color:exEditScope===v?T.on_accent:T.txt2}}>
-                                {l}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                       {/* Vorschau */}
                       {exStartDate&&exAmount&&(()=>{
@@ -3195,16 +3433,19 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                           return md>=0 && md%exInterval===0;
                         }).slice(0,n);
                         if(!matches.length) return <div style={{color:T.neg,fontSize:10,marginBottom:6}}>
-                          Keine passenden Hauptserien-Monate gefunden.
+                          Keine passenden Monate in der Serie gefunden.
                         </div>;
                         const pad2=n=>String(n).padStart(2,"0");
                         const first=new Date(matches[0].date);
                         const last=new Date(matches[matches.length-1].date);
                         return <div style={{background:"rgba(0,0,0,0.2)",borderRadius:7,
                           padding:"6px 8px",marginBottom:8,fontSize:10,color:T.txt2}}>
-                          <span style={{color:T.gold,fontWeight:700}}>{matches.length} Ausnahme{matches.length!==1?"n":""}</span>
+                          <span style={{color:T.gold,fontWeight:700}}>{matches.length}× wird geändert</span>
                           {" · "}{pad2(first.getDate())}.{pad2(first.getMonth()+1)}.{first.getFullYear()}
                           {matches.length>1&&<> – {pad2(last.getDate())}.{pad2(last.getMonth()+1)}.{last.getFullYear()}</>}
+                          <div style={{color:T.txt2,marginTop:3,fontSize:9}}>
+                            Diese Monate bekommen {exAmount.replace(".",",")} € statt {fmt(seriesAmtInfo.regularAmt)} €
+                          </div>
                         </div>;
                       })()}
 
@@ -4925,7 +5166,7 @@ function EditPopup() {
                   <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                     {Li("link",12,T.blue)}
                     <span style={{color:T.blue,fontSize:11,fontWeight:700}}>Verknüpfte Vormerkung</span>
-                    {total>1&&pend._seriesIdx&&pend._seriesTyp==="finanzierung"&&<span style={{color:T.gold,fontSize:10,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
+                    {total>1&&pend._seriesIdx&&pend._seriesTyp==="finanzierung"&&<span style={{color:T.gold,fontSize:10,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
                       borderRadius:4,padding:"1px 6px",fontWeight:700,marginLeft:"auto"}}>
                       {Li("repeat",9,T.gold)} Zahlung {thisIdx+1} von {total}
                     </span>}
@@ -4981,7 +5222,7 @@ function EditPopup() {
                     {" · "}Differenz: <b style={{color:T.neg}}>{fmt(Math.abs(mm.pendAmt-mm.realAmt))}</b>
                   </div>
                   {pend&&<button onClick={()=>{ setEditTx(null); setTimeout(()=>setEditTx(pend),50); }}
-                    style={{marginTop:6,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}44`,
+                    style={{marginTop:6,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}44`,
                       color:T.gold,borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:700,
                       cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:"inherit"}}>
                     {Li("edit",10,T.gold)} Vormerkung bearbeiten
@@ -5049,7 +5290,7 @@ function EditPopup() {
                 <input type="date" value={editTx.valueDate||""}
                   onChange={e=>setEditTx(p=>({...p,valueDate:e.target.value||undefined}))}
                   style={{...INP,marginBottom:0,flex:1,
-                    colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+                    colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
                 {editTx.valueDate&&(
                   <button onClick={()=>setEditTx(p=>{const u={...p};delete u.valueDate;return u;})}
                     style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:4}}>
@@ -5274,7 +5515,7 @@ function EditPopup() {
             const endeAmt  = isMitte ? (endePartner?endePartner.totalAmount:0) : pn(editTx.totalAmount);
             const gesamtAmt = mitteAmt + endeAmt;
             return (
-            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:11,padding:"6px 10px",marginBottom:8,border:`1px solid ${T.gold}33`}}>
+            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:11,padding:"6px 10px",marginBottom:8,border:`1px solid ${T.gold}33`}}>
               <div style={{color:T.gold,fontSize:11,fontWeight:700,marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
                 {Li("target",11,T.gold)} Budget-Platzhalter
                 <span style={{color:T.txt2,fontSize:10,fontWeight:400,marginLeft:4}}>— Budget-Bindung lösen?</span>
@@ -5391,7 +5632,7 @@ function EditPopup() {
                 {/* Gesamtbetrag-Eingabe wenn Finanzierung */}
                 {(editTx._seriesTyp==="finanzierung"&&editTx._seriesIdx&&editTx._seriesTotal)&&(
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
-                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:8,padding:"7px 10px",
+                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:8,padding:"7px 10px",
                     border:`1px solid ${T.gold}33`}}>
                     <span style={{color:T.txt2,fontSize:11,flex:1}}>Gesamtbetrag Serie</span>
                     <input
@@ -5737,14 +5978,14 @@ function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
       background:T.hero_bg,
       borderRadius:22,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:-30,right:-30,width:110,height:110,borderRadius:"50%",
-        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.07)"}}/>
-      <div style={{color:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(255,255,255,0.8)":T.txt2,fontSize:11,marginBottom:1}}>{MONTHS_F[month]} {year}</div>
+        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.07)"}}/>
+      <div style={{color:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.8)":T.txt2,fontSize:11,marginBottom:1}}>{MONTHS_F[month]} {year}</div>
 
       {/* Kontostand groß */}
       <div style={{fontSize:32,fontWeight:800,letterSpacing:-1,color:ksColor}}>
         {ks!==null ? <>{ks>=0?"+":"-"}{fmt(Math.abs(ks))}</> : <>{ms>0?"+":ms<0?"−":""}{fmt(Math.abs(ms))}</>}
       </div>
-      <div style={{color:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(255,255,255,0.75)":T.txt2,fontSize:10,marginBottom:8}}>{ks!==null?"Kontostand":"Monatssaldo"}</div>
+      <div style={{color:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.75)":T.txt2,fontSize:10,marginBottom:8}}>{ks!==null?"Kontostand":"Monatssaldo"}</div>
 
       {/* Einnahmen | Ausgaben | Monatssaldo */}
       <div style={{display:"flex",gap:16,marginBottom:(saldoMitte!==null)?6:0}}>
@@ -6031,9 +6272,12 @@ function DashboardScreen() {
     onTS,onTE,
     budgets={},
     setShowMatching,
+    setDashDrillOpen,
   } = useContext(AppCtx);
 
-    const [dashDrill, setDashDrill] = useState(null);
+    const [dashDrill, _setDashDrill] = useState(null);
+    // Wrapper: synct dashDrillOpen in FinanzApp für TopBar-zIndex
+    const setDashDrill = (v) => { _setDashDrill(v); setDashDrillOpen(!!v); };
     const [expandedSplitId, setExpandedSplitId] = useState(null);
     const [drillExpandedSub, setDrillExpandedSub] = useState(null);
     const [budgetEditSub, setBudgetEditSub] = useState(null);
@@ -6263,10 +6507,10 @@ function DashboardScreen() {
                     <div key={t.id} onClick={()=>openEdit(t)}
                       style={{display:"flex",gap:8,alignItems:"center",padding:"5px 6px",
                         borderRadius:6,cursor:"pointer",marginBottom:2,
-                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}>
+                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}>
                       <span style={{color:T.txt2,fontSize:9,flexShrink:0}}>{t.date}</span>
                       <span style={{color:T.gold,fontSize:9,flexShrink:0,
-                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
+                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
                         borderRadius:3,padding:"1px 4px",fontWeight:700}}>
                         {t.totalAmount<0?"−":"+"} → {cat?.type==="income"?"Einnahme":"Ausgabe"}
                       </span>
@@ -6296,7 +6540,7 @@ function DashboardScreen() {
         {incomeTotals.length>0&&<>
           <div style={{color:T.lbl||T.txt2,fontSize:10,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",padding:"8px 14px 2px"}}>Einnahmen</div>
           {incomeTotals.map(cat=>(
-            <div key={cat.id} style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:"9px 10px",margin:"3px 10px",border:`1px solid ${T.bd}`,display:"flex",alignItems:"center",gap:10,minHeight:46}}>
+            <div key={cat.id} style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:14,padding:"9px 10px",margin:"3px 10px",border:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`,display:"flex",alignItems:"center",gap:10,minHeight:46}}>
               <button onClick={e=>{e.stopPropagation();setDashIconPick(dashIconPick===cat.id?null:cat.id);}}
                 style={{width:34,height:34,borderRadius:10,background:cat.color+"22",border:`1px solid ${dashIconPick===cat.id?cat.color+"88":"transparent"}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
                 {Li(cat.icon,17,cat.color||T.txt2)}
@@ -6319,8 +6563,8 @@ function DashboardScreen() {
                 const iAkt   = cat.sum;
                 const cell = (label, amt, col) => (
                   <div style={{textAlign:"center",padding:"3px 6px",borderRadius:7,minWidth:52,
-                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
-                    border:`1px solid ${T.bd}`,cursor:"pointer"}}
+                    background:T.themeName==="dkb"?"transparent":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
+                    border:T.themeName==="dkb"?"none":`1px solid ${T.bd}`,cursor:"pointer"}}
                     onClick={()=>{
                       const txList=txs.filter(t=>{const d=new Date(t.date);return !t.pending&&!t._linkedTo&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
                       const pendList=txs.filter(t=>{const d=new Date(t.date);return t.pending&&!t._budgetSubId&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
@@ -6482,9 +6726,9 @@ function DashboardScreen() {
             };
 
             return (
-            <div key={cat.id} style={{background:"rgba(255,255,255,0.04)",borderRadius:14,
+            <div key={cat.id} style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:14,
               padding:"7px 10px",margin:"3px 10px",
-              border:`1px solid ${T.bd}`}}>
+              border:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <button onClick={e=>{e.stopPropagation();setDashIconPick(dashIconPick===cat.id?null:cat.id);}}
                   style={{width:32,height:32,borderRadius:9,background:cat.color+"22",
@@ -6505,7 +6749,7 @@ function DashboardScreen() {
                   const trafficLight = (amt, bgt) => {
                     if(!bgt || bgt===0) return null;
                     const r = amt/bgt*100;
-                    const isLight = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper");
+                    const isLight = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand");
                     if(r<=25)  return isLight?"#C8E6C9":"#1B5E20"; // hellgrün
                     if(r<=50)  return isLight?"#81C784":"#2E7D32"; // grün
                     if(r<=75)  return isLight?"#FFF176":"#827717"; // gelb
@@ -6516,7 +6760,7 @@ function DashboardScreen() {
                   const trafficTxt = (amt, bgt) => {
                     if(!bgt) return T.txt;
                     const r = amt/bgt*100;
-                    return r>75 ? ((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"#1A1A1A":"#fff") : T.txt;
+                    return r>75 ? ((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"#1A1A1A":"#fff") : T.txt;
                   };
                   // Budgets für Mitte und Ende
                   const budgetMitte = (cat.subs||[]).reduce((s,sub)=>{
@@ -6580,8 +6824,8 @@ function DashboardScreen() {
                     <div onClick={onClick}
                       style={{textAlign:"center",cursor:"pointer",padding:"3px 5px",
                         borderRadius:7,minWidth:50,
-                        background:bg||((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)"),
-                        border:`1px solid ${bg?"transparent":T.bd}`}}>
+                        background:bg||(T.themeName==="dkb"?"transparent":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)"),
+                        border:(!bg&&T.themeName==="dkb")?"none":`1px solid ${bg?"transparent":T.bd}`}}>
                       {/* Label */}
                       <div style={{color:bg?trafficTxt(amt,bgt):T.txt2,
                         fontSize:7,fontWeight:700,opacity:0.85,marginBottom:1}}>
@@ -6595,7 +6839,7 @@ function DashboardScreen() {
                       {/* Budget darunter */}
                       {bgt>0&&(
                         <div style={{
-                          color:bg?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.65)"):T.txt2,
+                          color:bg?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.65)"):T.txt2,
                           fontSize:7,marginTop:2,fontWeight:600,whiteSpace:"nowrap",
                           borderTop:`1px solid ${bg?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.08)"}`,
                           paddingTop:2}}>
@@ -6639,12 +6883,14 @@ function DashboardScreen() {
                   <div style={{color:dashDrill.cat ? T.blue : dashDrill.isIncome ? T.pos : "#EA4025",
                     fontSize:15,fontWeight:700}}>{dashDrill.label||dashDrill.cat?.name}</div>
                   <div style={{color:T.txt2,fontSize:11,display:"flex",gap:8,alignItems:"center"}}>
-                    <span>{(dashDrill.txList||[]).length} Buchung{(dashDrill.txList||[]).length!==1?"en":""}</span>
+                    {dashDrill.cat ? (()=>{
+                      const live = txs.filter(t=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===dashDrill.cat.id);});
+                      return <span>{live.length} Buchung{live.length!==1?"en":""}</span>;
+                    })() : <span>{(dashDrill.txList||[]).length} Buchung{(dashDrill.txList||[]).length!==1?"en":""}</span>}
                     {dashDrill.total!=null&&<span style={{color:dashDrill.isIncome?T.pos:T.neg,fontWeight:700}}>
                       {dashDrill.isIncome?"+":"−"}{fmt(dashDrill.total)}
                     </span>}
                   </div>
-
                 </div>
                 <button onClick={()=>setDashDrill(null)}
                   style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt,
@@ -6665,7 +6911,11 @@ function DashboardScreen() {
                 {/* Unterkategorie-Ansicht wenn Kategorie-Drill und keine Suche */}
                 {dashDrill.cat&&!dashSearch&&(()=>{
                   const cat = dashDrill.cat;
-                  const allTxForCat = (dashDrill.txList||[]).map(t=>txs.find(x=>x.id===t.id)||t);
+                  // Live txList aus aktuellem Monat
+                  const allTxForCat = [
+                    ...txs.filter(t=>{const d=new Date(t.date);return !t.pending&&!t._linkedTo&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);}),
+                    ...txs.filter(t=>{const d=new Date(t.date);return t.pending&&!t._budgetSubId&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);}),
+                  ];
                   // Berechne je Unterkategorie: Mitte / Ende / aktuell
                   const subRows = (cat.subs||[]).map(sub=>{
                     const subTxs = allTxForCat.filter(t=>
@@ -6774,7 +7024,7 @@ function DashboardScreen() {
                                   <div key={lbl} onClick={e=>{e.stopPropagation();if(val>0)onCellClick();}}
                                     style={{textAlign:"center",cursor:val>0?"pointer":"default",
                                     minWidth:50,padding:"3px 5px",borderRadius:7,
-                                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
+                                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
                                     border:`1px solid ${onlyPend?T.gold:T.bd}`,
                                     position:"relative",overflow:"hidden",
                                     display:"flex",flexDirection:"column",gap:1}}>
@@ -6829,7 +7079,7 @@ function DashboardScreen() {
                               borderBottom:`1px solid ${T.bd}`}}>
                               {/* Balken */}
                               <div style={{height:6,borderRadius:3,
-                                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.1)",
+                                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.1)",
                                 overflow:"hidden",marginBottom:6}}>
                                 <div style={{height:"100%",borderRadius:3,
                                   background:barCol,
@@ -6919,7 +7169,12 @@ function DashboardScreen() {
                   </>);
                 })()}
                 {/* Normale Buchungsliste wenn kein Kategorie-Drill oder Suche aktiv */}
-                {(!dashDrill.cat||dashSearch)&&groupBudgetPairs((dashDrill.txList||[]).map(t=>txs.find(x=>x.id===t.id)||t).filter(t=>{
+                {(!dashDrill.cat||dashSearch)&&groupBudgetPairs((dashDrill.cat ? [
+                    ...txs.filter(t=>{const d=new Date(t.date);return !t.pending&&!t._linkedTo&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===dashDrill.cat.id);}),
+                    ...txs.filter(t=>{const d=new Date(t.date);return t.pending&&!t._budgetSubId&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===dashDrill.cat.id);}),
+                  ].sort((a,b)=>b.date.localeCompare(a.date))
+                  : (dashDrill.txList||[]).map(t=>txs.find(x=>x.id===t.id)||t)
+                ).filter(t=>{
                     if(!dashSearch) return true;
                     const isAmtSearch = /^[=<>]?[\d.,]+$/.test(dashSearch.trim());
                     if(isAmtSearch) return matchAmount(Math.abs(t.totalAmount), dashSearch);
@@ -6982,7 +7237,7 @@ function DashboardScreen() {
                               {tx._seriesTyp==="finanzierung"?"Finanzierung":tx._seriesId?"Wiederkehrend":"Vorgemerkt"}
                             </span>}
                             {tx._seriesId&&tx._seriesTotal>1&&tx._seriesIdx&&tx._seriesTyp==="finanzierung"&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
-                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:4,padding:"0 4px"}}>
+                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:4,padding:"0 4px"}}>
                               {tx._seriesIdx} / {tx._seriesTotal}
                             </span>}
                             {(tx.linkedIds||[]).map(lid=>{
@@ -7382,7 +7637,7 @@ function TransactionsScreen() {
               )}
               {selectedCount===2&&(
                 <button onClick={applyLink}
-                  style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}66`,
+                  style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}66`,
                     borderRadius:8,padding:"4px 9px",color:T.gold,
                     fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",gap:3}}>
                   {Li("link",12,T.gold)} Verknüpfen
@@ -7560,7 +7815,7 @@ function TransactionsScreen() {
                               const catIncome=cat.type==="income"||cat.type==="tagesgeld";
                               const subName=getSub((tx.splits||[])[0]?.catId,(tx.splits||[])[0]?.subId)?.name||cat.name;
                               if((isNeg&&catIncome)||(!isNeg&&!catIncome)) return (
-                                <span style={{fontSize:9,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
+                                <span style={{fontSize:9,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
                                   color:T.gold,borderRadius:4,padding:"1px 6px",fontWeight:700,
                                   display:"inline-flex",alignItems:"center",gap:3,
                                   border:`1px solid ${T.gold}44`}}>
@@ -8188,7 +8443,7 @@ function SubRow({sub, si, arr, cat}) {
           })()}
         </div>
         {budgets[sub.id]&&(
-          <span style={{color:T.gold,fontSize:10,fontWeight:700,flexShrink:0,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:5,padding:"1px 5px"}}>
+          <span style={{color:T.gold,fontSize:10,fontWeight:700,flexShrink:0,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:5,padding:"1px 5px"}}>
             {Li("target",9,T.gold)} {fmt(budgets[sub.id].amount)} {budgets[sub.id].months===1?"mtl.":budgets[sub.id].months===3?"quartl.":"jährl."}{budgets[sub.id].startDate?` · ${budgets[sub.id].startDate.split("-")[2]}.`:""}
           </span>
         )}
@@ -8201,7 +8456,7 @@ function SubRow({sub, si, arr, cat}) {
         <button onClick={()=>{if(window.confirm(`"${sub.name}" wirklich löschen?`)) deleteSub(cat.id,sub.id);}} style={{background:"none",border:"none",color:T.neg,opacity:0.55,cursor:"pointer",fontSize:15,flexShrink:0,display:"flex",alignItems:"center"}}>{Li("trash-2",14)}</button>
       </div>
       {subEdit==="budget"&&(
-        <div style={{borderTop:`1px solid ${T.bd}`,padding:"10px 10px 12px",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}}>
+        <div style={{borderTop:`1px solid ${T.bd}`,padding:"10px 10px 12px",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,gap:8}}>
             <div style={{color:T.gold,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",gap:5}}>
               {Li("target",11,T.gold)} Budget & Vormerkungen für „{sub.name}"
@@ -8222,20 +8477,20 @@ function SubRow({sub, si, arr, cat}) {
               <input value={budgetInputMitte} onChange={e=>setBudgetInputMitte(e.target.value)}
                 placeholder="z.B. 125" inputMode="decimal"
                 style={{...INP,marginBottom:0,width:"100%",fontSize:13,
-                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
+                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
             </div>
             <div style={{flex:1}}>
               <div style={{color:T.txt2,fontSize:9,marginBottom:2}}>Gesamt/Monat (Ende) €</div>
               <input value={budgetInput} onChange={e=>setBudgetInput(e.target.value)}
                 placeholder="z.B. 250" inputMode="decimal"
                 style={{...INP,marginBottom:0,width:"100%",fontSize:13,
-                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
+                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
             </div>
             <div style={{flex:1}}>
               <div style={{color:T.txt2,fontSize:9,marginBottom:2}}>Startdatum</div>
               <input type="date" value={budgetStartDate} onChange={e=>setBudgetStartDate(e.target.value)}
                 style={{...INP,marginBottom:0,fontSize:11,padding:"6px 6px",width:"100%",
-                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
+                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
                   colorScheme:"dark"}}/>
             </div>
             <div style={{flex:1}}>
@@ -8249,8 +8504,8 @@ function SubRow({sub, si, arr, cat}) {
                       min={new Date(Date.now()+86400000).toISOString().slice(0,10)}
                       style={{...INP,marginBottom:0,fontSize:11,padding:"6px 6px",flex:1,
                         border:`1px solid ${T.blue+"66"}`,
-                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
-                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"light":"dark"}}/>
+                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
+                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
                     <button onClick={()=>setBudgetEndDate("")}
                       style={{background:"none",border:"none",color:T.neg,
                         cursor:"pointer",padding:"2px",flexShrink:0}}>
@@ -8261,7 +8516,7 @@ function SubRow({sub, si, arr, cat}) {
                   <button onClick={()=>setBudgetEndDate(new Date(Date.now()+365*24*60*60*1000).toISOString().slice(0,10))}
                     style={{...INP,marginBottom:0,fontSize:11,padding:"6px 6px",flex:1,
                       border:`1px solid ${T.gold+"44"}`,cursor:"pointer",textAlign:"left",
-                      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
+                      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
                       color:T.txt2,fontFamily:"inherit"}}>
                     kein Enddatum (7 Jahre)
                   </button>
@@ -8275,7 +8530,7 @@ function SubRow({sub, si, arr, cat}) {
             {[{k:"h1",l:"1.H"},{k:"h2",l:"2.H"},{k:"w1",l:"W1"},{k:"w2",l:"W2"},{k:"w3",l:"W3"},{k:"w4",l:"W4"}].map(({k,l})=>(
               <button key={k} onClick={()=>applyQuickDate(k)}
                 style={{padding:"3px 6px",borderRadius:5,border:`1px solid ${T.gold}44`,
-                  background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",color:T.gold,fontSize:9,fontWeight:700,cursor:"pointer"}}>
+                  background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",color:T.gold,fontSize:9,fontWeight:700,cursor:"pointer"}}>
                 {l}
               </button>
             ))}
@@ -10094,6 +10349,27 @@ function SettingsInline() {
       {/* ── Custom Theme Editor ──────────────────────────────────────── */}
       <CustomThemeEditor/>
 
+      {/* ── Randlos-Modus ── */}
+      <div style={{marginBottom:14}}>
+        <div style={{color:T.lbl||T.txt2,fontSize:11,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+          {Li("square",13,T.blue)} Darstellung
+        </div>
+        <div onClick={()=>{const v=!noBorders;setNoBorders(v);localStorage.setItem("mbt_noborders",v?"1":"0");}}
+          style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,
+            cursor:"pointer",background:noBorders?`${T.blue}18`:"rgba(255,255,255,0.04)",
+            border:`1px solid ${noBorders?T.blue:T.bd}`}}>
+          <div style={{width:36,height:22,borderRadius:11,position:"relative",flexShrink:0,
+            background:noBorders?T.blue:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
+            <div style={{position:"absolute",top:3,left:noBorders?15:3,width:16,height:16,
+              borderRadius:"50%",background:"#fff",transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
+          </div>
+          <div>
+            <div style={{color:T.txt,fontSize:12,fontWeight:600}}>Randlos</div>
+            <div style={{color:T.txt2,fontSize:10}}>Alle Rahmenlinien ausblenden</div>
+          </div>
+        </div>
+      </div>
+
       <Lbl>Eigene Bezeichnung der 3. Spalte (aktueller Ist-Stand)</Lbl>
       <input value={col3Name} onChange={e=>setCol3Name(e.target.value)} placeholder="z.B. aktuell, DKB, ING…" style={{...INP,marginBottom:8}}/>
       <div style={{color:T.txt2,fontSize:11,marginBottom:18}}>Erscheint als dritte Spaltenüberschrift (gold) im Jahres- und Monatsplan.</div>
@@ -11299,8 +11575,8 @@ function AddTxModal() {
           </div>
         )}
 
-        {/* Abweichende Erst-/Letztbuchung (wiederkehrend + finanzierung) */}
-        {(typ==="wiederkehrend"||typ==="finanzierung")&&(
+        {/* Abweichende Erst-/Letztbuchung (nur Finanzierung) */}
+        {typ==="finanzierung"&&(
           <div onClick={()=>{setCustomFirstLast(v=>!v);setFirstAmount("");setLastAmount("");}}
             style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,cursor:"pointer",
               padding:"5px 8px",borderRadius:8,
@@ -11313,13 +11589,13 @@ function AddTxModal() {
                 boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
             </div>
             <span style={{color:customFirstLast?T.txt:T.txt2,fontSize:10}}>
-              Abweichende Erst- und/oder Letztbuchung
+              Abweichende Anzahlung / Schlussrate
             </span>
           </div>
         )}
 
-        {/* Erst-/Letztbetrag */}
-        {customFirstLast&&(typ==="wiederkehrend"||typ==="finanzierung")&&(
+        {/* Erst-/Letztbetrag nur für Finanzierung */}
+        {customFirstLast&&typ==="finanzierung"&&(
           <div style={{display:"flex",gap:6,marginBottom:8}}>
             <div style={{flex:1}}>
               <Lbl>Startbetrag (1. Buchung)</Lbl>
@@ -13051,7 +13327,7 @@ function JahrScreen({forceSingle=false}) {
             const cellBg = "transparent";
             const isFutureGiroSaldo = row.id==="giro_saldo" && sub!=="D" &&
               (year > nowYear || (year===nowYear && mi >= nowMonth));
-            const emptyCol = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")
+            const emptyCol = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")
               ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.12)";
             const textCol = isEmpty             ? emptyCol
                           : isOverride          ? T.gold
@@ -13348,7 +13624,7 @@ function JahrScreen({forceSingle=false}) {
                 </div>
               )}
               {drilldown.linkPendId&&(
-                <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",border:`1px solid ${T.gold}44`,
+                <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",border:`1px solid ${T.gold}44`,
                   borderRadius:10,margin:"0 12px 8px",padding:"8px 12px",
                   color:T.gold,fontSize:11,display:"flex",alignItems:"center",gap:8}}>
                   {Li("link",12,T.gold)}
@@ -13406,7 +13682,7 @@ function JahrScreen({forceSingle=false}) {
                       return (
                         <div key={tx.id} style={{display:"flex",alignItems:"center",gap:10,
                           padding:"8px 14px",borderBottom:`1px solid ${T.bd}`,cursor:"pointer",
-                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}} onClick={()=>{setDrilldown(null);openEdit(tx);}}>
+                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}} onClick={()=>{setDrilldown(null);openEdit(tx);}}>
                           <div style={{width:36,height:36,borderRadius:11,flexShrink:0,
                             background:(cat2?.color||"#888")+"33",display:"flex",alignItems:"center",justifyContent:"center"}}>
                             {Li(cat2?.icon||"target",16,cat2?.color||T.gold)}
@@ -13488,7 +13764,7 @@ function JahrScreen({forceSingle=false}) {
                           </div>
                           <div style={{color:T.txt2,fontSize:10,marginTop:1,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                             <span>{tx.date}</span>
-                            {tx.pending&&<span style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",color:T.gold,
+                            {tx.pending&&<span style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",color:T.gold,
                               borderRadius:4,padding:"0 4px",fontSize:9,fontWeight:700}}>
                               {isSelectedPend?"✓ ausgewählt":"Vormerkung – antippen zum Verknüpfen"}
                             </span>}
@@ -15084,7 +15360,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
 
           {/* Auto-Vorschläge Vergleichspanel */}
           {showAutoSugg&&(parsed.autoSuggestions||[]).length>0&&(
-            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderBottom:`1px solid ${T.gold}33`,
+            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderBottom:`1px solid ${T.gold}33`,
               padding:"10px 16px",flexShrink:0,maxHeight:220,overflowY:"auto"}}>
               <div style={{color:T.gold,fontSize:MFSl,fontWeight:700,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
                 {Li("git-compare",13,T.gold)} Automatische Verknüpfungsvorschläge — nur zur Ansicht, nichts wird automatisch übernommen
@@ -15229,7 +15505,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                           <div style={{color:T.txt2,fontSize:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                             <span>{r.isoDate}</span>
                             {r._paypalRows>1&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
-                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"0 4px"}}>
+                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"0 4px"}}>
                               {r._paypalRows} Zeilen zusammengefasst{r._paypalTypes?" · "+r._paypalTypes:""}
                             </span>}
                             {r._detailNote&&<span style={{color:T.blue,fontSize:9,fontWeight:600,
@@ -16402,7 +16678,10 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
       const s=new Date(startDate),e=new Date(endDate);
       return Math.max(1,Math.round(((e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth()))/interval_)+1);
     }
-    return Math.floor(84/interval_);
+    // 7 Jahre ab Startdatum
+    const s=new Date(startDate||today);
+    const endY=s.getFullYear()+6;
+    return Math.max(1,Math.round(((endY-s.getFullYear())*12+(11-s.getMonth()))/interval_)+1);
   };
   const totalCount = calcCount();
   const intervalLabel = {1:"monatlich",3:"quartalsweise",6:"halbjährlich",12:"jährlich"}[interval_]||`alle ${interval_} Monate`;
@@ -16454,10 +16733,8 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
     const firstAmt = customFL&&firstAmount ? pn(firstAmount.replace(",",".")) : null;
     const lastAmt  = customFL&&lastAmount  ? pn(lastAmount.replace(",","."))  : null;
     const newTxs = Array.from({length:n},(_,i)=>{
-      const d = new Date(startDate+"T12:00:00");
-      if(!firstIsStart || i>0) d.setMonth(d.getMonth()+i*interval_);
-      if(lastOfMon && (!firstIsStart || i>0)) d.setDate(new Date(d.getFullYear(),d.getMonth()+1,0).getDate());
-      const date = d.toISOString().split("T")[0];
+      const offset = (!firstIsStart || i>0) ? i*interval_ : 0;
+      const date = isoAddMonths(startDate, offset, lastOfMon);
       const txAmt = (i===0&&firstAmt!=null)?firstAmt:(i===n-1&&lastAmt!=null)?lastAmt:a;
       return {
         id:uid(), date, desc:desc.trim(), totalAmount:txAmt, pending:true,
@@ -16614,6 +16891,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
           <div style={{height:S.gap}}/>
 
           {/* Abweichende Erst-/Letztbuchung */}
+          {isFinanz&&<>
           <div onClick={()=>{setCustomFL(v=>!v);setFirstAmount("");setLastAmount("");}}
             style={{display:"flex",alignItems:"center",gap:12,padding:`${S.pad}px ${S.padL}px`,
               borderRadius:S.radius,cursor:"pointer",marginBottom:S.gap,
@@ -16625,20 +16903,20 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
                 borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
             </div>
             <span style={{color:customFL?T.txt:T.txt2,fontSize:S.fs}}>
-              {isFinanz?"Abweichende Anzahlung / Schlussrate":"Abweichende Erst-/Letztbuchung"}
+              Abweichende Anzahlung / Schlussrate
             </span>
           </div>
           {customFL&&(
             <div style={{display:"flex",gap:S.gap,marginBottom:S.gap}}>
               <div style={{flex:1}}>
-                {fieldLabel(isFinanz?"Anzahlung (1. Rate)":"Erstbetrag")}
+                {fieldLabel("Anzahlung (1. Rate)")}
                 <input type="text" inputMode="decimal" value={firstAmount}
                   onChange={e=>setFirstAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                   placeholder={amount||"0,00"}
                   style={{...inp({border:`2px solid ${T.blue}66`})}}/>
               </div>
               <div style={{flex:1}}>
-                {fieldLabel(isFinanz?"Schlussrate":"Letztbetrag")}
+                {fieldLabel("Schlussrate")}
                 <input type="text" inputMode="decimal" value={lastAmount}
                   onChange={e=>setLastAmount(e.target.value.replace(/[^0-9,\.]/g,""))}
                   placeholder={amount||"0,00"}
@@ -16646,6 +16924,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
               </div>
             </div>
           )}
+          </>}
 
           {/* Vorschau */}
           <div style={{background:"rgba(0,0,0,0.2)",borderRadius:S.radius/2,
@@ -17233,6 +17512,7 @@ window.FinanzApp = function FinanzApp() {
   const [activeStructurTab, setActiveStructurTab] = useState("einstellungen");
   const [hideEmptyRows, setHideEmptyRows] = useState(true);
   const [themeName, setThemeName] = useState(()=>localStorage.getItem("mbt_theme")||"dark");
+  const [noBorders, setNoBorders] = useState(()=>localStorage.getItem("mbt_noborders")==="1");
   const [themeRev, setThemeRev] = useState(0); // incremented to force re-render on same theme
   const [handedness, setHandedness] = useState(()=>localStorage.getItem("mbt_handedness")||"right");
   // T als reaktive Variable — alle Komponenten die T nutzen re-rendern durch Context
@@ -17279,6 +17559,7 @@ window.FinanzApp = function FinanzApp() {
   const [showMobilePicker, setShowMobilePicker] = useState(false);
   const [showMobileBudget, setShowMobileBudget] = useState(false);
   const [showMobileKategorien, setShowMobileKategorien] = useState(false);
+  const [dashDrillOpen, setDashDrillOpen] = useState(false);
   const [reviewQueue,   setReviewQueue]  = useState(null);
   const [customIcons,   setCustomIconsRaw] = useState(()=>{
     try { return JSON.parse(localStorage.getItem("mbt_custom_icons")||"[]"); } catch{ return []; }
@@ -19186,6 +19467,8 @@ Abbrechen = ${remoteName}-Stand laden`
     handedness, setHandedness,
     cfActive, cfSave, cfLoad, cfStatus, setCfStatus, cfUrl, cfSecret, setCfUrl, setCfSecret,
     cfSaveOnClose, setCfSaveOnClose,
+    dashDrillOpen, setDashDrillOpen,
+    noBorders, setNoBorders,
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -19211,7 +19494,7 @@ Abbrechen = ${remoteName}-Stand laden`
     "home";
   const anyMobileModalOpen = showMobileVormerken||showMobileWiederkehrend||
     showMobilePicker||showMobileKategorien||showMobileBudget||
-    showCsv||showVormHub||showRecurring||showMatching||!!modal;
+    showCsv||showVormHub||showRecurring||showMatching||!!modal||dashDrillOpen;
 
   const showMonthPicker = anyMobileModalOpen ||
     activeNavTab==="home"||activeNavTab==="monat"||
@@ -19220,8 +19503,9 @@ Abbrechen = ${remoteName}-Stand laden`
   return (
   <AppCtx.Provider value={cx}>
     <>
-    <div style={{background:T.bg,height:"100vh",maxHeight:"100vh",
-      colorScheme:themeName==="light"?"light":"dark",
+    <div className={noBorders?"no-borders":undefined}
+      style={{background:T.bg,height:"100vh",maxHeight:"100vh",
+      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark",
       display:"flex",flexDirection:"column",
       fontFamily:"'SF Pro Text',-apple-system,BlinkMacSystemFont,sans-serif",
       userSelect:"none",overflow:"hidden"}}>
@@ -19567,14 +19851,14 @@ Abbrechen = ${remoteName}-Stand laden`
               style={{
                 width:60, height:60, borderRadius:"50%",
                 border:`3px solid ${T.surf}`,
-                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")
+                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")
                   ?"linear-gradient(135deg,#9CC800,#AADD00)"
                   :`linear-gradient(135deg,${T.blue},${T.blue}BB)`,
                 cursor:"pointer", flexShrink:0,
                 display:"flex",alignItems:"center",justifyContent:"center",
                 boxShadow:"0 -2px 12px rgba(0,0,0,0.25)",
                 WebkitTapHighlightColor:"transparent"}}>
-              {Li("plus",30,(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper")?T.on_accent:"#000",2.5)}
+              {Li("plus",30,(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?T.on_accent:"#000",2.5)}
             </button>
           </div>
         );
