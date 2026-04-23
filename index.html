@@ -5853,7 +5853,7 @@ function PendingList({pTxs, getCat, txType, openEdit, dayOf, pendOpenAmt, getSub
       if(isAmtSearch) return matchAmount(Math.abs(t.totalAmount), search.replace(/^[+\-]/,""));
       return matchSearch(t.desc, search);
     });
-    return groupBudgetPairs(base);
+    return groupBudgetPairs([...base].sort(drillSort));
   }, [pTxs, search]);
   return (
     <div style={{background:T.vorm_bg||T.tab_pend,border:`2px solid ${T.vorm_bd||"rgba(255,200,0,0.8)"}`,borderRadius:16,margin:"0 10px 4px",padding:"7px 10px"}}>
