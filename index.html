@@ -268,6 +268,19 @@ const groupBudgetPairs = (txList) => {
 
 // Day of month from ISO date string
 const dayOf = iso => parseInt(iso.split("-")[2], 10);
+
+// Sortierung für Drilldown-Listen: zwei Sektionen (Mitte 1-14, Ende 15-31)
+// Budget-Vormerkungen (_budgetSubId) jeweils ganz oben in ihrer Sektion
+const drillSort = (a, b) => {
+  // Budget-Mitte (0) → Budget-Ende (1) → alle anderen absteigend nach Datum (2)
+  const sectionOf = t => {
+    if(!t._budgetSubId) return 2;
+    return t._budgetSubId.endsWith("_mitte") ? 0 : 1;
+  };
+  const sa = sectionOf(a), sb = sectionOf(b);
+  if(sa !== sb) return sa - sb;
+  return b.date.localeCompare(a.date);
+};
 const normSearch = s => (s||"").toLowerCase().replace(/[‒–—―−]/g,"-");
 const matchSearch = (text, search) => {
   if(!search.trim()) return true;
@@ -6127,7 +6140,7 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
             </div>
             {hasAny&&(
               <div style={{maxHeight:340,overflowY:"auto"}}>
-                {budgets2.sort((a,b)=>a.date.localeCompare(b.date)).map((b,bi)=>{
+                {budgets2.sort(drillSort).map((b,bi)=>{
                   const sub=getSub(getCat((b.budgetTx.splits||[])[0]?.catId)?.id||"",b.baseSubId)||getCat((b.budgetTx.splits||[])[0]?.catId);
                   const subName=sub?.name||b.budgetTx.desc||"Budget";
                   const overBudget=(b.realAmt+b.concAmt)>b.budget;
@@ -6141,13 +6154,13 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
                         <span style={{color:T.txt2,fontFamily:"monospace",fontSize:8,textDecoration:"line-through",flexShrink:0,marginRight:4}}>{b.isInc?"+":"−"}{fmt(b.budget)}</span>
                         <span style={{color:overBudget?T.warn:effCol,fontFamily:"monospace",fontSize:9,fontWeight:700,flexShrink:0}}>{b.isInc?"+":"−"}{fmt(b.effektiv)}</span>
                       </div>
-                      {b.realTxs.sort((a,c)=>a.date.localeCompare(c.date)).map(t=>(<TxRow key={t.id} t={t} isInc={b.isInc} indent icon="check-circle" iconCol={T.pos}/>))}
-                      {b.concTxs.sort((a,c)=>a.date.localeCompare(c.date)).map(t=>(<TxRow key={t.id} t={t} isInc={b.isInc} indent dimmed icon={t._seriesId?"repeat":"calendar"} iconCol={T.gold}/>))}
+                      {b.realTxs.sort((a,c)=>c.date.localeCompare(a.date)).map(t=>(<TxRow key={t.id} t={t} isInc={b.isInc} indent icon="check-circle" iconCol={T.pos}/>))}
+                      {b.concTxs.sort((a,c)=>c.date.localeCompare(a.date)).map(t=>(<TxRow key={t.id} t={t} isInc={b.isInc} indent dimmed icon={t._seriesId?"repeat":"calendar"} iconCol={T.gold}/>))}
                     </div>
                   );
                 })}
-                {unbPend.length>0&&<>{unbPend.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>(<TxRow key={t.id} t={t} isInc={t._csvType==="income"} icon={t._seriesId?"repeat":"calendar"} iconCol={T.gold}/>))}</>}
-                {unbReal.length>0&&<>{unbReal.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>(<TxRow key={t.id} t={t} isInc={t._csvType==="income"} icon="check-circle" iconCol={T.pos}/>))}</>}
+                {unbPend.length>0&&<>{unbPend.sort(drillSort).map(t=>(<TxRow key={t.id} t={t} isInc={t._csvType==="income"} icon={t._seriesId?"repeat":"calendar"} iconCol={T.gold}/>))}</>}
+                {unbReal.length>0&&<>{unbReal.sort(drillSort).map(t=>(<TxRow key={t.id} t={t} isInc={t._csvType==="income"} icon="check-circle" iconCol={T.pos}/>))}</>}
                 {(drill.overBudgetWarnings||[]).length>0&&(
                   <div style={{background:"rgba(255,159,67,0.12)",border:"1px solid rgba(255,159,67,0.4)",borderRadius:7,padding:"5px 8px",marginTop:4}}>
                     <div style={{color:T.warn,fontSize:9,fontWeight:700,marginBottom:3,display:"flex",alignItems:"center",gap:4}}>{Li("alert-triangle",9,T.warn)} Budget überschritten:</div>
@@ -6367,7 +6380,7 @@ function DashboardScreen() {
       const catIsIncome = cat.type==="income"||cat.type==="tagesgeld";
       const catIsExpense = cat.type==="expense";
       return (isNegative && catIsIncome) || (isPositive && catIsExpense);
-    }).sort((a,b)=>b.date.localeCompare(a.date));
+    }).sort(drillSort);
 
     return (<>
       <div style={{flex:1,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}}>
@@ -6568,7 +6581,7 @@ function DashboardScreen() {
                     onClick={()=>{
                       const txList=txs.filter(t=>{const d=new Date(t.date);return !t.pending&&!t._linkedTo&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
                       const pendList=txs.filter(t=>{const d=new Date(t.date);return t.pending&&!t._budgetSubId&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
-                      setDashDrill({cat,txList:[...txList,...pendList].sort((a,b)=>b.date.localeCompare(a.date)),isIncome:true});
+                      setDashDrill({cat,txList:[...txList,...pendList].sort(drillSort),isIncome:true});
                     }}>
                     <div style={{color:T.txt2,fontSize:7,fontWeight:700}}>{label}</div>
                     <div style={{color:amt>0?T.pos:T.txt2,fontSize:11,fontWeight:700,fontFamily:"monospace"}}>
@@ -6717,7 +6730,7 @@ function DashboardScreen() {
               }).filter(Boolean);
 
               setDashDrill({cat, label:`${cat.name} – ${label}`,
-                txList:[...realTxsForCat,...concreteP].sort((a,b)=>b.date.localeCompare(a.date)),
+                txList:[...realTxsForCat,...concreteP].sort(drillSort),
                 isIncome: cat.type==="income", isMitte,
                 budgetRest: budgetForHalf>0?budgetRest:null,
                 budgetTotal: budgetForHalf||budget,
@@ -6997,7 +7010,7 @@ function DashboardScreen() {
                                   if(t.pending&&t._budgetSubId) return false;
                                   const d=new Date(t.date);
                                   return d.getDate()<=maxDay;
-                                }).sort((a,b)=>b.date.localeCompare(a.date));
+                                }).sort(drillSort);
                                 setDashDrill({
                                   label:`${cat.name} / ${sub.name} — ${lbl}`,
                                   txList,
@@ -7111,7 +7124,7 @@ function DashboardScreen() {
                           );
                         })()}
                         {/* Buchungen der Unterkategorie */}
-                        {isExp(sub.id)&&subTxs.sort((a,b)=>b.date.localeCompare(a.date)).map(tx=>{
+                        {isExp(sub.id)&&subTxs.sort(drillSort).map(tx=>{
                           const sp = (tx.splits||[]).find(s=>s.subId===sub.id);
                           const amt = sp ? Math.abs(pn(sp.amount)) : Math.abs(tx.totalAmount);
                           return (
@@ -7169,17 +7182,37 @@ function DashboardScreen() {
                   </>);
                 })()}
                 {/* Normale Buchungsliste wenn kein Kategorie-Drill oder Suche aktiv */}
-                {(!dashDrill.cat||dashSearch)&&groupBudgetPairs((dashDrill.cat ? [
+                {(!dashDrill.cat||dashSearch)&&(()=>{
+                  const sorted = groupBudgetPairs((dashDrill.cat ? [
                     ...txs.filter(t=>{const d=new Date(t.date);return !t.pending&&!t._linkedTo&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===dashDrill.cat.id);}),
                     ...txs.filter(t=>{const d=new Date(t.date);return t.pending&&!t._budgetSubId&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===dashDrill.cat.id);}),
-                  ].sort((a,b)=>b.date.localeCompare(a.date))
-                  : (dashDrill.txList||[]).map(t=>txs.find(x=>x.id===t.id)||t)
-                ).filter(t=>{
+                  ].sort(drillSort)
+                  : [...(dashDrill.txList||[]).map(t=>txs.find(x=>x.id===t.id)||t)].sort(drillSort)
+                  ).filter(t=>{
                     if(!dashSearch) return true;
                     const isAmtSearch = /^[=<>]?[\d.,]+$/.test(dashSearch.trim());
                     if(isAmtSearch) return matchAmount(Math.abs(t.totalAmount), dashSearch);
                     return matchSearch(t.desc, dashSearch);
-                  })).map(tx=>{
+                  }));
+                  // Trennlinie zwischen Mitte (1-14) und Ende (15-31) einfügen
+                  const sectionOf = t => {
+                    if(!t._budgetSubId) return 2;
+                    return t._budgetSubId.endsWith("_mitte") ? 0 : 1;
+                  };
+                  let lastSection = null;
+                  return sorted.map((tx,idx)=>{
+                    const sec = sectionOf(tx);
+                    // Trennlinie nur zwischen Budget-Ende (1) und Rest (2), oder zwischen Mitte (0) und Ende (1)
+                    const showDivider = !dashSearch && lastSection!==null && lastSection<2 && sec===2;
+                    lastSection = sec;
+                    return (<React.Fragment key={tx.id}>
+                      {showDivider&&<div style={{padding:"6px 18px",background:T.surf3,
+                        borderBottom:`1px solid ${T.bd}`,display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{flex:1,height:1,background:T.bd}}/>
+                        <span style={{color:T.txt2,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:0.5}}>Vormerkungen</span>
+                        <div style={{flex:1,height:1,background:T.bd}}/>
+                      </div>}
+                      {(()=>{
                   // Budget-Paar: als einzelne Zeile darstellen
                   if(tx._isBudgetPair) {
                     const cat2 = getCat((tx.splits||[])[0]?.catId);
@@ -7196,6 +7229,28 @@ function DashboardScreen() {
                             <span style={{color:col2,fontSize:12,fontWeight:700,fontFamily:"monospace"}}>−{fmt(tx._mitteAmt)}</span>
                             <span style={{color:T.gold,fontSize:10}}>Gesamt</span>
                             <span style={{color:col2,fontSize:12,fontWeight:700,fontFamily:"monospace"}}>−{fmt(tx._mitteAmt+tx._endeAmt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  // Ungepaartes Budget (z.B. "Budget für Unvorhergesehenes" ohne Mitte)
+                  if(tx._budgetSubId && !tx._isBudgetPair) {
+                    const cat2 = getCat((tx.splits||[])[0]?.catId);
+                    const col2 = T.neg;
+                    const isMitte = tx._budgetSubId.endsWith("_mitte");
+                    return (
+                      <div key={tx.id} style={{padding:"10px 18px",borderBottom:`1px solid ${T.bd}`,background:T.surf3}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>{setDashDrill(null);openEdit(tx);}}>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{color:T.txt,fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tx.desc||cat2?.name}</div>
+                            <div style={{color:T.txt2,fontSize:10}}>{tx.date.slice(0,7)}</div>
+                          </div>
+                          <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+                            {isMitte&&<><span style={{color:T.mid,fontSize:10}}>Mitte</span>
+                            <span style={{color:col2,fontSize:12,fontWeight:700,fontFamily:"monospace"}}>−{fmt(tx.totalAmount)}</span></>}
+                            <span style={{color:T.gold,fontSize:10}}>Gesamt</span>
+                            <span style={{color:col2,fontSize:12,fontWeight:700,fontFamily:"monospace"}}>−{fmt(tx.totalAmount)}</span>
                           </div>
                         </div>
                       </div>
@@ -7325,7 +7380,10 @@ function DashboardScreen() {
                       )}
                     </div>
                   );
-                })}
+                  })()}
+                  </React.Fragment>);
+                  });
+                })()}
               </div>
             </div>
           </div>
@@ -13675,7 +13733,7 @@ function JahrScreen({forceSingle=false}) {
                     Keine Buchungen{drilldown.isSaldoRow?" / Vormerkungen":""} in diesem Zeitraum.
                   </div>
                 ):(
-                  groupBudgetPairs((drilldown.txList||[]).sort((a,b)=>a.date.localeCompare(b.date))).map(tx=>{
+                  groupBudgetPairs((drilldown.txList||[]).sort(drillSort)).map(tx=>{
                     // Budget-Paar: als einzelne Zeile
                     if(tx._isBudgetPair) {
                       const cat2=getCat((tx.splits||[])[0]?.catId);
