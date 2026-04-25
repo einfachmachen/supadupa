@@ -5972,17 +5972,19 @@ function PendingList({pTxs, getCat, txType, openEdit, dayOf, pendOpenAmt, getSub
 function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
   pTxsIn, pTxsOut, mTxs, dashLinkedChildIds,
   onDrillIn, onDrillOut, onDrillUncatIn, onDrillUncatOut, onDrillPendIn, onDrillPendOut,
-  onOpenMatching}) {
-  const { getKumulierterSaldo, getPrognoseSaldo, getPrognoseSaldoDetail, txs, getCat, getSub } = useContext(AppCtx);
+  onOpenMatching, prognoseMitte, prognoseEnde, dbg}) {
+  const { getKumulierterSaldo, getPrognoseSaldoDetail, txs, getCat, getSub } = useContext(AppCtx);
   const ks = getKumulierterSaldo(year, month);
   const ms = totalIn - totalOut;
   const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
   const isCurrent = year===nowY && month===nowM;
   const isFuture  = year>nowY || (year===nowY && month>nowM);
+  // Prognose: von außen übergeben (einfache Formel: Vormonat + Einnahmen - Ausgaben)
+  // detailMitte/detailEnde nur noch für den Drilldown-Inhalt (Buchungsliste)
   const detailMitte = (isCurrent||isFuture) ? getPrognoseSaldoDetail(year,month,true)  : null;
   const detailEnde  = (isCurrent||isFuture) ? getPrognoseSaldoDetail(year,month,false) : null;
-  const saldoMitte = detailMitte?.saldo ?? null;
-  const saldoEnde  = detailEnde?.saldo  ?? null;
+  const saldoMitte = (isCurrent||isFuture) ? prognoseMitte ?? null : null;
+  const saldoEnde  = (isCurrent||isFuture) ? prognoseEnde  ?? null : null;
   const ksColor = ks===null ? T.txt : ks<0 ? T.cond_neg : ks<=500 ? T.cond_warn : ks<=1000 ? T.cond_gold : T.cond_pos;
   const uncatIn  = (mTxs||[]).filter(t=>t._csvType==="income"||false).length; // computed inline below
   const uncatOut = 0;
@@ -6030,6 +6032,14 @@ function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
           </div>
         </div>
       </div>
+      {/* DEBUG */}
+      {dbg&&(saldoMitte!==null||saldoEnde!==null)&&(
+        <div style={{background:"#111",borderRadius:8,padding:"5px 8px",marginTop:4,fontSize:9,fontFamily:"monospace",color:"#ff0",lineHeight:1.8,wordBreak:"break-all"}}>
+          <b>base:</b> {fmt(dbg.base??0)}<br/>
+          <b>inM:</b> {fmt(dbg._inMitte)} <b>outM:</b> {fmt(dbg._outMitte)} → <b>ProgM:</b> {fmt(Math.abs(saldoMitte??0))}<br/>
+          <b>inE:</b> {fmt(dbg._inEnde)} <b>outE:</b> {fmt(dbg._outEnde)} → <b>ProgE:</b> {fmt(Math.abs(saldoEnde??0))}
+        </div>
+      )}
       {/* Saldo-Prognose Mitte / Ende — mit Drilldown */}
       {detailMitte&&<SaldoPrognose year={year} month={month} txs={txs} detailMitte={detailMitte} detailEnde={detailEnde} saldoMitte={saldoMitte} saldoEnde={saldoEnde} getCat={getCat} getSub={getSub}/>}
       {/* Warnungen: offene Vormerkungen die noch nicht zugeordnet wurden */}
@@ -6090,19 +6100,24 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
   const fmtD = iso=>{const[,m,d]=iso.split("-");return `${d}.${m}.`;};
   return (
     <div style={{borderTop:`1px solid rgba(255,255,255,0.07)`,paddingTop:6,marginTop:2}}>
-      <div style={{display:"flex",gap:6}}>
-        {pairs.filter(([,,s])=>s!==null).map(([label,col,saldo,det])=>(
-          <div key={label} onClick={()=>setDrillOpen(v=>v===label?null:label)}
-            style={{flex:1,textAlign:"center",cursor:"pointer",
-              background:drillOpen===label?"rgba(255,255,255,0.07)":"transparent",
-              borderRadius:8,padding:"3px 4px",transition:"background 0.15s"}}>
-            <div style={{color:col,fontSize:8,fontWeight:700,marginBottom:1,
-              display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-              {label} {Li(drillOpen===label?"chevron-up":"chevron-down",8,col)}
-            </div>
-            <div style={{color:saldo>=0?T.pos:T.neg,fontSize:12,fontWeight:700,fontFamily:"monospace"}}>
-              {saldo>=0?"+":"−"}{fmt(Math.abs(saldo))} €
-            </div>
+      {/* Mitte/Ende aligned to category columns: icon(44) + 3x flex:1, gap:3 */}
+      <div style={{display:"flex",gap:3,alignItems:"flex-start"}}>
+        <div style={{width:44,flexShrink:0}}/>
+        {[["Mitte",T.mid,saldoMitte,detailMitte],["Ende",T.gold,saldoEnde,detailEnde],[null,null,null,null]].map(([label,col,saldo,det],i)=>(
+          <div key={i} style={{flex:1,minWidth:0,textAlign:"center",
+            cursor:label?"pointer":"default",
+            background:label&&drillOpen===label?"rgba(255,255,255,0.07)":"transparent",
+            borderRadius:8,padding:"3px 4px",transition:"background 0.15s"}}
+            onClick={()=>label&&setDrillOpen(v=>v===label?null:label)}>
+            {label&&saldo!==null&&(<>
+              <div style={{color:col,fontSize:8,fontWeight:700,marginBottom:1,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                {label} {Li(drillOpen===label?"chevron-up":"chevron-down",8,col)}
+              </div>
+              <div style={{color:saldo>=0?T.pos:T.neg,fontSize:12,fontWeight:700,fontFamily:"monospace"}}>
+                {saldo>=0?"+":"−"}{fmt(Math.abs(saldo))} €
+              </div>
+            </>)}
           </div>
         ))}
       </div>
@@ -6328,6 +6343,9 @@ function DashboardScreen() {
     const [budgetEditKey, setBudgetEditKey] = useState(0);
     const openBudgetEdit = (sub) => { setBudgetEditSub(sub); setBudgetEditKey(k=>k+1); };
     const [dashIconPick, setDashIconPick] = useState(null);
+    const [catSortMode, setCatSortMode] = useState("desc"); // "desc" | "asc" | "custom"
+    const [dragCatId,   setDragCatId]   = useState(null);
+    const [dragOver,    setDragOver]    = useState(null);
     const [dashSearch, setDashSearch] = useState("");
     const [showDupDetail,   setShowDupDetail]   = useState(false);
     const [showMismatch,    setShowMismatch]    = useState(false);
@@ -6351,11 +6369,19 @@ function DashboardScreen() {
       .map(c=>({...c,sum:(c.subs||[]).reduce((s,sub)=>s+getActualSum(year,month,sub.id),0)}))
       .filter(c=>{
         if(c.sum>0) return true;
-        // Auch Kategorien mit Budget oder offenen Vormerkungen anzeigen
-        const hasBudget=(c.subs||[]).some(sub=>budgets[sub.id]?.amount>0);
-        const hasPend=txs.some(t=>t.pending&&!t._linkedTo&&!t._budgetSubId&&(()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&(t.splits||[]).some(sp=>sp.catId===c.id));
-        return hasBudget||hasPend;
-      }).sort((a,b)=>b.sum-a.sum);
+        const hasBudget=(c.subs||[]).some(sub=>getBudgetForMonth(sub.id,year,month)>0);
+        const hasPend=txs.some(t=>t.pending&&!t._linkedTo&&!t._budgetSubId&&
+          (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
+          (t.splits||[]).some(sp=>sp.catId===c.id));
+        const hasRealTx=txs.some(t=>!t.pending&&!t._linkedTo&&
+          (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
+          (t.splits||[]).some(sp=>sp.catId===c.id));
+        return hasBudget||hasPend||hasRealTx;
+      }).sort((a,b)=>{
+        if(catSortMode==="asc")  return a.sum-b.sum;
+        if(catSortMode==="custom") return 0;
+        return b.sum-a.sum;
+      });
     // Einnahmen-Kategorien (income + tagesgeld)
     // Einnahmen: echte Buchungen + konkrete Vormerkungen (kein Budget-Platzhalter)
     const getPendingIncomeSum = (catId) => txs.filter(t=>{
@@ -6368,7 +6394,20 @@ function DashboardScreen() {
 
     const incomeTotals = cats.filter(c=>c.type==="income"||c.type==="tagesgeld")
       .map(c=>({...c,sum:(c.subs||[]).reduce((s,sub)=>s+getActualSum(year,month,sub.id),0)+getPendingIncomeSum(c.id)}))
-      .filter(c=>c.sum>0).sort((a,b)=>b.sum-a.sum);
+      .filter(c=>{
+        if(c.sum>0) return true;
+        const hasPend=txs.some(t=>t.pending&&!t._linkedTo&&!t._budgetSubId&&
+          (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
+          (t.splits||[]).some(sp=>sp.catId===c.id));
+        const hasRealTx=txs.some(t=>!t.pending&&!t._linkedTo&&
+          (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
+          (t.splits||[]).some(sp=>sp.catId===c.id));
+        return hasPend||hasRealTx;
+      }).sort((a,b)=>{
+        if(catSortMode==="asc")  return a.sum-b.sum;
+        if(catSortMode==="custom") return 0;
+        return b.sum-a.sum;
+      });
 
     // Duplikat-Erkennung: nur zwischen VERSCHIEDENEN CSV-Quellen
     // Buchungen aus derselben CSV (gleicher _csvSource) werden nie als Duplikat gewertet
@@ -6413,6 +6452,95 @@ function DashboardScreen() {
       return (isNegative && catIsIncome) || (isPositive && catIsExpense);
     }).sort(drillSort);
 
+    // ── Gemeinsame Summen (Prognose + Header) ──
+    const _todayS=new Date(),_todayYS=_todayS.getFullYear(),_todayMS=_todayS.getMonth(),_todayDS=_todayS.getDate();
+    const _isCurS=year===_todayYS&&month===_todayMS,_isPastS=year<_todayYS||(year===_todayYS&&month<_todayMS);
+    const _lastDayS=new Date(year,month+1,0).getDate(),_mitteAbg=_isPastS||(_isCurS&&_todayDS>14),_endeAbg=_isPastS||(_isCurS&&_todayDS>=_lastDayS);
+    const _calcInc = (maxDay, onlyReal=false) => {
+      const isMC = maxDay===14;
+      if(onlyReal || (isMC && _mitteAbg) || (!isMC && _endeAbg)) {
+        return cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+    s+txs.filter(t=>{
+      if(t.pending||t._linkedTo||t._budgetSubId) return false;
+      const d=new Date(t.date);
+      return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+        (t.splits||[]).some(sp=>sp.catId===cat.id);
+    }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+      .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0)
+        ,0);
+      }
+      return cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+        s+txs.filter(t=>{
+    if(t._linkedTo||t._budgetSubId) return false;
+    const d=new Date(t.date);
+    return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+      (t.splits||[]).some(sp=>sp.catId===cat.id);
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+    .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0)
+      ,0);
+    };
+
+    // Ausgaben-Summen: exakt gleiche Logik wie calcTotal im Render
+    const _calcOut = (maxDay, onlyReal=false) => {
+      const isMC = maxDay===14;
+      return cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+        // Abgelaufen oder onlyReal: nur echte Buchungen
+        if(onlyReal||(isMC&&_mitteAbg)||(!isMC&&_endeAbg)) {
+          return s+txs.filter(t=>{
+            if(t.pending||t._linkedTo||t._budgetSubId) return false;
+            const d=new Date(t.date);
+            return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+              (t.splits||[]).some(sp=>sp.catId===cat.id);
+          }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+            .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+        }
+        // Nicht abgelaufen: je Sub max(budget, real+pend), dann Rest ohne Sub
+        const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
+        const subTotal=(cat.subs||[]).reduce((catSum,sub)=>{
+          const bG=getBudgetForMonth(sub.id,year,month);
+          const bM=(()=>{const m=getBudgetForMonth(sub.id+"_mitte",year,month);return(m>0&&m<bG)?m:0;})();
+          const budget=isMC?bM:bG;
+          const real=txs.filter(t=>{
+            if(t.pending||t._linkedTo||t._budgetSubId) return false;
+            const d=new Date(t.date);
+            return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+              (t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);
+          }).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+          const pend=txs.filter(t=>{
+            if(!t.pending||t._linkedTo||t._budgetSubId) return false;
+            const d=new Date(t.date);
+            return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+              (t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);
+          }).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+          return catSum+(budget>0?Math.max(budget,real+pend):real+pend);
+        },0);
+        // Vormerkungen + Buchungen ohne bekannte subId — separat, kein Budget-Floor
+        const pendNoSub=txs.filter(t=>{
+          if(!t.pending||t._linkedTo||t._budgetSubId) return false;
+          const d=new Date(t.date);
+          return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+            (t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)))
+          .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+        const realNoSub=txs.filter(t=>{
+          if(t.pending||t._linkedTo||t._budgetSubId) return false;
+          const d=new Date(t.date);
+          return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+            (t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)))
+          .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+        return s+subTotal+pendNoSub+realNoSub;
+      },0);
+    };
+
+    const _inMitte  = _calcInc(14);
+    const _inEnde   = _calcInc(_lastDayS);
+    const _inAkt    = _calcInc(_lastDayS, true);
+    const _outMitte = _calcOut(14);
+    const _outEnde  = _calcOut(_lastDayS);
+    const _outAkt   = _calcOut(_lastDayS, true);
+
+    // ── Prognose: Vormonatssaldo + Einnahmen - Ausgaben (Mitte/Ende) ──
     return (<>
       <div style={{flex:1,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}}>
         {/* Duplikat-Warnung */}
@@ -6472,7 +6600,72 @@ function DashboardScreen() {
             </button>
           </div>
         )}
+        {(()=>{
+          // ── Prognose: Vormonatssaldo + Einnahmen - Ausgaben ──
+
+          // Einnahmen-Summen
+          // Basis = Prognose-Ende des Vormonats
+          // Für vergangene Monate: echter Kontostand per getKumulierterSaldo
+          // Für aktuellen und zukünftige Monate: rekursiv Prognose-Ende berechnen
+          const getProgEnde = (y, m) => {
+            const tb=new Date();
+            // Vergangener Monat: echter Kontostand
+            if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth()))
+              return getKumulierterSaldo(y,m);
+            // Aktueller oder zukünftiger Monat: Prognose-Ende(Vormonat) + inc(m) - out(m)
+            const pY=m===0?y-1:y, pM=m===0?11:m-1;
+            const prevEnde = getProgEnde(pY, pM);
+            if(prevEnde===null||prevEnde===undefined) return null;
+            // inc/out für Monat (y,m) mit Ende-Logik — wiederverwendet _calcOut/_calcInc Logik
+            const lastD=new Date(y,m+1,0).getDate();
+            const todayY=tb.getFullYear(),todayM=tb.getMonth(),todayD=tb.getDate();
+            const isCur=y===todayY&&m===todayM, isPastM=y<todayY||(y===todayY&&m<todayM);
+            const endeAbgM=isPastM||(isCur&&todayD>=lastD);
+            // Einnahmen Ende
+            const inc=cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>{
+              // abgelaufen: nur echte; sonst: echt+vorme
+              return s+txs.filter(t=>{
+                if(t._linkedTo||t._budgetSubId) return false;
+                if(endeAbgM&&t.pending) return false;
+                const d=new Date(t.date);
+                return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+              }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+                .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+            },0);
+            // Ausgaben Ende: max(budget, real+pend) je Sub + pendNoSub + realNoSub
+            const out=cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+              if(endeAbgM) {
+                return s+txs.filter(t=>{
+                  if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                  const d=new Date(t.date);
+                  return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+                }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+                  .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+              }
+              const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
+              const subTotal=(cat.subs||[]).reduce((catSum,sub)=>{
+                const bG=getBudgetForMonth(sub.id,y,m);
+                // kein Mitte-Split → kein Budget-Floor für Mitte
+                const real=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+                const pend=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+                return catSum+(bG>0?Math.max(bG,real+pend):real+pend);
+              },0);
+              const pendNoSub=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+              const realNoSub=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+              return s+subTotal+pendNoSub+realNoSub;
+            },0);
+            return prevEnde + inc - out;
+          };
+          const prevY=month===0?year-1:year, prevM=month===0?11:month-1;
+          const base = getProgEnde(prevY, prevM);
+          // Prognose direkt aus gemeinsamen Summen: Vormonatssaldo + Einnahmen - Ausgaben
+          const prognoseMitte = base!=null ? base + _inMitte - _outMitte : null;
+          const prognoseEnde  = base!=null ? base + _inEnde  - _outEnde  : null;
+
+          return (
         <SaldoHero year={year} month={month}
+          prognoseMitte={prognoseMitte} prognoseEnde={prognoseEnde}
+          dbg={{base,_inMitte,_outMitte,_inEnde,_outEnde}}
           totalIn={totalIn} totalOut={totalOut}
           pendingIn={pendingIn} pendingOut={pendingOut}
           pTxsIn={pTxsIn} pTxsOut={pTxsOut}
@@ -6501,6 +6694,8 @@ function DashboardScreen() {
           onDrillPendOut={()=>{setDashDrill({label:"Ausgaben – Vormerkungen",txList:pTxsOut,isIncome:false,uncatCount:0,cat:null,total:pendingOut,isPending:true});setDashSearch("");}}
           onOpenMatching={()=>setShowMatching(true)}
         />
+          );
+        })()}
 
         {/* ── Tagesgeld-Transfer Widget ── */}
         <TagesgeldWidget year={year} month={month}/>
@@ -6586,12 +6781,24 @@ function DashboardScreen() {
           <div style={{position:"sticky",top:0,zIndex:5,
             background:T.bg,borderBottom:`1px solid ${T.bd}`,
             padding:"4px 10px"}}>
-            {/* Leerzeile für Kategoriename */}
-            <div style={{height:0}}/>
-            {/* Spaltenköpfe: exakt wie Zeilen-Layout */}
+            {/* Sort-Buttons */}
+            <div style={{display:"flex",gap:4,marginBottom:4}}>
+              {[["desc","↓ Größe"],["asc","↑ Größe"],["custom","✎ Eigene"]].map(([mode,lbl])=>(
+                <button key={mode} onClick={()=>setCatSortMode(mode)}
+                  style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:6,cursor:"pointer",
+                    fontFamily:"inherit",border:"none",
+                    background:catSortMode===mode?T.blue:"rgba(255,255,255,0.07)",
+                    color:catSortMode===mode?(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"?"#fff":T.bg):T.txt2}}>
+                  {lbl}
+                </button>
+              ))}
+              {catSortMode==="custom"&&<span style={{color:T.txt2,fontSize:9,alignSelf:"center",marginLeft:2}}>
+                Ziehen zum Sortieren
+              </span>}
+            </div>
+            {/* Spaltenköpfe */}
             <div style={{display:"flex",alignItems:"center",gap:3}}>
-              {/* Icon-Platzhalter */}
-              <div style={{width:44,height:20,flexShrink:0}}/>
+              <div style={{width:44,height:16,flexShrink:0}}/>
               {["Mitte","Ende","Aktuell"].map(lbl=>(
                 <div key={lbl} style={{flex:1,minWidth:0,textAlign:"center",
                   color:T.txt2,fontSize:9,fontWeight:700,letterSpacing:0.5,
@@ -6604,11 +6811,55 @@ function DashboardScreen() {
         )}
 
         {incomeTotals.length>0&&<>
-          <div style={{color:T.lbl||T.txt2,fontSize:13,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",padding:"8px 14px 4px"}}>Einnahmen</div>
-          {incomeTotals.map(cat=>(
+          {(()=>{
+            const sumMitte = _inMitte;
+            const sumEnde  = _inEnde;
+            const sumAkt   = _inAkt;
+            return (
+              <div style={{padding:"8px 10px 2px"}}>
+                <div style={{color:T.lbl||T.txt2,fontSize:13,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",marginBottom:3}}>Einnahmen</div>
+                <div style={{display:"flex",alignItems:"center",gap:3}}>
+                  <div style={{width:44,flexShrink:0}}/>
+                  {[sumMitte,sumEnde,sumAkt].map((v,i)=>(
+                    <div key={i} style={{flex:1,minWidth:0,textAlign:"center",
+                      color:v>0?T.pos:T.txt2,fontSize:11,fontWeight:700,fontFamily:"monospace",padding:"0 4px"}}>
+                      {v>0?fmt(v):"—"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+          {incomeTotals.map(cat=>{
+            const isDragTargetI = catSortMode==="custom" && dragOver===cat.id && dragCatId!==cat.id;
+            const isDraggingI   = catSortMode==="custom" && dragCatId===cat.id;
+            return (
             <div key={cat.id}
-              style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:0,padding:"7px 10px",margin:"2px 0",cursor:"pointer",borderTop:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`,borderBottom:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}
+              draggable={catSortMode==="custom"}
+              onDragStart={()=>setDragCatId(cat.id)}
+              onDragEnd={()=>{ setDragCatId(null); setDragOver(null); }}
+              onDragOver={e=>{e.preventDefault();setDragOver(cat.id);}}
+              onDrop={e=>{
+                e.preventDefault();
+                if(!dragCatId||dragCatId===cat.id) return;
+                setCats(prev=>{
+                  const arr=[...prev];
+                  const fi=arr.findIndex(c=>c.id===dragCatId);
+                  const ti=arr.findIndex(c=>c.id===cat.id);
+                  if(fi<0||ti<0) return prev;
+                  const [moved]=arr.splice(fi,1);
+                  arr.splice(ti,0,moved);
+                  return arr;
+                });
+                setDragCatId(null); setDragOver(null);
+              }}
+              style={{background:isDraggingI?"rgba(255,255,255,0.10)":isDragTargetI?T.blue+"22":T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",
+                borderRadius:0,padding:"7px 10px",margin:"2px 0",
+                cursor:catSortMode==="custom"?"grab":"pointer",opacity:isDraggingI?0.5:1,
+                borderTop:`2px solid ${isDragTargetI?T.blue:T.themeName==="dkb"?"#E0E8F0":T.bd}`,
+                borderBottom:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}
               onClick={()=>{
+                if(catSortMode==="custom") return;
                 const txList=txs.filter(t=>{const d=new Date(t.date);return !t.pending&&!t._linkedTo&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
                 const pendList=txs.filter(t=>{const d=new Date(t.date);return t.pending&&!t._budgetSubId&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
                 setDashDrill({cat,txList:[...txList,...pendList].sort(drillSort),isIncome:true});
@@ -6665,12 +6916,33 @@ function DashboardScreen() {
                 );
               })()}
             </div>
-          ))}
+            );
+          })}
         </>}
 
         {catTotals.length>0&&<>
-          <div style={{color:T.lbl||T.txt2,fontSize:13,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",padding:"8px 14px 4px"}}>Ausgaben</div>
+          {(()=>{
+            const sumMitte = _outMitte;
+            const sumEnde  = _outEnde;
+            const sumAkt   = _outAkt;
+            return (
+              <div style={{padding:"8px 10px 2px"}}>
+                <div style={{color:T.lbl||T.txt2,fontSize:13,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",marginBottom:3}}>Ausgaben</div>
+                <div style={{display:"flex",alignItems:"center",gap:3}}>
+                  <div style={{width:44,flexShrink:0}}/>
+                  {[sumMitte,sumEnde,sumAkt].map((v,i)=>(
+                    <div key={i} style={{flex:1,minWidth:0,textAlign:"center",
+                      color:v>0?T.neg:T.txt2,fontSize:11,fontWeight:700,fontFamily:"monospace",padding:"0 4px"}}>
+                      {v>0?fmt(v):"—"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
           {catTotals.map(cat=>{
+            const isDragTarget = catSortMode==="custom" && dragOver===cat.id && dragCatId!==cat.id;
+            const isDragging   = catSortMode==="custom" && dragCatId===cat.id;
             // budgets[sub.id].amount = Gesamtbudget (Mitte+Ende)
             const budget = (cat.subs||[]).reduce((s,sub)=>s+(getBudgetForMonth(sub.id,year,month))||0,0);
             const hasBudget = budget > 0;
@@ -6702,7 +6974,7 @@ function DashboardScreen() {
                 const gesamt = getBudgetForMonth(sub.id,year,month);
                 const mitte  = getBudgetForMonth(sub.id+"_mitte",year,month);
                 const hasSplit = mitte>0 && mitte<gesamt;
-                const subBudget = isMitte ? (hasSplit?mitte:gesamt) : gesamt;
+                const subBudget = isMitte ? (hasSplit?mitte:0) : gesamt;
                 if(!subBudget) return;
                 // Hat diese Unterkategorie einen Budget-Platzhalter im Zeitraum?
                 const hasPH = allP.some(t=>t._budgetSubId&&
@@ -6737,7 +7009,7 @@ function DashboardScreen() {
                 const gesamt = getBudgetForMonth(sub.id,year,month);
                 const mitte  = getBudgetForMonth(sub.id+"_mitte",year,month);
                 const hasSplit = mitte>0 && mitte<gesamt;
-                if(isMitte) return s+(hasSplit?mitte:gesamt);
+                if(isMitte) return s+(hasSplit?mitte:0);
                 return s+gesamt; // Ende = immer Gesamtbetrag
               },0);
 
@@ -6786,7 +7058,7 @@ function DashboardScreen() {
                 const gesamt = getBudgetForMonth(sub.id,year,month);
                 const mitte  = getBudgetForMonth(sub.id+"_mitte",year,month);
                 const hasSplit = mitte>0 && mitte<gesamt;
-                const subBudget = isMitte?(hasSplit?mitte:gesamt):gesamt;
+                const subBudget = isMitte?(hasSplit?mitte:0):gesamt;
                 if(!subBudget) return null;
                 const concSub = concreteP.filter(c=>(c.splits||[]).some(sp=>sp.subId===sub.id))
                   .reduce((s,c)=>s+(c.splits||[]).filter(sp=>sp.subId===sub.id).reduce((ss,sp)=>ss+Math.abs(pn(sp.amount)),0),0);
@@ -6805,10 +7077,31 @@ function DashboardScreen() {
             };
 
             return (
-            <div key={cat.id} onClick={()=>openDrillBudget(31,"Ende")}
-              style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:0,
-              padding:"7px 10px",margin:"2px 0",cursor:"pointer",
-              borderTop:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`,borderBottom:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}>
+            <div key={cat.id}
+              draggable={catSortMode==="custom"}
+              onDragStart={()=>setDragCatId(cat.id)}
+              onDragEnd={()=>{ setDragCatId(null); setDragOver(null); }}
+              onDragOver={e=>{e.preventDefault();setDragOver(cat.id);}}
+              onDrop={e=>{
+                e.preventDefault();
+                if(!dragCatId||dragCatId===cat.id) return;
+                setCats(prev=>{
+                  const arr=[...prev];
+                  const fi=arr.findIndex(c=>c.id===dragCatId);
+                  const ti=arr.findIndex(c=>c.id===cat.id);
+                  if(fi<0||ti<0) return prev;
+                  const [moved]=arr.splice(fi,1);
+                  arr.splice(ti,0,moved);
+                  return arr;
+                });
+                setDragCatId(null); setDragOver(null);
+              }}
+              onClick={()=>catSortMode!=="custom"&&openDrillBudget(31,"Ende")}
+              style={{background:isDragging?"rgba(255,255,255,0.10)":isDragTarget?T.blue+"22":T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",
+              borderRadius:0,padding:"7px 10px",margin:"2px 0",
+              cursor:catSortMode==="custom"?"grab":"pointer",opacity:isDragging?0.5:1,
+              borderTop:`2px solid ${isDragTarget?T.blue:T.themeName==="dkb"?"#E0E8F0":T.bd}`,
+              borderBottom:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}>
               {/* Kategoriename als Teilüberschrift — nur Text, kein Icon */}
               <div style={{color:cat.color||T.txt,fontSize:13,fontWeight:700,
                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
@@ -6847,28 +7140,83 @@ function DashboardScreen() {
                   const budgetMitte = (cat.subs||[]).reduce((s,sub)=>{
                     const g=getBudgetForMonth(sub.id,year,month), m=getBudgetForMonth(sub.id+"_mitte",year,month);
                     const hasSplit=m>0&&m<g;
-                    return s+(hasSplit?m:g);
+                    return s+(hasSplit?m:0);
                   },0);
                   const budgetEnde = (cat.subs||[]).reduce((s,sub)=>s+(getBudgetForMonth(sub.id,year,month)),0);
                   const subsWithBudget = new Set(
                     (cat.subs||[]).filter(sub=>pn(budgets[sub.id]?.amount)>0).map(s=>s.id)
                   );
+                  const today = new Date();
+                  const todayY = today.getFullYear(), todayM = today.getMonth(), todayD2 = today.getDate();
+                  const isCurrentMonth = year===todayY && month===todayM;
+                  const isPastMonth    = year<todayY || (year===todayY && month<todayM);
+                  const lastDayOfMonth = new Date(year, month+1, 0).getDate();
+                  // Abgelaufen nur für vergangene Monate oder aktuellen Monat nach Stichtag
+                  const mitteAbgelaufen = isPastMonth || (isCurrentMonth && todayD2 > 14);
+                  const endeAbgelaufen  = isPastMonth || (isCurrentMonth && todayD2 >= lastDayOfMonth);
                   const calcTotal = (maxDay) => {
-                    const real = txs.filter(t=>{
-                      if(t.pending||t._linkedTo||t._budgetSubId) return false;
-                      const d=new Date(t.date);
-                      return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
-                        (t.splits||[]).some(sp=>sp.catId===cat.id);
-                    }).reduce((s,t)=>s+(t.splits||[]).filter(sp=>sp.catId===cat.id)
-                      .reduce((ss,sp)=>ss+Math.abs(pn(sp.amount)),0),0);
-                    const pend = txs.filter(t=>{
+                    const isMitteCalc = maxDay===14;
+                    const isEndeCalc  = !isMitteCalc;
+                    // Abgelaufen? → nur echte Buchungen
+                    if(isMitteCalc && mitteAbgelaufen) {
+                      return txs.filter(t=>{
+                        if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                        const d=new Date(t.date);
+                        return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+                          (t.splits||[]).some(sp=>sp.catId===cat.id);
+                      }).reduce((s,t)=>s+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+                        .reduce((ss,sp)=>ss+Math.abs(pn(sp.amount)),0),0);
+                    }
+                    if(isEndeCalc && endeAbgelaufen) {
+                      return txs.filter(t=>{
+                        if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                        const d=new Date(t.date);
+                        return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+                          (t.splits||[]).some(sp=>sp.catId===cat.id);
+                      }).reduce((s,t)=>s+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+                        .reduce((ss,sp)=>ss+Math.abs(pn(sp.amount)),0),0);
+                    }
+                    // Noch nicht abgelaufen:
+                    // Je Sub: max(budget, real+pend) für Vormerkungen MIT subId
+                    const subTotal = (cat.subs||[]).reduce((catSum, sub)=>{
+                      const budgetGesamt = getBudgetForMonth(sub.id, year, month);
+                      const budgetMitteS = (()=>{
+                        const m=getBudgetForMonth(sub.id+"_mitte",year,month);
+                        return (m>0&&m<budgetGesamt)?m:0;
+                      })();
+                      const budget = isMitteCalc ? budgetMitteS : budgetGesamt;
+                      const real = txs.filter(t=>{
+                        if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                        const d=new Date(t.date);
+                        return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+                          (t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);
+                      }).reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+                      const pend = txs.filter(t=>{
+                        if(!t.pending||t._linkedTo||t._budgetSubId) return false;
+                        const d=new Date(t.date);
+                        return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+                          (t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);
+                      }).reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+                      return catSum + (budget>0 ? Math.max(budget, real+pend) : real+pend);
+                    }, 0);
+                    // Zusätzlich: Vormerkungen MIT catId aber OHNE subId (nicht in subs enthalten)
+                    const subIds = new Set((cat.subs||[]).map(s=>s.id));
+                    const pendNoSub = txs.filter(t=>{
                       if(!t.pending||t._linkedTo||t._budgetSubId) return false;
                       const d=new Date(t.date);
                       return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
-                        (t.splits||[]).some(sp=>sp.catId===cat.id);
-                    }).reduce((s,t)=>s+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+                        (t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));
+                    }).reduce((s,t)=>s+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)))
+                      .reduce((ss,sp)=>ss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+                    // Echte Buchungen ohne subId
+                    const realNoSub = txs.filter(t=>{
+                      if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                      const d=new Date(t.date);
+                      return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
+                        (t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));
+                    }).reduce((s,t)=>s+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)))
                       .reduce((ss,sp)=>ss+Math.abs(pn(sp.amount)),0),0);
-                    return real + pend;
+                    return subTotal + pendNoSub + realNoSub;
                   };
                   const calcBudgetSpent = (maxDay) => txs.filter(t=>{
                     if(t._linkedTo||t._budgetSubId) return false;
@@ -7081,7 +7429,7 @@ function DashboardScreen() {
                               // Budget je Halbmonat
                               const budgetMitteS = (()=>{
                                 const g=getBudgetForMonth(sub.id,year,month), m=getBudgetForMonth(sub.id+"_mitte",year,month);
-                                return (m>0&&m<g)?m:g;
+                                return (m>0&&m<g)?m:0;
                               })();
                               const budgetEndeS = getBudgetForMonth(sub.id,year,month);
                               const openSubDrill = (maxDay, lbl) => {
@@ -8254,7 +8602,7 @@ function BudgetEditorModal({sub, cat, onClose}) {
                 border:`1px solid ${T.mid}55`,background:goldBg}}/>
           </div>
           <div style={{flex:1}}>
-            <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Gesamt/Monat €</div>
+            <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>{intv===1?"Gesamt/Monat":intv===3?"Gesamt/Quartal":intv===6?"Gesamt/Halbjahr":"Gesamt/Jahr"} €</div>
             <input value={inGesamt} onChange={e=>setInGesamt(e.target.value)}
               placeholder="z.B. 300" inputMode="decimal"
               style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
@@ -8280,7 +8628,7 @@ function BudgetEditorModal({sub, cat, onClose}) {
 
         {/* Rhythmus */}
         <div style={{display:"flex",gap:4,marginBottom:8}}>
-          {[{v:1,l:"monatlich"},{v:3,l:"quartalsw."},{v:12,l:"jährlich"}].map(({v,l})=>(
+          {[{v:1,l:"monatlich"},{v:3,l:"quartalsw."},{v:6,l:"halbjährl."},{v:12,l:"jährlich"}].map(({v,l})=>(
             <button key={v} onClick={()=>setIntv(v)}
               style={{flex:1,padding:"6px 2px",borderRadius:8,cursor:"pointer",
                 fontFamily:"inherit",fontSize:10,fontWeight:700,
@@ -8561,7 +8909,7 @@ function SubRow({sub, si, arr, cat}) {
         </div>
         {budgets[sub.id]&&(
           <span style={{color:T.gold,fontSize:10,fontWeight:700,flexShrink:0,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:5,padding:"1px 5px"}}>
-            {Li("target",9,T.gold)} {fmt(budgets[sub.id].amount)} {budgets[sub.id].months===1?"mtl.":budgets[sub.id].months===3?"quartl.":"jährl."}{budgets[sub.id].startDate?` · ${budgets[sub.id].startDate.split("-")[2]}.`:""}
+            {Li("target",9,T.gold)} {fmt(budgets[sub.id].amount)} {budgets[sub.id].months===1?"mtl.":budgets[sub.id].months===3?"quartl.":budgets[sub.id].months===6?"halbj.":"jährl."}{budgets[sub.id].startDate?` · ${budgets[sub.id].startDate.split("-")[2]}.`:""}
           </span>
         )}
         <button onClick={()=>setSubEdit(subEdit==="budget"?false:"budget")}
@@ -11550,7 +11898,7 @@ function AddTxModal() {
                       {hasBudget?(
                         <span style={{color:T.gold,fontSize:10,fontWeight:700,
                           background:"rgba(245,166,35,0.12)",borderRadius:5,padding:"2px 6px"}}>
-                          {Li("target",9,T.gold)} {fmt(totalBudget)} {budgets[sub.id].months===1?"mtl.":budgets[sub.id].months===3?"quartl.":"jährl."}
+                          {Li("target",9,T.gold)} {fmt(totalBudget)} {budgets[sub.id].months===1?"mtl.":budgets[sub.id].months===3?"quartl.":budgets[sub.id].months===6?"halbj.":"jährl."}
                         </span>
                       ):(
                         <span style={{color:T.txt2,fontSize:10}}>{Li("plus",10,T.txt2)} Budget</span>
@@ -17248,6 +17596,7 @@ function MobileKategorienModal({onClose}) {
   const [budgetOpen, setBudgetOpen]  = useState({}); // {subId: bool}
   const [budgetEdits, setBudgetEdits] = useState({});
   const [budgetScope, setBudgetScope] = useState({});
+  const [budgetRhythm, setBudgetRhythm] = useState({}); // {subId: 1|3|6|12}
 
   const btnBase = {width:"100%",padding:`${S.padL}px`,borderRadius:S.radius,
     border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:S.fs,fontWeight:700,
@@ -17442,6 +17791,7 @@ function MobileKategorienModal({onClose}) {
               const amtE = Math.max(0, amtG - amtM);
               const isRenamingSub = !!budgetOpen[sub.id+"_rename"];
 
+              const rhythm = budgetRhythm[sub.id] || budgets[sub.id]?.months || 1;
               const doSaveBudget = () => {
                 const acc = accounts?.[0];
                 const pfx = `${year}-${pad2(month+1)}-`;
@@ -17457,21 +17807,33 @@ function MobileKategorienModal({onClose}) {
                       accountId:acc?.id||"",splits:[{id:uid(),catId:cat.id,subId:sub.id,amount:amtM}],_csvType:"expense"});
                     return [...rest,...add];
                   });
-                } else if(scope==="from") {
-                  const fromIso = `${year}-${pad2(month+1)}-01`;
-                  setTxs(p=>p.map(t=>{
-                    if(!t.pending) return t;
-                    if(t._budgetSubId===eKey&&t.date>=fromIso)
-                      return {...t,totalAmount:amtE,splits:[{...((t.splits||[])[0]||{}),amount:amtE}]};
-                    if(t._budgetSubId===mKey&&t.date>=fromIso)
-                      return amtM>0?{...t,totalAmount:amtM,splits:[{...((t.splits||[])[0]||{}),amount:amtM}]}:null;
-                    return t;
-                  }).filter(Boolean));
-                  setBudgets(p=>({...p,[eKey]:{amount:amtE,months:1},
-                    ...(amtM>0?{[mKey]:{amount:amtM,months:1}}:{})}));
                 } else {
-                  setBudgets(p=>({...p,[eKey]:{amount:amtE,months:1},
-                    ...(amtM>0?{[mKey]:{amount:amtM,months:1}}:{})}));
+                  // "from" oder "all": Platzhalter neu generieren ab startMonat
+                  const startY=year, startM=month;
+                  const endY=startY+6, endMo=11;
+                  const totalMos=(endY-startY)*12+(endMo-startM)+1;
+                  const n=Math.ceil(totalMos/rhythm);
+                  const newP=[];
+                  for(let i=0;i<n;i++){
+                    const tm=i*rhythm, mo=(startM+tm)%12, y=startY+Math.floor((startM+tm)/12);
+                    if(y>endY||(y===endY&&mo>endMo)) break;
+                    const maxD=new Date(y,mo+1,0).getDate();
+                    const day=String(Math.min(28,maxD)).padStart(2,"0");
+                    if(amtE>0) newP.push({id:uid(),date:`${y}-${pad2(mo+1)}-${day}`,
+                      desc:sub.name,totalAmount:amtE,pending:true,_budgetSubId:eKey,
+                      accountId:acc?.id||"",splits:[{id:uid(),catId:cat.id,subId:sub.id,amount:amtE}],_csvType:"expense"});
+                    if(amtM>0) newP.push({id:uid(),date:`${y}-${pad2(mo+1)}-14`,
+                      desc:sub.name,totalAmount:amtM,pending:true,_budgetSubId:mKey,
+                      accountId:acc?.id||"",splits:[{id:uid(),catId:cat.id,subId:sub.id,amount:amtM}],_csvType:"expense"});
+                  }
+                  if(scope==="from") {
+                    const fromIso=`${year}-${pad2(month+1)}-01`;
+                    setTxs(p=>[...p.filter(t=>!t.pending||(t._budgetSubId!==eKey&&t._budgetSubId!==mKey)||t.date<fromIso),...newP]);
+                  } else {
+                    setTxs(p=>[...p.filter(t=>!t.pending||(t._budgetSubId!==eKey&&t._budgetSubId!==mKey)),...newP]);
+                  }
+                  setBudgets(p=>({...p,[eKey]:{amount:amtE,months:rhythm},
+                    ...(amtM>0?{[mKey]:{amount:amtM,months:rhythm}}:{})}));
                 }
                 setBudgetOpen(p=>({...p,[sub.id]:false}));
                 setBudgetEdits(p=>{const n={...p};delete n[sub.id+"_G"];delete n[sub.id+"_M"];return n;});
@@ -17573,6 +17935,18 @@ function MobileKategorienModal({onClose}) {
                       {amtG>0&&<div style={{color:T.txt2,fontSize:S.fs-8,marginBottom:S.gap/2,textAlign:"right"}}>
                         2. Hälfte: {fmt(amtE)}
                       </div>}
+                      {/* Rhythmus */}
+                      <div style={{display:"flex",gap:4,marginBottom:S.gap/2}}>
+                        {[[1,"monatl."],[3,"quartalsw."],[6,"halbjährl."],[12,"jährlich"]].map(([v,l])=>(
+                          <button key={v} onClick={()=>setBudgetRhythm(p=>({...p,[sub.id]:v}))}
+                            style={{flex:1,padding:"6px 2px",borderRadius:8,border:"none",
+                              cursor:"pointer",fontFamily:"inherit",fontSize:S.fs-10,fontWeight:700,
+                              background:rhythm===v?T.gold+"33":"rgba(255,255,255,0.08)",
+                              color:rhythm===v?T.gold:T.txt2}}>
+                            {l}
+                          </button>
+                        ))}
+                      </div>
                       {/* Scope */}
                       <div style={{display:"flex",gap:4,marginBottom:S.gap/2}}>
                         {[["month","nur "+MONTHS[month]],["from","ab "+MONTHS[month]],["all","immer"]].map(([v,l])=>(
