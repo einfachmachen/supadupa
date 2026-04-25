@@ -6146,33 +6146,34 @@ function SaldoHero2({year, month,
   const ms = buchInE - buchOutE;
 
   const tapStyle = {cursor:"pointer",borderRadius:8,transition:"background 0.1s"};
+  const LBL_W = 42; // Label-Spalte in der Mitte
   const Val = ({v, cnt, clr, dim}) => (
     <div style={{flex:1,textAlign:"center"}}>
-      <span style={{color:clr,fontSize:12,fontWeight:700,opacity:dim?0.65:1}}>
+      <span style={{color:clr,fontSize:15,fontWeight:700,opacity:dim?0.55:1}}>
         {v>0?fmt(v):"–"}
       </span>
-      {cnt!=null&&v>0&&<span style={{color:subClr,fontSize:8,opacity:0.6}}> ({cnt})</span>}
+      {cnt!=null&&v>0&&<div style={{color:subClr,fontSize:9,opacity:0.6,marginTop:1}}>({cnt})</div>}
     </div>
   );
 
-  // Layout: MITTE(Ein+Aus) | Label | ENDE(Ein+Aus)
   const HalfCell = ({vIn, vOut, cntIn, cntOut, clrIn, clrOut, dim, onTapIn, onTapOut}) => (
-    <div style={{flex:2,display:"flex",gap:2}}>
-      <div style={{flex:1,textAlign:"center",...(onTapIn?tapStyle:{}),padding:"1px 0"}}
+    <div style={{flex:2,display:"flex"}}>
+      <div style={{flex:1,textAlign:"center",...(onTapIn?tapStyle:{}),padding:"3px 0"}}
         onClick={onTapIn||undefined}>
         <Val v={vIn}  cnt={cntIn}  clr={clrIn||T.pos} dim={dim}/>
       </div>
-      <div style={{flex:1,textAlign:"center",...(onTapOut?tapStyle:{}),padding:"1px 0"}}
+      <div style={{flex:1,textAlign:"center",...(onTapOut?tapStyle:{}),padding:"3px 0"}}
         onClick={onTapOut||undefined}>
         <Val v={vOut} cnt={cntOut} clr={clrOut||T.neg} dim={dim}/>
       </div>
     </div>
   );
+
   const Row = ({label, mIn, mOut, eIn, eOut, cntIn, cntOut, clrIn, clrOut, onTapIn, onTapOut}) => (
-    <div style={{display:"flex",alignItems:"center",marginBottom:4}}>
+    <div style={{display:"flex",alignItems:"center",marginBottom:6}}>
       <HalfCell vIn={mIn} vOut={mOut} cntIn={cntIn} cntOut={cntOut}
         clrIn={clrIn} clrOut={clrOut} dim={true} onTapIn={onTapIn} onTapOut={onTapOut}/>
-      <div style={{width:52,flexShrink:0,textAlign:"center",color:subClr,fontSize:8}}>{label}</div>
+      <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10}}>{label}</div>
       <HalfCell vIn={eIn} vOut={eOut} cntIn={cntIn} cntOut={cntOut}
         clrIn={clrIn} clrOut={clrOut} dim={false} onTapIn={onTapIn} onTapOut={onTapOut}/>
     </div>
@@ -6180,16 +6181,16 @@ function SaldoHero2({year, month,
 
   const PrognoseRow = ({pm, pe}) => (
     <div style={{display:"flex",alignItems:"center"}}>
-      <div style={{flex:2,textAlign:"center",...tapStyle,padding:"2px 0"}}
+      <div style={{flex:2,textAlign:"center",...tapStyle,padding:"4px 0"}}
         onClick={()=>onDrillPrognose&&onDrillPrognose(true)}>
-        <span style={{color:saldoColor(pm),fontSize:13,fontWeight:800}}>
+        <span style={{color:saldoColor(pm),fontSize:17,fontWeight:800}}>
           {pm!==null?fmt(pm)+" €":"–"}
         </span>
       </div>
-      <div style={{width:52,flexShrink:0,textAlign:"center",color:subClr,fontSize:9,fontWeight:700}}>Prog.</div>
-      <div style={{flex:2,textAlign:"center",...tapStyle,padding:"2px 0"}}
+      <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10,fontWeight:700}}>Prog.</div>
+      <div style={{flex:2,textAlign:"center",...tapStyle,padding:"4px 0"}}
         onClick={()=>onDrillPrognose&&onDrillPrognose(false)}>
-        <span style={{color:saldoColor(pe),fontSize:13,fontWeight:800}}>
+        <span style={{color:saldoColor(pe),fontSize:17,fontWeight:800}}>
           {pe!==null?fmt(pe)+" €":"–"}
         </span>
       </div>
@@ -6197,27 +6198,25 @@ function SaldoHero2({year, month,
   );
 
   return (
-    <div style={{margin:"6px 10px 4px",background:T.hero_bg,
-      borderRadius:22,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:-30,right:-30,width:110,height:110,borderRadius:"50%",
-        background:isLight?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.07)"}}/>
+    <div style={{margin:"4px 0 0",background:T.hero_bg,
+      borderRadius:0,padding:"12px 14px 10px",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-30,right:-30,width:130,height:130,borderRadius:"50%",
+        background:isLight?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.06)"}}/>
 
       {/* Kontostand zentriert */}
-      <div style={{textAlign:"center",margin:"2px 0 8px"}}>
-        <div style={{fontSize:34,fontWeight:800,letterSpacing:-1,color:ksColor}}>
+      <div style={{textAlign:"center",margin:"0 0 10px"}}>
+        <div style={{fontSize:40,fontWeight:800,letterSpacing:-1,color:ksColor}}>
           {ks!==null ? fmt(Math.abs(ks))+" €" : fmt(Math.abs(ms))+" €"}
         </div>
       </div>
 
-      {/* Tabelle: MITTE-Ein | MITTE-Aus | Label | ENDE-Ein | ENDE-Aus */}
-      <div style={{background:"rgba(255,255,255,0.06)",borderRadius:14,padding:"8px 10px"}}>
-        {/* Kopfzeile: MITTE | Label | ENDE */}
-        {showPrognose&&<div style={{display:"flex",alignItems:"center",marginBottom:5}}>
-          <div style={{flex:2,textAlign:"center",color:T.mid,fontSize:10,fontWeight:700,letterSpacing:0.5}}>MITTE</div>
-          <div style={{width:52,flexShrink:0}}/>
-          <div style={{flex:2,textAlign:"center",color:T.gold,fontSize:10,fontWeight:700,letterSpacing:0.5}}>ENDE</div>
+      {/* Tabelle */}
+      <div style={{background:"rgba(255,255,255,0.06)",borderRadius:14,padding:"10px 10px 8px"}}>
+        {showPrognose&&<div style={{display:"flex",alignItems:"center",marginBottom:7}}>
+          <div style={{flex:2,textAlign:"center",color:T.mid,fontSize:11,fontWeight:700,letterSpacing:0.5}}>MITTE</div>
+          <div style={{width:LBL_W,flexShrink:0}}/>
+          <div style={{flex:2,textAlign:"center",color:T.gold,fontSize:11,fontWeight:700,letterSpacing:0.5}}>ENDE</div>
         </div>}
-
 
         <Row label="Buch."
           mIn={buchInM} mOut={buchOutM} eIn={buchInE} eOut={buchOutE}
@@ -6234,15 +6233,15 @@ function SaldoHero2({year, month,
           clrIn={T.gold} clrOut={T.gold}
           onTapIn={onDrillUncatIn} onTapOut={onDrillUncatOut}/>}
 
-        <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"4px 0"}}/>
+        <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"6px 0 4px"}}/>
 
         {showPrognose
           ? <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>
           : <div style={{display:"flex",alignItems:"center"}}>
               <div style={{flex:2,textAlign:"center"}}>
-                <span style={{color:ms>=0?T.pos:T.neg,fontSize:13,fontWeight:800}}>{fmt(Math.abs(ms))} €</span>
+                <span style={{color:ms>=0?T.pos:T.neg,fontSize:17,fontWeight:800}}>{fmt(Math.abs(ms))} €</span>
               </div>
-              <div style={{width:52,flexShrink:0,textAlign:"center",color:subClr,fontSize:9,fontWeight:700}}>Saldo</div>
+              <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10,fontWeight:700}}>Saldo</div>
               <div style={{flex:2}}/>
             </div>}
       </div>
