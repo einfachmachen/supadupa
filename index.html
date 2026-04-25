@@ -738,7 +738,7 @@ const BASE_ROWS = [
   {id:"tg_saldo_giro",label:"Saldo Giro vor Gehalt",   block:"tg",   type:"row",       cols:true},
   {id:"tg_vorschlag", label:"Vorschlag eig. Einzahl.", block:"tg",   type:"row",       cols:true},
   {id:"tg_gutschrift",label:"Gutschrift",              block:"tg",   type:"row",       cols:true},
-  {id:"tg_einzahlung",label:"Eigene Einzahlung",       block:"tg",   type:"row",       cols:true},
+  {id:"tg_einzahlung",label:"eigene Einzahlung",       block:"tg",   type:"row",       cols:true},
   {id:"tg_zinsen",    label:"Zinsen",                  block:"tg",   type:"row",       cols:true},
   {id:"tg_saldo",     label:"TAGESGELD (Saldo)",       block:"tg",   type:"result",    cols:true},
   {id:"giro_head",    label:"Giro",                    block:"giro", type:"header",    cols:false},
@@ -1006,7 +1006,7 @@ function InlineCatSelect({value, onChange, allCatOpts, cats, setCats, groups, is
           ))}
         </select>
         <button onClick={()=>setShowNew(v=>!v)}
-          title="Neue Kategorie anlegen"
+          title="neue Kategorie anlegen"
           style={{padding:"3px 7px",borderRadius:6,border:`1px solid ${showNew?col:T.bds}`,
             background:showNew?`${col}22`:"transparent",color:showNew?col:T.txt2,
             fontSize:10,cursor:"pointer",flexShrink:0,fontFamily:"inherit",fontWeight:700}}>
@@ -1060,14 +1060,14 @@ function InlineCatSelect({value, onChange, allCatOpts, cats, setCats, groups, is
               </select>
             ):(
               <input value={ncCatName} onChange={e=>setNcCatName(e.target.value)}
-                placeholder="Name der Kategorie"
+                placeholder="name der Kategorie"
                 style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,
                   borderRadius:6,padding:"4px 7px",color:T.txt,fontSize:10,outline:"none",
                   boxSizing:"border-box",marginBottom:5,fontFamily:"inherit"}}/>
             )}
             {/* Unterkategorie */}
             <input value={ncSubName} onChange={e=>setNcSubName(e.target.value)}
-              placeholder="Name der Unterkategorie"
+              placeholder="name der Unterkategorie"
               style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,
                 borderRadius:6,padding:"4px 7px",color:T.txt,fontSize:10,outline:"none",
                 boxSizing:"border-box",marginBottom:6,fontFamily:"inherit"}}/>
@@ -1155,12 +1155,12 @@ function InlineNewCat({s, isIncome, groups, cats, setCats, set_, setNewCatPanel}
             </select>
           ):(
             <input value={ncCatName} onChange={e=>setNcCatName(e.target.value)}
-              placeholder="Name der neuen Kategorie"
+              placeholder="name der neuen Kategorie"
               style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,borderRadius:7,padding:"5px 8px",color:T.txt,fontSize:11,outline:"none",boxSizing:"border-box",marginBottom:6,fontFamily:"inherit"}}/>
           )}
           <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Unterkategorie</div>
           <input value={ncSubName} onChange={e=>setNcSubName(e.target.value)}
-            placeholder="Name der Unterkategorie"
+            placeholder="name der Unterkategorie"
             style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,borderRadius:7,padding:"5px 8px",color:T.txt,fontSize:11,outline:"none",boxSizing:"border-box",marginBottom:8,fontFamily:"inherit"}}/>
           <button
             disabled={!ncSubName.trim()||(ncCatMode==="existing"?!ncCatId:!ncCatName.trim())}
@@ -1527,16 +1527,16 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
           </div>
           <div style={{color:T.txt2,fontSize:10,marginTop:1}}>
             {tab==="vormerkung"&&(
-              phase==="config"?"Zeitraum wählen":
+              phase==="config"?"zeitraum wählen":
               phase==="vendors"?`Schritt 1/2 — Absender (${(vendors||[]).length} gefunden)`:
               phase==="results"?`Schritt 2/2 — Vorschläge (${suggestions.length} Muster)`:
-              "Fertig"
+              "fertig"
             )}
             {tab==="kategorisieren"&&(
-              katPhase==="config"?"Zeitraum wählen":
+              katPhase==="config"?"zeitraum wählen":
               katPhase==="vendors"?`Schritt 1/2 — Absender (${(katVendors||[]).length} gefunden)`:
               katPhase==="apply"?`Schritt 2/2 — Kategorien zuweisen`:
-              "Fertig"
+              "fertig"
             )}
           </div>
         </div>
@@ -1558,7 +1558,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
       {/* Tab-Switch */}
       {(phase==="config"||phase==="done")&&(katPhase==="config"||katPhase==="done")&&(
         <div style={{display:"flex",background:T.surf,borderBottom:`1px solid ${T.bd}`,flexShrink:0}}>
-          {[["vormerkung","Vormerkungen erstellen","clock"],["kategorisieren","Buchungen kategorisieren","tag"]].map(([id,label,icon])=>(
+          {[["vormerkung","vormerkungen erstellen","clock"],["kategorisieren","buchungen kategorisieren","tag"]].map(([id,label,icon])=>(
             <button key={id} onClick={()=>setTab(id)}
               style={{flex:1,padding:"10px 8px",border:"none",borderBottom:`2px solid ${tab===id?T.gold:"transparent"}`,
                 background:"transparent",color:tab===id?T.gold:T.txt2,fontSize:12,fontWeight:tab===id?700:400,
@@ -1985,7 +1985,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
                         ))}
                       </select>
                       <button onClick={()=>setNewCatPanel(newCatPanel===s.id?null:s.id)}
-                        title="Neue Kategorie anlegen"
+                        title="neue Kategorie anlegen"
                         style={{padding:"6px 8px",borderRadius:8,border:`1px solid ${T.pos}44`,
                           background:newCatPanel===s.id?`${T.pos}22`:`${T.pos}11`,
                           color:T.pos,fontSize:11,cursor:"pointer",flexShrink:0,
@@ -2022,7 +2022,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
             {suggestions.filter(s=>accepted.has(s.id)).length} Serien angelegt!
           </div>
           <div style={{color:T.txt2,fontSize:13,textAlign:"center"}}>
-            Die Vormerkungen erscheinen im Dashboard unter "Offene Vormerkungen".
+            Die Vormerkungen erscheinen im Dashboard unter "offene Vormerkungen".
           </div>
           <button onClick={onClose}
             style={{padding:"12px 32px",borderRadius:11,border:"none",background:T.gold,
@@ -2422,43 +2422,33 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   // Typ
   const [typ, setTyp] = useState(initTyp);
 
-  // Scope für Bearbeiten
-  const [editScope, setEditScope] = useState("single"); // single | from | all
-  const [fromDate,  setFromDate]  = useState(editVorm?.date||today); // "Ab dieser" Datum
-  const [fromDateManual, setFromDateManual] = useState(false); // User hat manuell geändert
+  // Scope für Bearbeiten: single | range | from | all
+  const [editScope, setEditScope] = useState("single");
+  // Hilfsfunktion: Datum der Buchung im Monat y/m dieser Serie
+  const _txDateForMonth = (y, m) => {
+    const pad2 = n=>String(n).padStart(2,"0");
+    const ms = `${y}-${pad2(m+1)}`;
+    const found = txs.find(t=>t._seriesId===editVorm?._seriesId && !t._exSeriesId && t.date.startsWith(ms));
+    if(found) return found.date;
+    // Fallback: Tag aus editVorm, im Monat y/m
+    const origDay = editVorm?.date ? parseInt(editVorm.date.split("-")[2]) : 1;
+    const maxD = new Date(y, m+1, 0).getDate();
+    return `${y}-${pad2(m+1)}-${pad2(Math.min(origDay,maxD))}`;
+  };
+  const [scopeFrom, setScopeFrom] = useState(()=>_txDateForMonth(year, month));
+  const [scopeTo,   setScopeTo]   = useState(()=>_txDateForMonth(year, month));
+  const [fromDateManual, setFromDateManual] = useState(false);
   const [lastOfMonth, setLastOfMonth] = useState(editVorm?._lastOfMonth||false);
 
-  // Berechnet das korrekte fromDate für einen Monat
-  const _calcFromDate = (lom, m, y) => {
-    const pad2 = n=>String(n).padStart(2,"0");
-    if(lom) {
-      const lastDay = new Date(y, m+1, 0).getDate();
-      return `${y}-${pad2(m+1)}-${pad2(lastDay)}`;
-    }
-    const origDay = editVorm?.date ? parseInt(editVorm.date.split("-")[2]) : 1;
-    const day = Math.min(origDay, new Date(y, m+1, 0).getDate());
-    return `${y}-${pad2(m+1)}-${pad2(day)}`;
-  };
-
-  // Monat/Jahr wechselt → fromDate nachziehen (nur wenn nicht manuell)
+  // Monat/Jahr wechselt → scopeFrom/scopeTo nachziehen (nur wenn nicht manuell)
   React.useEffect(()=>{
     if(fromDateManual) return;
-    const pad2 = n=>String(n).padStart(2,"0");
-    if(editScope==="from") {
-      setFromDate(_calcFromDate(lastOfMonth, month, year));
-    } else if(editScope==="single" && editVorm?._seriesId) {
-      const found = txs.find(t=>t._seriesId===editVorm._seriesId
-        && !t._exSeriesId && t.date.startsWith(`${year}-${pad2(month+1)}`));
-      if(found) setFromDate(found.date);
-      else setFromDate(_calcFromDate(lastOfMonth, month, year));
-    }
+    const d = _txDateForMonth(year, month);
+    setScopeFrom(d);
+    if(editScope==="single") setScopeTo(d);
     // Im Bearbeiten-Modus: Startdatum auf die Buchung im gewählten Monat setzen
-    if(isEdit && editVorm?._seriesId) {
-      const found = txs.find(t=>t._seriesId===editVorm._seriesId
-        && !t._exSeriesId && t.date.startsWith(`${year}-${pad2(month+1)}`));
-      if(found) setStartDate(found.date);
-    }
-  }, [month, year, editScope]);
+    if(isEdit && editVorm?._seriesId) setStartDate(d);
+  }, [month, year]);
 
   // Formular — mit Vorbelegung aus editVorm
   const initSplit = editVorm ? (editVorm.splits||[])[0] : null;
@@ -2470,10 +2460,17 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
   const [accountId, setAccountId] = useState(editVorm?.accountId||accounts[0]?.id||"");
   const [note,      setNote]      = useState(editVorm?.note||"");
   const [startDate, setStartDate] = useState(()=>{
+    if(editVorm?._seriesId) {
+      // Für Serien: erste Buchung der Serie als Startdatum
+      const firstTx = txs.filter(t=>t._seriesId===editVorm._seriesId&&!t._exSeriesId)
+        .sort((a,b)=>a.date.localeCompare(b.date))[0];
+      if(firstTx) return firstTx.date;
+    }
     if(editVorm?.date) return editVorm.date;
-    // Neu-Anlegen: erster Tag des aktiven Monats als Default
+    // Neu-Anlegen: heute als Default (nicht der angezeigte Monat!)
+    const now = new Date();
     const pad2 = n=>String(n).padStart(2,"0");
-    return `${year}-${pad2(month+1)}-01`;
+    return `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
   });
   const [endDate,   setEndDate]   = useState("");
   const [valueDate, setValueDate] = useState(editVorm?.valueDate||"");
@@ -2485,8 +2482,13 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     // (wird unten via seriesInterval überschrieben sobald txs verfügbar)
     return editVorm.repeatMonths||1;
   });
-  const [count,     setCount]     = useState(()=>{
-    if(!editVorm || !editVorm._seriesId) return "";
+  const [count, setCount] = useState(()=>{
+    if(!editVorm?._seriesId) return "";
+    // Finanzierung: Ratenanzahl vorausfüllen
+    if(editVorm._seriesTyp==="finanzierung") {
+      const n = txs.filter(t=>t._seriesId===editVorm._seriesId&&!t._isException).length;
+      return n>0 ? String(n) : "";
+    }
     return "";
   });
   const [customFirstLast, setCustomFirstLast] = useState(()=>{
@@ -2512,7 +2514,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     const found = txs.find(t=>t._seriesId===editVorm._seriesId
       && !t._exSeriesId && t.date.startsWith(monthStr));
     if(found) setExStartDate(found.date);
-    else setExStartDate(_calcFromDate(lastOfMonth, month, year));
+    else setExStartDate(_txDateForMonth(year, month));
   }, [month, year, showExForm]);
   const [exCount,       setExCount]       = useState("");
   const [exEditId,      setExEditId]      = useState(null);  // _exSeriesId beim Bearbeiten
@@ -2655,7 +2657,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
 
   // Korrigiere amount auf den regulären Betrag (nicht den der angeklickten Buchung)
   React.useEffect(()=>{
-    if(!isEdit || !seriesAmtInfo.regularAmt) return;
+    if(!isEdit || !seriesAmtInfo.regularAmt || seriesAmtInfo.regularAmt<=0) return;
     setAmount(String(seriesAmtInfo.regularAmt).replace(".",","));
   }, [seriesAmtInfo.regularAmt]);
 
@@ -2702,7 +2704,11 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
       const months=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth())+1;
       return Math.max(1, Math.ceil(months/interval_));
     }
-    if(typ==="finanzierung") return 1;
+    // Finanzierung: bestehende Serienanzahl als Fallback (nicht 1!)
+    if(typ==="finanzierung") {
+      if(isEdit && seriesCount) return seriesCount;
+      return 1;
+    }
     // "unbegrenzt" = vom Startdatum bis Dezember (Startjahr + 6)
     const start = new Date(startDate||today);
     const endYear = start.getFullYear() + 6;
@@ -2726,77 +2732,77 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
     // ── BEARBEITEN-MODUS ──────────────────────────────────────────────
     if(isEdit) {
       const seriesId = editVorm._seriesId;
-      if(typ==="einmalig" || !seriesId || editScope==="single") {
-        // Finde die Buchung im gewählten Monat (year/month aus Monatswähler)
-        const pad2 = n=>String(n).padStart(2,"0");
-        const monthStr = `${year}-${pad2(month+1)}`;
-        const targetId = (editScope==="single" && seriesId)
-          ? (txs.find(t=>t._seriesId===seriesId && !t._exSeriesId
-              && t.date.startsWith(monthStr))?.id || editVorm.id)
-          : editVorm.id;
-        setTxs(p=>p.map(t=>t.id!==targetId ? t : {
-          ...t, desc:desc.trim(), totalAmount:amt, date:startDate||t.date,
-          accountId, _csvType:csvType, splits:newSplits, note:note||"",
-          valueDate: valueDate||undefined,
+      const pad2 = n=>String(n).padStart(2,"0");
+
+      // Hilfsfunktion: eine einzelne tx updaten
+      const updateTx = (t) => ({
+        ...t, desc:desc.trim(), totalAmount:amt,
+        accountId, _csvType:csvType, splits:newSplits, note:note||"",
+        repeatMonths:interval_,
+        ...(lastOfMonth?{_lastOfMonth:true}:{_lastOfMonth:undefined}),
+        ...(typ==="finanzierung"?{_seriesTyp:"finanzierung"}:{_seriesTyp:undefined}),
+      });
+
+      if(typ==="einmalig" || !seriesId) {
+        // Einmalige Buchung: direkt updaten inkl. Datum
+        setTxs(p=>p.map(t=>t.id!==editVorm.id ? t : {
+          ...updateTx(t), date: startDate||t.date
         }));
+
+      } else if(editScope==="single") {
+        // Nur die Buchung im aktuell gewählten Monat ändern (Datum bleibt)
+        const monthStr = `${year}-${pad2(month+1)}`;
+        setTxs(p=>p.map(t=>{
+          if(t._seriesId!==seriesId||t._exSeriesId) return t;
+          if(!t.date.startsWith(monthStr)) return t;
+          return updateTx(t);
+        }));
+
       } else {
-        // Ab dieser / Alle
-        setTxs(prevTxs=>{
-          const seriesTxs = prevTxs.filter(t=>t._seriesId===seriesId && !t._exSeriesId)
-            .sort((a,b)=>a.date.localeCompare(b.date));
-          // fromDate frisch berechnen beim Speichern
-          const effectiveFromDate = editScope==="from"
-            ? _calcFromDate(lastOfMonth, month, year)
-            : fromDate;
-          // "Ab dieser": alle Buchungen >= effectiveFromDate; "Alle": alle
-          const thisIdx = editScope==="all" ? 0
-            : seriesTxs.findIndex(t=>t.date>=effectiveFromDate);
-          const startIdx = thisIdx<0 ? seriesTxs.length : thisIdx;
-          const toUpdateAll = seriesTxs.slice(startIdx);
-          // Alle Buchungen ab fromDate updaten (pending UND bereits gebuchte)
-          const toUpdateIds = new Set(toUpdateAll.map(t=>t.id));
-          // Datums-Verschiebung nur wenn startDate explizit geändert wurde
-          const origDate = new Date(editVorm.date);
-          const newDateD = new Date(startDate);
-          const monthOffset = (newDateD.getFullYear()-origDate.getFullYear())*12
-            + (newDateD.getMonth()-origDate.getMonth());
-          const dayOffset = newDateD.getDate() - origDate.getDate();
-          const dateChanged = monthOffset!==0 || dayOffset!==0;
-          return prevTxs.map(t=>{
-            if(!toUpdateIds.has(t.id)) return t;
-            // Datum: nur ändern wenn explizit vom User geändert, sonst behalten
-            let newDate = t.date;
-            if(lastOfMonth) {
-              const [ty,tm]=t.date.split("-").map(Number);
-              const maxD=new Date(ty,tm,0).getDate();
-              newDate=`${ty}-${String(tm).padStart(2,"0")}-${String(maxD).padStart(2,"0")}`;
-            } else if(dateChanged) {
-              const shifted = isoAddMonths(t.date, monthOffset);
-              const [y,m,d]=shifted.split("-").map(Number);
-              const maxD=new Date(y,m,0).getDate();
-              newDate=`${y}-${String(m).padStart(2,"0")}-${String(Math.min(Math.max(1,d+dayOffset),maxD)).padStart(2,"0")}`;
-            }
-            const seriesIdxSorted = toUpdateAll.findIndex(u=>u.id===t.id);
-            const isFirstTx = seriesIdxSorted===0;
-            const isLastTx  = seriesIdxSorted===toUpdateAll.length-1;
-            const firstAmt2 = customFirstLast&&firstAmount ? pn(firstAmount.replace(",",".")) : null;
-            const lastAmt2  = customFirstLast&&lastAmount  ? pn(lastAmount.replace(",","."))  : null;
-            const devAmt = devAmounts[t.id] ? pn(devAmounts[t.id].replace(",",".")) : null;
-            const txAmt = (isFirstTx&&firstAmt2) ? firstAmt2
-                        : (isLastTx &&lastAmt2)  ? lastAmt2
-                        : devAmt || amt;
-            const txSplits = catId
-              ? newSplits.map(s=>({...s,amount:txAmt}))
-              : newSplits;
-            return {
-              ...t, date:newDate, desc:desc.trim(), totalAmount:txAmt,
-              accountId, _csvType:csvType, splits:txSplits, note:note||"",
-              repeatMonths:interval_,
-              ...(lastOfMonth?{_lastOfMonth:true}:{_lastOfMonth:undefined}),
-              ...(typ==="finanzierung"?{_seriesTyp:"finanzierung"}:{_seriesTyp:undefined}),
-            };
-          });
+        // range / from / all — Serie immer komplett neu aufbauen im Bereich
+        const seriesTxs = txs.filter(t=>t._seriesId===seriesId&&!t._exSeriesId)
+          .sort((a,b)=>a.date.localeCompare(b.date));
+        const rangeFrom = editScope==="all" ? "0000-00-00" : scopeFrom;
+        const rangeTo   = editScope==="all" ? "9999-99-99"
+                        : editScope==="from" ? "9999-99-99"
+                        : scopeTo;
+        const affectedIds = new Set(
+          seriesTxs.filter(t=>t.date>=rangeFrom && t.date<=rangeTo).map(t=>t.id)
+        );
+        const keepTxs = txs.filter(t=>!affectedIds.has(t.id));
+
+        // Startdatum: bei "alle" = neues startDate; bei "from"/"range" = scopeFrom
+        const refStart = editScope==="all"
+          ? (startDate || seriesTxs[0]?.date || editVorm.date)
+          : scopeFrom;
+
+        // Anzahl: bei "alle" = count-Feld oder calcCount(); sonst = betroffene Raten
+        const firstAmt2 = customFirstLast&&firstAmount ? pn(firstAmount.replace(",",".")) : null;
+        const lastAmt2  = customFirstLast&&lastAmount  ? pn(lastAmount.replace(",","."))  : null;
+
+        let n;
+        if(editScope==="all") {
+          n = count ? Math.max(1,parseInt(count)||1) : calcCount();
+        } else {
+          // range/from: Anzahl der betroffenen Raten beibehalten
+          n = affectedIds.size;
+        }
+
+        const newGenTxs = Array.from({length:n},(_,i)=>{
+          const date = isoAddMonths(refStart, i*interval_, lastOfMonth);
+          const isFirst=i===0, isLast=i===n-1;
+          const txAmt = (isFirst&&firstAmt2!=null)?firstAmt2:(isLast&&lastAmt2!=null)?lastAmt2:amt;
+          const txSplits = catId?[{id:uid(),catId,subId:subId||"",amount:txAmt}]:newSplits;
+          return {
+            id:uid(), date, desc:desc.trim(), totalAmount:txAmt, pending:true,
+            accountId, _csvType:csvType, splits:txSplits, note:note||"",
+            repeatMonths:interval_, _seriesId:seriesId,
+            _seriesIdx:i+1, _seriesTotal:n,
+            ...(lastOfMonth?{_lastOfMonth:true}:{_lastOfMonth:undefined}),
+            ...(typ==="finanzierung"?{_seriesTyp:"finanzierung"}:{_seriesTyp:undefined}),
+          };
         });
+        setTxs([...keepTxs, ...newGenTxs]);
       }
       setSaved(true); setTimeout(()=>{ setSaved(false); onClose(); },1000);
       return;
@@ -2849,7 +2855,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
       if(!window.confirm("Diese und alle folgenden Vormerkungen löschen?")) return;
       setTxs(prevTxs=>{
         const seriesTxs=prevTxs.filter(t=>t._seriesId===seriesId).sort((a,b)=>a.date.localeCompare(b.date));
-        const toDelete=new Set(seriesTxs.filter(t=>t.date>=fromDate).map(t=>t.id));
+        const toDelete=new Set(seriesTxs.filter(t=>t.date>=scopeFrom).map(t=>t.id));
         return prevTxs.filter(t=>!toDelete.has(t.id));
       });
     } else {
@@ -2893,11 +2899,11 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
           </button>
           <div style={{flex:1}}>
             <div style={{color:T.txt,fontSize:mobileMode?24:15,fontWeight:700}}>
-              {isEdit ? "Vormerkung bearbeiten" : "Wiederkehrende anlegen"}
+              {isEdit ? "vormerkung bearbeiten" : "wiederkehrende anlegen"}
             </div>
             <div style={{color:T.txt2,fontSize:mobileMode?16:10}}>
               {isEdit
-                ? (editVorm._seriesId ? `${typ==="finanzierung"?"Finanzierung":"Serie"} · ${txs.filter(t=>t._seriesId===editVorm._seriesId).length} Buchungen · Intervall: ${interval_===1?"monatlich":interval_===3?"quartalsweise":interval_===12?"jährlich":interval_+"M"}` : "Einmalige Vormerkung")
+                ? (editVorm._seriesId ? `${typ==="finanzierung"?"Finanzierung":"Serie"} · ${txs.filter(t=>t._seriesId===editVorm._seriesId).length} Buchungen · Intervall: ${interval_===1?"monatlich":interval_===3?"quartalsweise":interval_===12?"jährlich":interval_+"M"}` : "einmalige Vormerkung")
                 : "Einmalig · Wiederkehrend · Finanzierung · Erkennen"}
             </div>
           </div>
@@ -2910,7 +2916,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
         <div style={{flex:1,overflowY:"auto",background:mobileMode?T.surf2:"transparent"}}>
 
           {/* NEU ERSTELLEN */}
-          <VormHubSecToggle label="Neue Vormerkung erstellen" icon="plus-circle"
+          <VormHubSecToggle label="neue Vormerkung erstellen" icon="plus-circle"
             active={secNeu} onToggle={()=>setSecNeu(v=>!v)} accent={T.gold}/>
 
           {secNeu&&(
@@ -2945,7 +2951,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                         </div>
                         <button
                           onClick={()=>setDevAmounts(p=>({...p,[e.id]:amount}))}
-                          title="Auf regulären Betrag zurücksetzen"
+                          title="auf regulären Betrag zurücksetzen"
                           style={{background:"rgba(255,255,255,0.07)",border:"none",
                             color:T.txt2,cursor:"pointer",borderRadius:6,
                             padding:"6px 8px",flexShrink:0,marginTop:12}}>
@@ -2964,7 +2970,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
               <div style={{display:"flex",gap:3,background:"rgba(0,0,0,0.2)",
                 borderRadius:10,padding:3,marginBottom:12}}>
                 <VormHubSegBtn v="einmalig"      l="Einmalig"      icon="calendar"     cur={typ} set={setTyp} clearCount={()=>setCount("")} clearEnd={()=>setEndDate("")}/>
-                <VormHubSegBtn v="wiederkehrend" l="Wiederkehrend" icon="repeat"        cur={typ} set={setTyp} clearCount={()=>setCount("")} clearEnd={()=>setEndDate("")}/>
+                <VormHubSegBtn v="wiederkehrend" l="wiederkehrend" icon="repeat"        cur={typ} set={setTyp} clearCount={()=>setCount("")} clearEnd={()=>setEndDate("")}/>
                 <VormHubSegBtn v="finanzierung"  l="Finanzierung"  icon="credit-card"   cur={typ} set={setTyp} clearCount={()=>setCount("")} clearEnd={()=>setEndDate("")}/>
               </div>
 
@@ -3040,7 +3046,8 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                   }
                   // fromDate immer mitaktualisieren wenn nicht manuell gesetzt
                   if(!fromDateManual) {
-                    setFromDate(_calcFromDate(next, month, year));
+                    const d=_txDateForMonth(year,month);
+                    setScopeFrom(d); setScopeTo(d);
                   }
                 }} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",
                   borderRadius:8,cursor:"pointer",marginBottom:8,
@@ -3142,7 +3149,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                 style={{...INP,marginBottom:4,width:"100%",boxSizing:"border-box"}}/>
               {/* 11. Abweichende Erst-/Letztbuchung (nur Finanzierung) */}
               {typ==="finanzierung"&&(
-                <div onClick={()=>{setCustomFirstLast(v=>!v);setFirstAmount("");setLastAmount("");}}
+                <div onClick={()=>{setCustomFirstLast(v=>{if(v){setFirstAmount("");setLastAmount("");}return !v;})}}
                   style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
                     cursor:"pointer",padding:"5px 8px",borderRadius:8,
                     background:customFirstLast?"rgba(74,159,212,0.1)":"rgba(255,255,255,0.03)",
@@ -3268,51 +3275,74 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
               {isEdit&&editVorm&&<VormVerknuepfenPanel editVorm={editVorm} txs={txs} setTxs={setTxs} onClose={onClose}/>}
 
               {/* Scope-Auswahl im Bearbeiten-Modus */}
-              {isEdit&&editVorm._seriesId&&(
+              {isEdit&&editVorm._seriesId&&(()=>{
+                const isLight2=T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand";
+                const csD={colorScheme:isLight2?"light":"dark"};
+                const inpStyle={...INP,marginBottom:0,width:"100%",boxSizing:"border-box",...csD,
+                  border:`1px solid ${T.blue}66`};
+                return (
                 <div style={{marginBottom:8}}>
                   <div style={{color:T.txt2,fontSize:10,marginBottom:4}}>Änderung anwenden auf:</div>
-                  <div style={{display:"flex",gap:3,marginBottom:6}}>
-                    {[["single","Nur diese","calendar"],["from","Ab dieser","chevrons-right"],["all","Alle","repeat"]].map(([v,l,icon])=>(
+                  {/* 4 Scope-Buttons */}
+                  <div style={{display:"flex",gap:3,marginBottom:8}}>
+                    {[["single","nur dieser"],["range","von … bis"],["from","ab dieser"],["all","alle"]].map(([v,l])=>(
                       <button key={v} onClick={()=>{
                         setEditScope(v);
                         setFromDateManual(false);
-                        if(v==="from") setFromDate(_calcFromDate(lastOfMonth, month, year));
-                        else if(v==="single" && editVorm?._seriesId) {
-                          const pad2 = n=>String(n).padStart(2,"0");
-                          const monthStr = `${year}-${pad2(month+1)}`;
-                          const found = txs.find(t=>t._seriesId===editVorm._seriesId && !t._exSeriesId && t.date.startsWith(monthStr));
-                          if(found) setFromDate(found.date); else setFromDate(editVorm.date||today);
-                        } else setFromDate(editVorm.date||today);
+                        const d=_txDateForMonth(year,month);
+                        if(v==="single"){setScopeFrom(d);setScopeTo(d);}
+                        else if(v==="from"){setScopeFrom(d);}
+                        else if(v==="range"){setScopeFrom(d);setScopeTo(d);}
                       }}
-                        style={{flex:1,padding:"7px 4px",borderRadius:8,border:"none",cursor:"pointer",
+                        style={{flex:1,padding:"7px 2px",borderRadius:8,border:"none",cursor:"pointer",
                           fontFamily:"inherit",fontSize:10,fontWeight:editScope===v?700:400,
                           background:editScope===v?T.blue:"rgba(255,255,255,0.08)",
-                          color:editScope===v?"#fff":T.txt2,
-                          display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                        {Li(icon,10,editScope===v?"#fff":T.txt2)} {l}
+                          color:editScope===v?"#fff":T.txt2}}>
+                        {l}
                       </button>
                     ))}
                   </div>
-                  {/* Datum-Auswahl: bei "Nur diese" = welche Buchung, bei "Ab dieser" = ab wann */}
-                  <div style={{marginBottom:4}}>
-                    <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>
-                      {editScope==="single"?"Welche Buchung:":editScope==="from"?"Änderung ab diesem Datum:":"Startdatum der Serie:"}
+                  {/* Datumfelder je nach Scope */}
+                  {editScope==="single"&&(
+                    <div style={{color:T.txt2,fontSize:10,padding:"4px 0",opacity:0.8}}>
+                      Buchung im gewählten Monat <strong style={{color:T.blue}}>{MONTHS_F[month]} {year}</strong> wird geändert.
                     </div>
-                    <input type="date" value={fromDate}
-                      onChange={e=>{setFromDate(e.target.value);setFromDateManual(true);}}
-                      disabled={editScope==="all"}
-                      style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
-                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark",
-                        border:`1px solid ${editScope==="all"?T.bd:T.blue}66`,
-                        opacity:editScope==="all"?0.4:1}}/>
-                    <div style={{color:T.txt2,fontSize:9,marginTop:2,opacity:0.7}}>
-                      {editScope==="single"?"Die Buchung in diesem Monat wird geändert"
-                       :editScope==="from"?"Alle offenen Buchungen ab diesem Datum werden geändert"
-                       :"Alle Buchungen der Serie werden geändert"}
+                  )}
+                  {editScope==="range"&&(
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <div style={{flex:1}}>
+                        <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Von</div>
+                        <input type="date" value={scopeFrom}
+                          onChange={e=>{setScopeFrom(e.target.value);setFromDateManual(true);}}
+                          style={inpStyle}/>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Bis</div>
+                        <input type="date" value={scopeTo}
+                          onChange={e=>{setScopeTo(e.target.value);setFromDateManual(true);}}
+                          style={inpStyle}/>
+                      </div>
                     </div>
-                  </div>
+                  )}
+                  {editScope==="from"&&(
+                    <div>
+                      <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Ab diesem Datum:</div>
+                      <input type="date" value={scopeFrom}
+                        onChange={e=>{setScopeFrom(e.target.value);setFromDateManual(true);}}
+                        style={inpStyle}/>
+                      <div style={{color:T.txt2,fontSize:9,marginTop:2,opacity:0.7}}>
+                        Alle Buchungen ab hier bis zum Ende der Serie werden geändert.
+                      </div>
+                    </div>
+                  )}
+                  {editScope==="all"&&(
+                    <div style={{color:T.txt2,fontSize:10,padding:"4px 0",opacity:0.8}}>
+                      Alle Buchungen der gesamten Serie werden geändert.
+                    </div>
+                  )}
                 </div>
-              )}
+                );
+              })()}
 
               {/* ── Eingebettete Ausnahme-Serien ── */}
               {isEdit&&editVorm._seriesId&&!editVorm._isException&&(
@@ -3379,7 +3409,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       const monthStr = `${year}-${pad2(month+1)}`;
                       const found = txs.find(t=>t._seriesId===editVorm._seriesId
                         && !t._exSeriesId && t.date.startsWith(monthStr));
-                      setExStartDate(found?.date || _calcFromDate(lastOfMonth, month, year));
+                      setExStartDate(found?.date || _txDateForMonth(year, month));
                       setExCount(""); setExInterval(12);
                       setShowExForm(true);
                     }} style={{width:"100%",padding:"7px 10px",borderRadius:9,
@@ -3399,7 +3429,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       <div style={{color:T.gold,fontSize:11,fontWeight:700,marginBottom:8,
                         display:"flex",alignItems:"center",gap:6}}>
                         {Li("git-branch",12,T.gold)}
-                        {exEditId ? "Ausnahme bearbeiten" : "Abweichenden Betrag setzen"}
+                        {exEditId ? "ausnahme bearbeiten" : "abweichenden Betrag setzen"}
                       </div>
 
                       {/* Betrag */}
@@ -3515,7 +3545,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
           )}
 
           {/* WIEDERKEHRENDE ERKENNEN */}
-          <VormHubSecToggle label="Wiederkehrende aus CSV erkennen" icon="search"
+          <VormHubSecToggle label="wiederkehrende aus CSV erkennen" icon="search"
             active={secErkennen} onToggle={()=>{setSecErkennen(v=>!v);if(!secErkennen)setSecKategorien(false);}}
             accent={T.mid}/>
           {secErkennen&&(
@@ -3525,7 +3555,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
           )}
 
           {/* BUCHUNGEN KATEGORISIEREN */}
-          <VormHubSecToggle label="Buchungen kategorisieren" icon="tag"
+          <VormHubSecToggle label="buchungen kategorisieren" icon="tag"
             active={secKategorien} onToggle={()=>{setSecKategorien(v=>!v);if(!secKategorien)setSecErkennen(false);}}
             accent={T.pos}/>
           {secKategorien&&(
@@ -3731,7 +3761,7 @@ function MatchingScreen({onClose}) {
 
           {filteredPends.length===0&&(
             <div style={{color:T.txt2,fontSize:11,marginBottom:8}}>
-              {searchPend ? "Keine Treffer" : "Alle zugeordnet ✓"}
+              {searchPend ? "keine Treffer" : "Alle zugeordnet ✓"}
             </div>
           )}
 
@@ -3895,7 +3925,7 @@ function MatchingScreen({onClose}) {
               Buchungen ({filteredTxs.length}{filteredTxs.length!==unmatchedTxs.length?` / ${unmatchedTxs.length}`:""})
             </div>
             <button onClick={()=>setMatchAmt(v=>!v)}
-              title={matchAmt?"Alle Buchungen zeigen":"Nur passende Beträge zeigen"}
+              title={matchAmt?"alle Buchungen zeigen":"nur passende Beträge zeigen"}
               style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:7,
                 border:`1.5px solid ${matchAmt?T.blue:T.bds}`,cursor:"pointer",fontFamily:"inherit",
                 background:matchAmt?`${T.blue}22`:"transparent",
@@ -3915,7 +3945,7 @@ function MatchingScreen({onClose}) {
 
           {filteredTxs.length===0&&(
             <div style={{color:T.txt2,fontSize:11}}>
-              {searchTx ? "Keine Treffer" : "Keine Buchungen in diesem Monat"}
+              {searchTx ? "keine Treffer" : "keine Buchungen in diesem Monat"}
             </div>
           )}
 
@@ -4173,7 +4203,7 @@ function QuickBtnsBar({onSelect, _colorTarget, _noDelete, _onDragStart, _onDragE
         })}
         {/* + Button wandert mit jedem neuen Icon nach rechts */}
         <button onClick={() => setPickingNew(true)}
-          title="Icon zur Schnellwahl hinzufügen"
+          title="icon zur Schnellwahl hinzufügen"
           style={{width:40,height:40,borderRadius:10,flexShrink:0,
             display:"flex",alignItems:"center",justifyContent:"center",
             background:"transparent",border:`1.5px dashed ${T.bds}`,
@@ -4386,7 +4416,7 @@ function QuickColorsBar({onSelect}) {
       })}
       {/* + Kreis – öffnet Farbwahl-Popup */}
       <button onClick={() => setShowPicker(true)}
-        title="Farbe zur Schnellwahl hinzufügen"
+        title="farbe zur Schnellwahl hinzufügen"
         style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
           display:"flex",alignItems:"center",justifyContent:"center",
           background:"transparent",border:`1.5px dashed ${T.bds}`,cursor:"pointer"}}>
@@ -4555,7 +4585,7 @@ function QuickBtnsBarWithColor({onSelectIcon, onSelectColor, _onDragStart, _onDr
           );
         })}
         <button onClick={()=>setShowPickerW(true)}
-          title="Farbe hinzufügen"
+          title="farbe hinzufügen"
           style={{width:32,height:32,borderRadius:"50%",flexShrink:0,
             display:"flex",alignItems:"center",justifyContent:"center",
             background:"transparent",border:`1.5px dashed ${T.bds}`,cursor:"pointer"}}>
@@ -4708,7 +4738,7 @@ function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAm
                         style={{width:80,background:"rgba(255,255,255,0.07)",border:`1px solid ${T.bds}`,
                           borderRadius:7,padding:"4px 8px",color:T.txt,fontSize:12,outline:"none"}}/>
                       <span style={{color:T.txt2,fontSize:11,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                        {ss?`${sc.name}/${ss.name}`:sc?sc.name:"Kategorie wählen"}
+                        {ss?`${sc.name}/${ss.name}`:sc?sc.name:"kategorie wählen"}
                       </span>
                       {splits.length>1&&(
                         <button onClick={()=>setSplits(p=>p.filter(s=>s.id!==sp.id))}
@@ -4998,7 +5028,7 @@ function SupaField({value, onChange, placeholder, locked, type="text"}) {
             <button onClick={()=>setShowPw(v=>!v)}
               style={{background:"none",border:"none",cursor:"pointer",padding:2,
                 color:showPw?T.blue:T.txt2,display:"flex",alignItems:"center"}}
-              title={showPw?"Passwort verbergen":"Passwort anzeigen"}>
+              title={showPw?"passwort verbergen":"passwort anzeigen"}>
               {Li(showPw?"eye-off":"eye", 13, showPw?T.blue:T.txt2)}
             </button>
           )}
@@ -5152,7 +5182,7 @@ function EditPopup() {
           <div style={{width:36,height:4,borderRadius:2,background:T.blue+"44",margin:"0 auto 16px"}}/>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
             <div style={{color:T.blue,fontSize:16,fontWeight:700}}>
-              {editTx.pending ? "Vormerkung bearbeiten" : "Buchung bearbeiten"}
+              {editTx.pending ? "vormerkung bearbeiten" : "buchung bearbeiten"}
             </div>
             <button onClick={()=>setEditTx(null)} style={{background:"rgba(255,255,255,0.07)",border:"none",color:"#888",borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:13}}>{Li("x",13)}</button>
           </div>
@@ -5448,7 +5478,7 @@ function EditPopup() {
                         : null}
                     </span>
                     <button onClick={doUnlinkSplit}
-                      title="Nur diesen Split entknüpfen"
+                      title="nur diesen Split entknüpfen"
                       style={{background:"rgba(234,64,37,0.12)",border:`1px solid ${T.neg}33`,
                         color:T.neg,borderRadius:5,padding:"2px 6px",fontSize:9,
                         cursor:"pointer",display:"flex",alignItems:"center",gap:3,
@@ -5972,7 +6002,7 @@ function PendingList({pTxs, getCat, txType, openEdit, dayOf, pendOpenAmt, getSub
 function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
   pTxsIn, pTxsOut, mTxs, dashLinkedChildIds,
   onDrillIn, onDrillOut, onDrillUncatIn, onDrillUncatOut, onDrillPendIn, onDrillPendOut,
-  onOpenMatching, prognoseMitte, prognoseEnde, dbg}) {
+  onOpenMatching, prognoseMitte, prognoseEnde, onSwitch}) {
   const { getKumulierterSaldo, getPrognoseSaldoDetail, txs, getCat, getSub } = useContext(AppCtx);
   const ks = getKumulierterSaldo(year, month);
   const ms = totalIn - totalOut;
@@ -5995,6 +6025,11 @@ function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
       borderRadius:22,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:-30,right:-30,width:110,height:110,borderRadius:"50%",
         background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.07)"}}/>
+      {/* Switch-Button oben rechts */}
+      {onSwitch&&<button onClick={onSwitch} style={{position:"absolute",top:10,right:12,
+        background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,
+        padding:"3px 8px",cursor:"pointer",color:"rgba(255,255,255,0.7)",
+        fontSize:10,fontFamily:"inherit",zIndex:2}}>⇄ Kompakt</button>}
       <div style={{color:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.8)":T.txt2,fontSize:11,marginBottom:1}}>{MONTHS_F[month]} {year}</div>
 
       {/* Kontostand groß */}
@@ -6005,41 +6040,38 @@ function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
 
       {/* Einnahmen | Ausgaben | Monatssaldo */}
       <div style={{display:"flex",gap:16,marginBottom:(saldoMitte!==null)?6:0}}>
-        <div style={{cursor:"pointer"}}>
+        <div style={{cursor:"pointer",flex:1}}>
           <div style={{color:T.lbl||T.txt2,fontSize:10}}>Einnahmen</div>
           <div onClick={onDrillIn} style={{color:T.pos,fontSize:15,fontWeight:700}}>+{fmt(totalIn)}</div>
+          {pendingIn>0&&<div onClick={onDrillPendIn} style={{color:T.gold,fontSize:9,cursor:"pointer"}}>
+            {pTxsIn.length} vorgemerkt · +{fmt(pendingIn)} ›
+          </div>}
           {(()=>{const uc=(mTxs||[]).filter(t=>t._csvType==="income"&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));return uc.length>0&&(
             <div onClick={onDrillUncatIn} style={{color:T.pos,fontSize:9,opacity:0.7,cursor:"pointer"}}>
-              {uc.length} unkat. · +{fmt(uc.reduce((s,t)=>s+t.totalAmount,0))}›
+              {uc.length} unkat. ›
             </div>
           );})()}
-          {pendingIn>0&&<div onClick={onDrillPendIn} style={{color:T.gold,fontSize:9,cursor:"pointer"}}>{(()=>{const n=pTxsIn.length;return `${n} vorgemerkt · +${fmt(pendingIn)}`;})()}  ›</div>}
         </div>
-        <div style={{cursor:"pointer"}}>
+        <div style={{cursor:"pointer",flex:1}}>
           <div style={{color:T.lbl||T.txt2,fontSize:10}}>Ausgaben</div>
           <div onClick={onDrillOut} style={{color:T.neg,fontSize:15,fontWeight:700}}>−{fmt(totalOut)}</div>
+          {pendingOut>0&&<div onClick={onDrillPendOut} style={{color:T.gold,fontSize:9,cursor:"pointer"}}>
+            {pTxsOut.length} vorgemerkt · −{fmt(pendingOut)} ›
+          </div>}
           {(()=>{const uc=(mTxs||[]).filter(t=>!t.pending&&!t._csvType?.includes("income")&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));return uc.length>0&&(
             <div onClick={onDrillUncatOut} style={{color:T.neg,fontSize:9,opacity:0.7,cursor:"pointer"}}>
-              {uc.length} unkat. · −{fmt(uc.reduce((s,t)=>s+t.totalAmount,0))} ›
+              {uc.length} unkat. ›
             </div>
           );})()}
-          {pendingOut>0&&<div onClick={onDrillPendOut} style={{color:T.gold,fontSize:9,cursor:"pointer"}}>{(()=>{const n=pTxsOut.length;return `${n} vorgemerkt · −${fmt(pendingOut)}`;})()}  ›</div>}
         </div>
-        <div>
+        <div style={{flex:1}}>
           <div style={{color:T.txt2,fontSize:10}}>Monatssaldo</div>
           <div style={{color:ms>=0?T.pos:T.neg,fontSize:15,fontWeight:700}}>
             {ms>0?"+":ms<0?"−":""}{fmt(Math.abs(ms))}
           </div>
         </div>
       </div>
-      {/* DEBUG */}
-      {dbg&&(saldoMitte!==null||saldoEnde!==null)&&(
-        <div style={{background:"#111",borderRadius:8,padding:"5px 8px",marginTop:4,fontSize:9,fontFamily:"monospace",color:"#ff0",lineHeight:1.8,wordBreak:"break-all"}}>
-          <b>base:</b> {fmt(dbg.base??0)}<br/>
-          <b>inM:</b> {fmt(dbg._inMitte)} <b>outM:</b> {fmt(dbg._outMitte)} → <b>ProgM:</b> {fmt(Math.abs(saldoMitte??0))}<br/>
-          <b>inE:</b> {fmt(dbg._inEnde)} <b>outE:</b> {fmt(dbg._outEnde)} → <b>ProgE:</b> {fmt(Math.abs(saldoEnde??0))}
-        </div>
-      )}
+
       {/* Saldo-Prognose Mitte / Ende — mit Drilldown */}
       {detailMitte&&<SaldoPrognose year={year} month={month} txs={txs} detailMitte={detailMitte} detailEnde={detailEnde} saldoMitte={saldoMitte} saldoEnde={saldoEnde} getCat={getCat} getSub={getSub}/>}
       {/* Warnungen: offene Vormerkungen die noch nicht zugeordnet wurden */}
@@ -6087,6 +6119,96 @@ function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
           </div>
         );
       })()}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ── SaldoHero2: Kompakter Hero ───────────────────────────────────────
+function SaldoHero2({year, month, totalIn, totalOut, pendingIn, pendingOut,
+  prognoseMitte, prognoseEnde, uncatIn, uncatOut,
+  pendingInCount, pendingOutCount, uncatInCount, uncatOutCount,
+  realInCount, realOutCount, onSwitch}) {
+  const { getKumulierterSaldo } = useContext(AppCtx);
+  const ks = getKumulierterSaldo(year, month);
+  const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
+  const isCurrent = year===nowY && month===nowM;
+  const isFuture  = year>nowY || (year===nowY && month>nowM);
+  const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand";
+  const subClr = isLight?"rgba(255,255,255,0.75)":T.txt2;
+  const ksColor = ks===null?T.txt:ks<0?T.cond_neg:ks<=500?T.cond_warn:ks<=1000?T.cond_gold:T.cond_pos;
+  const ms = totalIn - totalOut;
+  const showPrognose = isCurrent || isFuture;
+  const saldoColor = v => v===null?T.txt2:v<0?T.cond_neg:v<=500?T.cond_warn:v<=1000?T.cond_gold:T.cond_pos;
+
+  const Row = ({label, nIn, nOut, vIn, vOut, clrIn, clrOut}) => (
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4}}>
+      <span style={{color:subClr,fontSize:9,flexShrink:0,marginRight:4}}>{label}</span>
+      <div style={{display:"flex",gap:5}}>
+        <span style={{color:clrIn||T.pos,fontSize:12,fontWeight:700,minWidth:52,textAlign:"right"}}>
+          {vIn>0?fmt(vIn):"–"}{nIn!=null&&vIn>0?<span style={{fontSize:8,opacity:0.7}}> ({nIn})</span>:null}
+        </span>
+        <span style={{color:clrOut||T.neg,fontSize:12,fontWeight:700,minWidth:52,textAlign:"right"}}>
+          {vOut>0?fmt(vOut):"–"}{nOut!=null&&vOut>0?<span style={{fontSize:8,opacity:0.7}}> ({nOut})</span>:null}
+        </span>
+      </div>
+    </div>
+  );
+
+  const Card = ({label, prog}) => (
+    <div style={{flex:1,background:"rgba(255,255,255,0.06)",borderRadius:14,padding:"8px 10px"}}>
+      {label&&<div style={{color:subClr,fontSize:10,fontWeight:700,textAlign:"center",
+        marginBottom:6,letterSpacing:0.5}}>{label}</div>}
+      {/* Spaltenköpfe */}
+      <div style={{display:"flex",justifyContent:"flex-end",gap:5,marginBottom:3}}>
+        <span style={{color:T.pos,fontSize:8,minWidth:52,textAlign:"right",opacity:0.7}}>Ein.</span>
+        <span style={{color:T.neg,fontSize:8,minWidth:52,textAlign:"right",opacity:0.7}}>Aus.</span>
+      </div>
+      <Row label="Buch." nIn={realInCount} nOut={realOutCount} vIn={totalIn} vOut={totalOut}/>
+      {(pendingIn>0||pendingOut>0)&&
+        <Row label="VM" nIn={pendingInCount} nOut={pendingOutCount} vIn={pendingIn||0} vOut={pendingOut||0}
+          clrIn={T.pos+"bb"} clrOut={T.neg+"bb"}/>}
+      {(uncatIn>0||uncatOut>0)&&
+        <Row label="unkat." nIn={uncatInCount} nOut={uncatOutCount} vIn={uncatIn||0} vOut={uncatOut||0}
+          clrIn={T.gold} clrOut={T.gold}/>}
+      <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"4px 0"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+        <span style={{color:subClr,fontSize:9}}>{prog!==undefined?"Prog.":"Saldo"}</span>
+        <span style={{color:prog!==undefined?saldoColor(prog):ms>=0?T.pos:T.neg,fontSize:14,fontWeight:800}}>
+          {prog!==undefined
+            ? prog!==null?fmt(prog)+" €":"–"
+            : fmt(Math.abs(ms))+" €"}
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{margin:"6px 10px 4px",background:T.hero_bg,
+      borderRadius:22,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-30,right:-30,width:110,height:110,borderRadius:"50%",
+        background:isLight?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.07)"}}/>
+
+      <button onClick={onSwitch} style={{position:"absolute",top:10,right:12,
+        background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,
+        padding:"3px 8px",cursor:"pointer",color:subClr,
+        fontSize:10,fontFamily:"inherit",zIndex:2}}>⇄ Detail</button>
+
+      {/* Kontostand groß – zentriert, ohne Label und Datum */}
+      <div style={{textAlign:"center",margin:"2px 0 10px"}}>
+        <div style={{fontSize:34,fontWeight:800,letterSpacing:-1,color:ksColor}}>
+          {ks!==null ? fmt(Math.abs(ks))+" €" : fmt(Math.abs(ms))+" €"}
+        </div>
+      </div>
+
+      {showPrognose ? (
+        <div style={{display:"flex",gap:8}}>
+          <Card label="MITTE" prog={prognoseMitte}/>
+          <Card label="ENDE"  prog={prognoseEnde}/>
+        </div>
+      ) : (
+        <Card prog={undefined}/>
+      )}
     </div>
   );
 }
@@ -6334,6 +6456,7 @@ function DashboardScreen() {
     setDashDrillOpen,
   } = useContext(AppCtx);
 
+    const [useHero2, setUseHero2] = useState(false);
     const [dashDrill, _setDashDrill] = useState(null);
     // Wrapper: synct dashDrillOpen in FinanzApp für TopBar-zIndex
     const setDashDrill = (v) => { _setDashDrill(v); setDashDrillOpen(!!v); };
@@ -6366,7 +6489,14 @@ function DashboardScreen() {
     const pendingOut= pTxsOut.reduce((s,t)=>s+pendOpenAmt(t),0);
     const pendingIn = pTxsIn.reduce((s,t)=>s+pendOpenAmt(t),0);
     const catTotals = cats.filter(c=>c.type==="expense")
-      .map(c=>({...c,sum:(c.subs||[]).reduce((s,sub)=>s+getActualSum(year,month,sub.id),0)}))
+      .map(c=>({...c,sum:
+        (c.subs||[]).reduce((s,sub)=>s+getActualSum(year,month,sub.id),0) +
+        // Finanzierungsraten zählen als Ausgaben (bleiben pending, werden nie real gebucht)
+        txs.filter(t=>t.pending&&t._seriesTyp==="finanzierung"&&!t._linkedTo&&!t._budgetSubId&&
+          (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
+          (t.splits||[]).some(sp=>(c.subs||[]).some(sub=>sub.id===sp.subId))
+        ).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)
+      }))
       .filter(c=>{
         if(c.sum>0) return true;
         const hasBudget=(c.subs||[]).some(sub=>getBudgetForMonth(sub.id,year,month)>0);
@@ -6484,10 +6614,11 @@ function DashboardScreen() {
     const _calcOut = (maxDay, onlyReal=false) => {
       const isMC = maxDay===14;
       return cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
-        // Abgelaufen oder onlyReal: nur echte Buchungen
+        // Abgelaufen oder onlyReal: echte Buchungen + Finanzierungsraten
         if(onlyReal||(isMC&&_mitteAbg)||(!isMC&&_endeAbg)) {
           return s+txs.filter(t=>{
-            if(t.pending||t._linkedTo||t._budgetSubId) return false;
+            if(t._linkedTo||t._budgetSubId) return false;
+            if(t.pending&&t._seriesTyp!=="finanzierung") return false;
             const d=new Date(t.date);
             return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
               (t.splits||[]).some(sp=>sp.catId===cat.id);
@@ -6636,7 +6767,9 @@ function DashboardScreen() {
             const out=cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
               if(endeAbgM) {
                 return s+txs.filter(t=>{
-                  if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                  if(t._linkedTo||t._budgetSubId) return false;
+                  // Finanzierungsraten mitzählen (werden nie echte Buchungen)
+                  if(t.pending&&t._seriesTyp!=="finanzierung") return false;
                   const d=new Date(t.date);
                   return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
                 }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
@@ -6662,38 +6795,55 @@ function DashboardScreen() {
           const prognoseMitte = base!=null ? base + _inMitte - _outMitte : null;
           const prognoseEnde  = base!=null ? base + _inEnde  - _outEnde  : null;
 
+          if(useHero2) {
+            const _uIn  = mTxs.filter(t=>txType(t)==="income" &&!dashLinkedChildIds.has(t.id)&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+            const _uOut = mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id)&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+            return (
+            <SaldoHero2 year={year} month={month}
+              totalIn={totalIn} totalOut={totalOut}
+              pendingIn={pendingIn} pendingOut={pendingOut}
+              prognoseMitte={prognoseMitte} prognoseEnde={prognoseEnde}
+              uncatIn={_uIn.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              uncatOut={_uOut.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              realInCount={mTxs.filter(t=>!t.pending&&txType(t)==="income"&&!dashLinkedChildIds.has(t.id)).length}
+              realOutCount={mTxs.filter(t=>!t.pending&&txType(t)==="expense"&&!dashLinkedChildIds.has(t.id)).length}
+              pendingInCount={pTxsIn.length} pendingOutCount={pTxsOut.length}
+              uncatInCount={_uIn.length} uncatOutCount={_uOut.length}
+              onSwitch={()=>setUseHero2(false)}/>
+            );
+          }
           return (
-        <SaldoHero year={year} month={month}
-          prognoseMitte={prognoseMitte} prognoseEnde={prognoseEnde}
-          dbg={{base,_inMitte,_outMitte,_inEnde,_outEnde}}
-          totalIn={totalIn} totalOut={totalOut}
-          pendingIn={pendingIn} pendingOut={pendingOut}
-          pTxsIn={pTxsIn} pTxsOut={pTxsOut}
-          mTxs={mTxs} dashLinkedChildIds={dashLinkedChildIds}
-          onDrillIn={()=>{
-            const txList=mTxs.filter(t=>txType(t)==="income"&&!dashLinkedChildIds.has(t.id));
-            const uncatList=txList.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-            setDashDrill({label:"Einnahmen",txList,isIncome:true,uncatCount:uncatList.length,cat:null,total:totalIn});setDashSearch("");
-          }}
-          onDrillOut={()=>{
-            const txList=mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id));
-            const uncatList=txList.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-            setDashDrill({label:"Ausgaben",txList,isIncome:false,uncatCount:uncatList.length,cat:null,total:totalOut});setDashSearch("");
-          }}
-          onDrillUncatIn={()=>{
-            const allIncome=mTxs.filter(t=>txType(t)==="income"&&!dashLinkedChildIds.has(t.id));
-            const uncatList=allIncome.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-            setDashDrill({label:"Einnahmen – unkategorisiert",txList:uncatList,isIncome:true,uncatCount:uncatList.length,cat:null,total:null});setDashSearch("");
-          }}
-          onDrillUncatOut={()=>{
-            const allExpense=mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id));
-            const uncatList=allExpense.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-            setDashDrill({label:"Ausgaben – unkategorisiert",txList:uncatList,isIncome:false,uncatCount:uncatList.length,cat:null,total:null});setDashSearch("");
-          }}
-          onDrillPendIn={()=>{setDashDrill({label:"Einnahmen – Vormerkungen",txList:pTxsIn,isIncome:true,uncatCount:0,cat:null,total:pendingIn,isPending:true});setDashSearch("");}}
-          onDrillPendOut={()=>{setDashDrill({label:"Ausgaben – Vormerkungen",txList:pTxsOut,isIncome:false,uncatCount:0,cat:null,total:pendingOut,isPending:true});setDashSearch("");}}
-          onOpenMatching={()=>setShowMatching(true)}
-        />
+            <SaldoHero year={year} month={month}
+              prognoseMitte={prognoseMitte} prognoseEnde={prognoseEnde}
+              totalIn={totalIn} totalOut={totalOut}
+              pendingIn={pendingIn} pendingOut={pendingOut}
+              pTxsIn={pTxsIn} pTxsOut={pTxsOut}
+              mTxs={mTxs} dashLinkedChildIds={dashLinkedChildIds}
+              onSwitch={()=>setUseHero2(true)}
+              onDrillIn={()=>{
+                const txList=mTxs.filter(t=>txType(t)==="income"&&!dashLinkedChildIds.has(t.id));
+                const uncatList=txList.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
+                setDashDrill({label:"Einnahmen",txList,isIncome:true,uncatCount:uncatList.length,cat:null,total:totalIn});setDashSearch("");
+              }}
+              onDrillOut={()=>{
+                const txList=mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id));
+                const uncatList=txList.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
+                setDashDrill({label:"Ausgaben",txList,isIncome:false,uncatCount:uncatList.length,cat:null,total:totalOut});setDashSearch("");
+              }}
+              onDrillUncatIn={()=>{
+                const allIncome=mTxs.filter(t=>txType(t)==="income"&&!dashLinkedChildIds.has(t.id));
+                const uncatList=allIncome.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
+                setDashDrill({label:"Einnahmen – unkategorisiert",txList:uncatList,isIncome:true,uncatCount:uncatList.length,cat:null,total:null});setDashSearch("");
+              }}
+              onDrillUncatOut={()=>{
+                const allExpense=mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id));
+                const uncatList=allExpense.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
+                setDashDrill({label:"Ausgaben – unkategorisiert",txList:uncatList,isIncome:false,uncatCount:uncatList.length,cat:null,total:null});setDashSearch("");
+              }}
+              onDrillPendIn={()=>{setDashDrill({label:"Einnahmen – Vormerkungen",txList:pTxsIn,isIncome:true,uncatCount:0,cat:null,total:pendingIn,isPending:true});setDashSearch("");}}
+              onDrillPendOut={()=>{setDashDrill({label:"Ausgaben – Vormerkungen",txList:pTxsOut,isIncome:false,uncatCount:0,cat:null,total:pendingOut,isPending:true});setDashSearch("");}}
+              onOpenMatching={()=>setShowMatching(true)}
+            />
           );
         })()}
 
@@ -7157,10 +7307,12 @@ function DashboardScreen() {
                   const calcTotal = (maxDay) => {
                     const isMitteCalc = maxDay===14;
                     const isEndeCalc  = !isMitteCalc;
-                    // Abgelaufen? → nur echte Buchungen
+                    // Abgelaufen? → echte Buchungen + Finanzierungsraten (die nie "real" werden)
+                    const isFinanzPend = t => t.pending&&t._seriesTyp==="finanzierung"&&!t._linkedTo&&!t._budgetSubId;
                     if(isMitteCalc && mitteAbgelaufen) {
                       return txs.filter(t=>{
-                        if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                        if(t._linkedTo||t._budgetSubId) return false;
+                        if(t.pending && !isFinanzPend(t)) return false;
                         const d=new Date(t.date);
                         return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
                           (t.splits||[]).some(sp=>sp.catId===cat.id);
@@ -7169,7 +7321,8 @@ function DashboardScreen() {
                     }
                     if(isEndeCalc && endeAbgelaufen) {
                       return txs.filter(t=>{
-                        if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                        if(t._linkedTo||t._budgetSubId) return false;
+                        if(t.pending && !isFinanzPend(t)) return false;
                         const d=new Date(t.date);
                         return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
                           (t.splits||[]).some(sp=>sp.catId===cat.id);
@@ -7230,7 +7383,8 @@ function DashboardScreen() {
                   const totalMitte  = calcTotal(14);
                   const totalEnde   = calcTotal(31);
                   const totalAkt    = txs.filter(t=>{
-                    if(t.pending||t._linkedTo||t._budgetSubId) return false;
+                    if(t._linkedTo||t._budgetSubId) return false;
+                    if(t.pending&&t._seriesTyp!=="finanzierung") return false;
                     const d=new Date(t.date);
                     return d.getFullYear()===year&&d.getMonth()===month&&
                       (t.splits||[]).some(sp=>sp.catId===cat.id);
@@ -7388,7 +7542,7 @@ function DashboardScreen() {
                             <div style={{color:T.txt,fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tx.desc}</div>
                             <div style={{color:T.txt2,fontSize:9,display:"flex",gap:6}}>
                               <span>{tx.date}</span>
-                              {tx.pending&&<span style={{color:T.gold,fontSize:8,fontWeight:700}}>{tx._seriesId?"Wiederkehrend":"Vorgemerkt"}</span>}
+                              {tx.pending&&<span style={{color:T.gold,fontSize:8,fontWeight:700}}>{tx._seriesId?"wiederkehrend":"vorgemerkt"}</span>}
                             </div>
                           </div>
                           <span style={{color:tx.pending?T.gold:(cat.type==="income"?T.pos:T.neg),fontSize:12,fontWeight:700,fontFamily:"monospace",flexShrink:0}}>{cat.type==="income"?"+":"−"}{fmt(amt)}</span>
@@ -7414,7 +7568,7 @@ function DashboardScreen() {
                           </div>
                           {/* Budget-Button */}
                           <button onClick={e=>{e.stopPropagation();openBudgetEdit({id:sub.id,name:sub.name,catId:cat.id,catColor:cat.color});}}
-                            title="Budget festlegen"
+                            title="budget festlegen"
                             style={{background:budget>0?`${T.gold}22`:"none",
                               border:`1px solid ${budget>0?T.gold+"66":"transparent"}`,
                               color:budget>0?T.gold:T.txt2,cursor:"pointer",
@@ -7570,7 +7724,7 @@ function DashboardScreen() {
                                 <div style={{color:T.txt2,fontSize:9,display:"flex",gap:6}}>
                                   <span>{tx.date}</span>
                                   {tx.pending&&<span style={{color:T.gold,fontSize:8,fontWeight:700}}>
-                                    {tx._seriesId?"Wiederkehrend":"Vorgemerkt"}
+                                    {tx._seriesId?"wiederkehrend":"vorgemerkt"}
                                   </span>}
                                 </div>
                               </div>
@@ -7696,7 +7850,7 @@ function DashboardScreen() {
                               borderRadius:4,padding:"0 4px",fontSize:9,fontWeight:700,
                               display:"inline-flex",alignItems:"center",gap:3}}>
                               {tx._seriesTyp==="finanzierung"?Li("credit-card",8,T.gold):tx._seriesId?Li("repeat",8,T.pos):Li("calendar",8,T.blue)}
-                              {tx._seriesTyp==="finanzierung"?"Finanzierung":tx._seriesId?"Wiederkehrend":"Vorgemerkt"}
+                              {tx._seriesTyp==="finanzierung"?"Finanzierung":tx._seriesId?"wiederkehrend":"vorgemerkt"}
                             </span>}
                             {tx._seriesId&&tx._seriesTotal>1&&tx._seriesIdx&&tx._seriesTyp==="finanzierung"&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
                               background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:4,padding:"0 4px"}}>
@@ -8031,7 +8185,7 @@ function TransactionsScreen() {
               const tabs = [
                 ["expense","Ausgaben",  T.neg,  T.tab_exp],
                 ["income", "Einnahmen", T.pos,  T.tab_inc],
-                ["pending","Vorgemerkt",T.gold, T.tab_pend],
+                ["pending","vorgemerkt",T.gold, T.tab_pend],
                 ["uncat",  "？",        T.txt2, T.disabled],
                 ["mismatch","⚠ Falsch", T.gold, T.tab_pend],
               ];
@@ -8659,7 +8813,7 @@ function BudgetEditorModal({sub, cat, onClose}) {
             Welche Monate ändern?
           </div>
           <div style={{display:"flex",gap:5,marginBottom:6}}>
-            {[["single","Nur dieser"],["from","Ab diesem"],["all","Alle"]].map(([sc,lbl])=>(
+            {[["single","nur dieser"],["from","Ab diesem"],["all","alle"]].map(([sc,lbl])=>(
               <button key={sc} onClick={()=>doSave(sc)}
                 style={{flex:1,padding:"9px 4px",borderRadius:10,fontFamily:"inherit",
                   fontSize:11,fontWeight:700,cursor:"pointer",
@@ -8913,7 +9067,7 @@ function SubRow({sub, si, arr, cat}) {
           </span>
         )}
         <button onClick={()=>setSubEdit(subEdit==="budget"?false:"budget")}
-          title="Budget festlegen"
+          title="budget festlegen"
           style={{background:subEdit==="budget"?T.gold+"22":"none",border:`1px solid ${subEdit==="budget"?T.gold+"66":"transparent"}`,
             color:budgets[sub.id]?T.gold:T.txt2,cursor:"pointer",borderRadius:7,padding:"3px 5px",flexShrink:0,display:"flex",alignItems:"center"}}>
           {Li("target",13,budgets[sub.id]?T.gold:T.txt2)}
@@ -9158,7 +9312,7 @@ function ReviewQueueModal({queue, setQueue}) {
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
             <div style={{color:queue.mode==="typfix"?T.neg:T.blue,fontWeight:700,fontSize:13,display:"flex",alignItems:"center",gap:6}}>
               {Li(queue.mode==="typfix"?"alert-triangle":"help-circle",13,queue.mode==="typfix"?T.neg:T.blue)}
-              {queue.mode==="typfix" ? "Falsche Kategorie?" : "Kategorie wählen"}
+              {queue.mode==="typfix" ? "Falsche Kategorie?" : "kategorie wählen"}
             </div>
             <div style={{color:T.txt2,fontSize:11}}>{queue.idx+1} / {queue.items.length}</div>
           </div>
@@ -10259,7 +10413,7 @@ function CustomThemeEditor() {
       { key:"on_accent", label:"Text auf Akzent-Buttons",    hint:'Textfarbe auf T.blue / T.pos / T.gold Buttons' },
       { key:"disabled",  label:"Deaktivierter Button",       hint:"Hintergrund deaktivierter Buttons" },
       { key:"warn",      label:"Warnfarbe",                  hint:"Budget-Alarm, Hinweise, Warnungen" },
-      { key:"override",  label:"Manuell-Markierung",         hint:'"Manuell überschrieben" in Jahresplan' },
+      { key:"override",  label:"Manuell-Markierung",         hint:'"manuell überschrieben" in Jahresplan' },
       { key:"err",       label:"Fehlerfarbe",                hint:"Sync-Fehler, kritische Fehlerzustände" },
     ]},
     { label:"Jahresplan-Zellen", fields:[
@@ -10273,7 +10427,7 @@ function CustomThemeEditor() {
       { key:"tab_pend", label:"Tab Vorgemerkt-Typ",          hint:"Hintergrund des Vorgemerkt-Typ-Tabs" },
       { key:"surf3",    label:"Oberfläche 3",                hint:"Modals, Sheets, leicht erhöhte Flächen" },
     ]},
-    { label:"Weitere Elemente", fields:[
+    { label:"weitere Elemente", fields:[
       { key:"vorm_bg",  label:"Vormerkungen Hintergrund",    hint:"Hintergrundfarbe der Vormerkungen-Leiste" },
       { key:"vorm_bd",  label:"Vormerkungen Rahmen",         hint:"Rahmenfarbe der Vormerkungen-Leiste" },
       { key:"cf",       label:"Cloudflare-Akzent",           hint:"Farbe für Cloudflare-Sync-Buttons & Icons" },
@@ -10524,7 +10678,7 @@ function CustomThemeEditor() {
                   {/* Section label on bg → lbl */}
                   <div style={{color:edit.lbl||edit.txt2,fontSize:7,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",padding:"5px 8px 2px"}}>Einnahmen</div>
                   {/* Category rows on surf */}
-                  {[["Einkommen","+2.856,53",true,true],["Weitere Einnahmen","+1.024,35",true,false],["Wohnen & Kind","−1.271,92",false,false],["Sonstiges","−893,85",false,true]].map(([l,v,inc,hasSubtext])=>(
+                  {[["Einkommen","+2.856,53",true,true],["weitere Einnahmen","+1.024,35",true,false],["Wohnen & Kind","−1.271,92",false,false],["Sonstiges","−893,85",false,true]].map(([l,v,inc,hasSubtext])=>(
                     <div key={l} style={{padding:"4px 8px",borderBottom:`1px solid ${edit.bd}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:edit.surf}}>
                       <div style={{minWidth:0}}>
                         <div style={{color:edit.txt,fontSize:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:90}}>{l}</div>
@@ -10607,7 +10761,7 @@ function CustomThemeEditor() {
                   {/* Section header on surf */}
                   <div style={{background:edit.surf,borderBottom:`1px solid ${edit.bd}`,padding:"3px 5px",color:edit.lbl||edit.txt2,fontSize:6,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em"}}>Einnahmen</div>
                   {/* Data rows */}
-                  {[["Einkommen",["2.856","2.856","2.856"],true],["Weitere Einnahmen",["1.024","1.024","1.024"],true],["Wohnen & Kind",["−1.117","−1.271","−1.271"],false],["Sonstiges",["−558","−893","−893"],false]].map(([label,vals,inc])=>(
+                  {[["Einkommen",["2.856","2.856","2.856"],true],["weitere Einnahmen",["1.024","1.024","1.024"],true],["Wohnen & Kind",["−1.117","−1.271","−1.271"],false],["Sonstiges",["−558","−893","−893"],false]].map(([label,vals,inc])=>(
                     <div key={label} style={{display:"flex",background:edit.surf,borderBottom:`1px solid ${edit.bd}`}}>
                       <div style={{width:60,padding:"3px 5px",borderRight:`1px solid ${edit.bd}`,color:edit.txt,fontSize:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flexShrink:0}}>{label}</div>
                       {vals.map((v,i)=>(
@@ -11795,7 +11949,7 @@ function AddTxModal() {
 
   const TABS = [
     {id:"csv",          label:"Import",   icon:"download"},
-    {id:"einmalig",     label:"Vormerken", icon:"calendar"},
+    {id:"einmalig",     label:"vormerken", icon:"calendar"},
     {id:"wiederkehrend",label:"Wieder­k.", icon:"repeat"},
     {id:"finanzierung", label:"Finan­z.",  icon:"credit-card"},
     {id:"budget",       label:"Budget",    icon:"target"},
@@ -11805,12 +11959,12 @@ function AddTxModal() {
   // Dynamischer Titel je Tab
   const TAB_TITLES = {
     csv:          "CSV importieren",
-    einmalig:     "Neue Vormerkung",
-    wiederkehrend:"Wiederkehrend anlegen",
-    finanzierung: "Finanzierung anlegen",
-    budget:       "Budget festlegen",
-    kontostand:   "Kontostand setzen",
-    kategorie:    "Kategorie anlegen",
+    einmalig:     "neue Vormerkung",
+    wiederkehrend:"wiederkehrend anlegen",
+    finanzierung: "finanzierung anlegen",
+    budget:       "budget festlegen",
+    kontostand:   "kontostand setzen",
+    kategorie:    "kategorie anlegen",
   };
 
   return (
@@ -12043,7 +12197,7 @@ function AddTxModal() {
 
         {/* Abweichende Erst-/Letztbuchung (nur Finanzierung) */}
         {typ==="finanzierung"&&(
-          <div onClick={()=>{setCustomFirstLast(v=>!v);setFirstAmount("");setLastAmount("");}}
+          <div onClick={()=>{setCustomFirstLast(v=>{if(v){setFirstAmount("");setLastAmount("");}return !v;})}}
             style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,cursor:"pointer",
               padding:"5px 8px",borderRadius:8,
               background:customFirstLast?"rgba(74,159,212,0.1)":"rgba(255,255,255,0.03)",
@@ -12166,7 +12320,7 @@ function AddTxModal() {
       {typ==="wiederkehrend"&&(
         <>
           <div style={{borderTop:`1px solid ${T.bd}`,margin:"14px 0 10px"}}/>
-          <VormHubSecToggle label="Wiederkehrende aus CSV erkennen" icon="search"
+          <VormHubSecToggle label="wiederkehrende aus CSV erkennen" icon="search"
             active={secErkennen} onToggle={()=>setSecErkennen(v=>!v)}
             accent={T.mid}/>
           {secErkennen&&(
@@ -12285,7 +12439,7 @@ const BANK_SVGS = {
   "raiffeisen": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><rect x="0" y="0" width="100" height="40" rx="4" fill="currentColor" opacity="0.12"/><text x="14" y="29" font-family="Arial,sans-serif" font-weight="900" font-size="26" fill="currentColor">R</text><text x="36" y="22" font-family="Arial,sans-serif" font-weight="600" font-size="9" fill="currentColor">Raiffeisen-</text><text x="36" y="32" font-family="Arial,sans-serif" font-weight="600" font-size="9" fill="currentColor">bank</text></svg>`,
 };
 const ICON_CATEGORIES = [
-  { label: "Alle",          keywords: null },
+  { label: "alle",          keywords: null },
   { label: "Finanzen",      keywords: ["bank","wallet","credit","coin","cash","money","euro","dollar","piggy","receipt","invoice","landmark","trending","chart","bar-chart","line-chart","pie-chart","percent","calculator","vault","safe","handshake","badge-dollar","badge-euro","badge-cent","badge-percent","currency","bitcoin","gem"] },
   { label: "Einkaufen",     keywords: ["shopping","cart","bag","store","tag","gift","package","barcode","scan","ticket","percent","star","award","ribbon","coupon","label"] },
   { label: "Essen & Trinken",keywords: ["utensils","coffee","cup","beer","wine","pizza","cake","apple","carrot","fish","ice-cream","cookie","croissant","sandwich","salad","chef","restaurant","fork","knife","spoon","milk","bottle","cocktail","candy","lollipop","popcorn","grill"] },
@@ -12298,7 +12452,7 @@ const ICON_CATEGORIES = [
   { label: "Technik",       keywords: ["laptop","desktop","monitor","tablet","smartphone","phone","keyboard","mouse","printer","server","database","cloud","cpu","hard-drive","usb","wifi","bluetooth","battery","power","plug","cable","circuit","chip","code","terminal","settings","tool","wrench","gear","cog"] },
   { label: "Sonstiges",     keywords: ["flag","tag","bookmark","paperclip","clip","pin","scissors","ruler","pen","pencil","edit","trash","delete","archive","folder","file","document","note","list","check","x","plus","minus","arrow","sort","filter","search","zoom","info","alert","warning","help","question","lock","unlock","eye","hide","refresh","clock","timer","calendar","date"] },
   { label: "Banken & Zahlung", keywords: null, simpleIcons: true },
-  { label: "Eigene Icons", keywords: null, bankIcons: true },
+  { label: "eigene Icons", keywords: null, bankIcons: true },
 ];
 
 // Bank Icons Grid
@@ -12749,7 +12903,7 @@ function ChartBlock({catSums, maxSum, budgets, getBudgetForMonth, year, month}) 
   const modes = [3, 10, 0];
   const nextMode = () => setChartMode(m => modes[(modes.indexOf(m)+1)%modes.length]);
   const shown = chartMode===0 ? catSums : catSums.slice(0, chartMode);
-  const modeLabel = chartMode===0 ? "Alle" : String(chartMode);
+  const modeLabel = chartMode===0 ? "alle" : String(chartMode);
   return (
     <div style={{margin:"0 10px 6px",background:T.hero_bg,borderRadius:20,padding:"10px 12px 8px"}}>
       <div style={{display:"flex",alignItems:"center",marginBottom:6}}>
@@ -13184,7 +13338,7 @@ function MonatScreen() {
             const chips = [
               ["expense","Ausgaben",  T.neg,    T.tab_exp],
               ["income", "Einnahmen", T.pos,    T.tab_inc],
-              ["pending","Vorgemerkt",T.gold,   T.tab_pend],
+              ["pending","vorgemerkt",T.gold,   T.tab_pend],
               ["uncat",  "？",        T.txt2,   T.disabled],
               ["mismatch","⚠ Falsch", T.gold,   T.tab_pend],
             ];
@@ -13889,7 +14043,7 @@ function JahrScreen({forceSingle=false}) {
 
                   openPopup(mi, row.id, sub, row);
                 }}
-                title={sub==="D"&&dIsLocked?"Automatisch aus Buchungen – gesperrt":isSumCol?"Tippen zum Überschreiben":undefined}
+                title={sub==="D"&&dIsLocked?"Automatisch aus Buchungen – gesperrt":isSumCol?"tippen zum Überschreiben":undefined}
                 style={{
                   width:SW, minWidth:SW, height:RH,
                   display:"flex", alignItems:"center", justifyContent:"flex-end",
@@ -14445,7 +14599,7 @@ function JahrScreen({forceSingle=false}) {
               padding:"2px 8px",color:hideEmptyRows?T.pos:T.lbl||T.txt2,
               fontSize:9,fontWeight:hideEmptyRows?700:400,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>
             {Li(hideEmptyRows?"eye":"eye-off",9,hideEmptyRows?T.pos:T.lbl||T.txt2)}
-            {hideEmptyRows?"Nur genutzte Kategorien":"Alle Kategorien"}
+            {hideEmptyRows?"nur genutzte Kategorien":"alle Kategorien"}
           </button>
           <span style={{color:T.lbl||T.txt2,fontSize:9}}>M = Buchungen 1–14 · E = alle · {col3Name} = aktuell</span>
           <span style={{color:T.lbl||T.txt2,fontSize:9,opacity:0.6}}>░ schraffiert = Ende ≠ {col3Name} · <span style={{color:T.override}}>amber</span> = manuell überschrieben (Zelle anklicken → ↺ Auto zum Zurücksetzen)</span>
@@ -14565,7 +14719,7 @@ function DataManagerDialog({onClose}) {
 
   // ── Löschen ─────────────────────────────────────────────────────────
   const DELETE_ITEMS = [
-    {key:"realTxs", label:"Echte Buchungen", icon:"check-circle",
+    {key:"realTxs", label:"echte Buchungen", icon:"check-circle",
      count: filterTxs(txs.filter(t=>!t.pending)).length,
      action:()=>setTxs(p=>p.filter(t=>t.pending||!(t.date>=fromIso&&t.date<=toIso)))},
     {key:"pendTxs", label:"Vormerkungen / Wiederkehrende", icon:"calendar",
@@ -14589,9 +14743,9 @@ function DataManagerDialog({onClose}) {
 
   const SEL_ITEMS = [
     {key:"cats",    label:"Kategorien & Gruppen",    icon:"tag",       count:cats.length+groups.length},
-    {key:"themes",  label:"Eigene Farbthemes",       icon:"palette",   count:Object.keys(JSON.parse(localStorage.getItem("mbt_custom_themes")||"{}")).length},
+    {key:"themes",  label:"eigene Farbthemes",       icon:"palette",   count:Object.keys(JSON.parse(localStorage.getItem("mbt_custom_themes")||"{}")).length},
     {key:"accounts",label:"Konten",                  icon:"landmark",  count:accounts.length},
-    {key:"realTxs", label:"Echte Buchungen",          icon:"check-circle",count:cntReal, hasRange:true},
+    {key:"realTxs", label:"echte Buchungen",          icon:"check-circle",count:cntReal, hasRange:true},
     {key:"pendTxs", label:"Vormerkungen & Wiederkehrende",icon:"calendar",count:cntPend, hasRange:true},
     {key:"rules",   label:"Kategorie-Zuordnungen",   icon:"bookmark",  count:cntRules},
     {key:"anchors", label:"Kontostand-Ankerpunkte",  icon:"landmark",  count:cntAnch},
@@ -14648,7 +14802,7 @@ function DataManagerDialog({onClose}) {
         {/* Tabs */}
         <div style={{display:"flex",gap:4,padding:"10px 16px 0",flexShrink:0}}>
           {[["export","download","Exportieren",T.pos],
-            ["import","upload","Importieren",T.blue],
+            ["import","upload","importieren",T.blue],
             ["delete","trash-2","Löschen",T.neg]].map(([v,ic,lb,col])=>(
             <button key={v} onClick={()=>setTab(v)}
               style={{flex:1,padding:"7px 4px",borderRadius:9,border:"none",cursor:"pointer",
@@ -16121,7 +16275,7 @@ function QuickPicker({onClose}) {
     <div onClick={onClose} style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.75)",zIndex:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surf2,borderRadius:20,padding:"16px 14px 28px",width:"100%",maxWidth:480,maxHeight:"88vh",display:"flex",flexDirection:"column",gap:10,overflowY:"auto"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <span style={{color:T.blue,fontSize:15,fontWeight:700}}>{editBtn==="new"?"Schnellwahl anlegen":"Schnellwahl bearbeiten"}</span>
+          <span style={{color:T.blue,fontSize:15,fontWeight:700}}>{editBtn==="new"?"schnellwahl anlegen":"schnellwahl bearbeiten"}</span>
           <button onClick={()=>setEditBtn(null)} style={{background:"none",border:"none",cursor:"pointer",color:T.txt2}}>{Li("x",16)}</button>
         </div>
 
@@ -16702,9 +16856,9 @@ function MobileNewAccOverlay({onClose, S}) {
 function MobileActionPicker({onClose, onSelect}) {
   const fs = 26;
   const actions = [
-    {id:"csv",          label:"Importieren",    icon:"download",     color:T.pos,   sub:"CSV aus Banking-App"},
-    {id:"vormerken",    label:"Vormerken",      icon:"calendar",     color:T.gold,  sub:"Neue Buchung vormerken"},
-    {id:"wiederkehrend",label:"Wiederkehrende", icon:"repeat",       color:T.blue,  sub:"Regelmäßige Buchungen"},
+    {id:"csv",          label:"importieren",    icon:"download",     color:T.pos,   sub:"CSV aus Banking-App"},
+    {id:"vormerken",    label:"vormerken",      icon:"calendar",     color:T.gold,  sub:"neue Buchung vormerken"},
+    {id:"wiederkehrend",label:"Wiederkehrende", icon:"repeat",       color:T.blue,  sub:"regelmäßige Buchungen"},
     {id:"finanzierung", label:"Finanzierungen", icon:"credit-card",  color:T.txt2,  sub:"Kredit, Ratenkauf"},
     {id:"kategorien",   label:"Kategorien & Budget", icon:"tag", color:T.blue,  sub:"Kategorien & Budgets verwalten"},
   ];
@@ -16829,7 +16983,7 @@ function MobileVormerkenModal({onClose}) {
     const amt = pn(amount.replace(",","."));
     if(amt<=0) return;
     setTxs(p=>[...p,{
-      id:uid(), date, desc:desc||"Neue Buchung",
+      id:uid(), date, desc:desc||"neue Buchung",
       totalAmount:amt, pending:true, _csvType:csvType,
       accountId:accId, repeatMonths:1,
       note: note||undefined,
@@ -17017,7 +17171,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 3: Details ── */}
       {step===3&&<>
-        {header("Details","Beschreibung & Notiz",3,()=>setStep(2))}
+        {header("details","Beschreibung & Notiz",3,()=>setStep(2))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
           {/* Beschreibung — auto-grow, Placeholder */}
@@ -17060,7 +17214,7 @@ function MobileVormerkenModal({onClose}) {
 
       {/* ── Schritt 4: Bestätigung ── */}
       {step===4&&<>
-        {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
+        {header("bestätigen","Alles korrekt?",4,()=>setStep(3))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {[
             ["Typ",            csvType==="expense"?"Ausgabe":"Einnahme"],
@@ -17430,7 +17584,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
 
       {/* ── Schritt 3: Beschreibung, Datum ── */}
       {step===3&&<>
-        {header("Details","Beschreibung & Startdatum",3,()=>setStep(2))}
+        {header("details","Beschreibung & Startdatum",3,()=>setStep(2))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
           {/* Beschreibung — auto-grow, Placeholder */}
@@ -17532,7 +17686,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
 
       {/* ── Schritt 4: Bestätigung ── */}
       {step===4&&<>
-        {header("Bestätigen","Alles korrekt?",4,()=>setStep(3))}
+        {header("bestätigen","Alles korrekt?",4,()=>setStep(3))}
         <div style={{flex:1,padding:S.padL,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           {[
             ["Art",        csvType==="expense"?"Ausgabe":"Einnahme"],
@@ -17545,7 +17699,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
             ...(isFinanz?[["Gesamtbetrag", gesamtbetrag||"—"]]:[]),
             ["Startdatum", startDate.split("-").reverse().join(".")],
             ...(valueDate?[["verursacht", valueDate.split("-").reverse().join(".")]]:[]),
-            ...(firstIsStart?[["Erste Buchung","= Startdatum"]]:[]),
+            ...(firstIsStart?[["erste Buchung","= Startdatum"]]:[]),
             ...(giltFuer!=="all"?[["gilt für", giltFuer==="from"?"ab "+giltFuerDate.split("-").reverse().join("."):"nur "+giltFuerDate.split("-").reverse().join(".")]]:[]),
             ["Kategorie",  catId?(getCat(catId)?.name||"?")+(subId?" / "+(getSub(catId,subId)?.name||""):""):"—"],
             ["Beschreibung",desc],
@@ -17561,7 +17715,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
           ))}
           <button onClick={doSave}
             style={{...btnCenter,background:T.pos,color:"#fff",marginTop:S.gap*2}}>
-            ✓ {totalCount}× {isFinanz?"Finanzierung":"Wiederkehrend"} anlegen
+            ✓ {totalCount}× {isFinanz?"Finanzierung":"wiederkehrend"} anlegen
           </button>
           <button onClick={onClose}
             style={{...btnCenter,background:"transparent",
@@ -18765,7 +18919,7 @@ Abbrechen = ${remoteName}-Stand laden`
               const cTs = cdata.saved_at||0;
               if(cTs > localTs + 60000) {
                 const diff = Math.round((cTs-localTs)/1000);
-                setSyncError(`☁ Cloudflare hat neuere Daten (${diff}s). "Von Cloudflare laden" verwenden um zu synchronisieren.`);
+                setSyncError(`☁ Cloudflare hat neuere Daten (${diff}s). "von Cloudflare laden" verwenden um zu synchronisieren.`);
                 setSyncStatus("error_shown");
               }
             }).catch(e=>{ setCfStatus("error"); });
@@ -20037,7 +20191,7 @@ Abbrechen = ${remoteName}-Stand laden`
 
           {/* Mobiler Modus Toggle */}
           <button onClick={()=>setMobileMode(v=>!v)}
-            title="Mobiler Modus"
+            title="mobiler Modus"
             style={{width:30,height:26,borderRadius:8,border:`1px solid ${mobileMode?T.blue:T.bd}`,
               background:mobileMode?`${T.blue}22`:"rgba(255,255,255,0.06)",
               cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -20182,11 +20336,11 @@ Abbrechen = ${remoteName}-Stand laden`
                action:()=>{setShowVormHub(true);}},
               {label:"CSV importieren",                 icon:"upload-cloud",  color:T.pos,
                action:()=>setShowCsv(true)},
-              {label:"Wiederkehrende erkennen",         icon:"repeat",        color:T.blue,
+              {label:"wiederkehrende erkennen",         icon:"repeat",        color:T.blue,
                action:()=>setShowRecurring(true)},
-              {label:"Buchungen kategorisieren",         icon:"tag",           color:T.gold,
+              {label:"buchungen kategorisieren",         icon:"tag",           color:T.gold,
                action:()=>setShowKategorisieren(true)},
-              {label:"Vormerkungen zuordnen",           icon:"git-merge",     color:T.blue,
+              {label:"vormerkungen zuordnen",           icon:"git-merge",     color:T.blue,
                action:()=>setShowMatching(true)},
             ].map(({label,icon,color,action,badge})=>(
               <button key={label} onClick={action}
@@ -20288,7 +20442,7 @@ Abbrechen = ${remoteName}-Stand laden`
                  syncStatus==="saving"?"Synchronisiert…":
                  syncStatus==="saved"?"Zuletzt gespeichert ✓":
                  cfActive&&cfStatus==="ok"?"Cloudflare aktiv":
-                 "Nur lokal gespeichert"}
+                 "nur lokal gespeichert"}
               </span>
               {cfActive&&(
                 <button onClick={()=>cx.saveConfig?.()}
