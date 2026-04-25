@@ -6607,7 +6607,7 @@ function DashboardScreen() {
           <div style={{color:T.lbl||T.txt2,fontSize:13,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",padding:"8px 14px 4px"}}>Einnahmen</div>
           {incomeTotals.map(cat=>(
             <div key={cat.id}
-              style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:14,padding:"7px 10px",margin:"3px 10px",cursor:"pointer",border:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}
+              style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:0,padding:"7px 10px",margin:"2px 0",cursor:"pointer",borderTop:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`,borderBottom:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}
               onClick={()=>{
                 const txList=txs.filter(t=>{const d=new Date(t.date);return !t.pending&&!t._linkedTo&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
                 const pendList=txs.filter(t=>{const d=new Date(t.date);return t.pending&&!t._budgetSubId&&d.getFullYear()===year&&d.getMonth()===month&&(t.splits||[]).some(sp=>sp.catId===cat.id);});
@@ -6806,9 +6806,9 @@ function DashboardScreen() {
 
             return (
             <div key={cat.id} onClick={()=>openDrillBudget(31,"Ende")}
-              style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:14,
-              padding:"7px 10px",margin:"3px 10px",cursor:"pointer",
-              border:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}>
+              style={{background:T.themeName==="dkb"?"#FFFFFF":"rgba(255,255,255,0.04)",borderRadius:0,
+              padding:"7px 10px",margin:"2px 0",cursor:"pointer",
+              borderTop:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`,borderBottom:`1px solid ${T.themeName==="dkb"?"#E0E8F0":T.bd}`}}>
               {/* Kategoriename als Teilüberschrift — nur Text, kein Icon */}
               <div style={{color:cat.color||T.txt,fontSize:13,fontWeight:700,
                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
