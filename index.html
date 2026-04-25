@@ -6125,10 +6125,14 @@ function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
 
 // ══════════════════════════════════════════════════════════════════════
 // ── SaldoHero2: Kompakter Hero ───────────────────────────────────────
-function SaldoHero2({year, month, totalIn, totalOut, pendingIn, pendingOut,
-  prognoseMitte, prognoseEnde, uncatIn, uncatOut,
-  pendingInCount, pendingOutCount, uncatInCount, uncatOutCount,
-  realInCount, realOutCount, onSwitch}) {
+function SaldoHero2({year, month,
+  buchInM, buchOutM, buchInE, buchOutE,
+  pendInM, pendOutM, pendInE, pendOutE,
+  uInM, uOutM, uInE, uOutE,
+  pendInCnt, pendOutCnt, buchInCnt, buchOutCnt, uInCnt, uOutCnt,
+  prognoseMitte, prognoseEnde,
+  onDrillBuchIn, onDrillBuchOut, onDrillPendIn, onDrillPendOut,
+  onDrillUncatIn, onDrillUncatOut, onDrillPrognose}) {
   const { getKumulierterSaldo } = useContext(AppCtx);
   const ks = getKumulierterSaldo(year, month);
   const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
@@ -6137,47 +6141,56 @@ function SaldoHero2({year, month, totalIn, totalOut, pendingIn, pendingOut,
   const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand";
   const subClr = isLight?"rgba(255,255,255,0.75)":T.txt2;
   const ksColor = ks===null?T.txt:ks<0?T.cond_neg:ks<=500?T.cond_warn:ks<=1000?T.cond_gold:T.cond_pos;
-  const ms = totalIn - totalOut;
   const showPrognose = isCurrent || isFuture;
   const saldoColor = v => v===null?T.txt2:v<0?T.cond_neg:v<=500?T.cond_warn:v<=1000?T.cond_gold:T.cond_pos;
+  const ms = buchInE - buchOutE;
 
-  const Row = ({label, nIn, nOut, vIn, vOut, clrIn, clrOut}) => (
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4}}>
-      <span style={{color:subClr,fontSize:9,flexShrink:0,marginRight:4}}>{label}</span>
-      <div style={{display:"flex",gap:5}}>
-        <span style={{color:clrIn||T.pos,fontSize:12,fontWeight:700,minWidth:52,textAlign:"right"}}>
-          {vIn>0?fmt(vIn):"–"}{nIn!=null&&vIn>0?<span style={{fontSize:8,opacity:0.7}}> ({nIn})</span>:null}
-        </span>
-        <span style={{color:clrOut||T.neg,fontSize:12,fontWeight:700,minWidth:52,textAlign:"right"}}>
-          {vOut>0?fmt(vOut):"–"}{nOut!=null&&vOut>0?<span style={{fontSize:8,opacity:0.7}}> ({nOut})</span>:null}
-        </span>
-      </div>
+  const tapStyle = {cursor:"pointer",borderRadius:8,transition:"background 0.1s"};
+  const Val = ({v, cnt, clr, dim}) => (
+    <div style={{flex:1,textAlign:"center"}}>
+      <span style={{color:clr,fontSize:12,fontWeight:700,opacity:dim?0.65:1}}>
+        {v>0?fmt(v):"–"}
+      </span>
+      {cnt!=null&&v>0&&<span style={{color:subClr,fontSize:8,opacity:0.6}}> ({cnt})</span>}
     </div>
   );
 
-  const Card = ({label, prog}) => (
-    <div style={{flex:1,background:"rgba(255,255,255,0.06)",borderRadius:14,padding:"8px 10px"}}>
-      {label&&<div style={{color:subClr,fontSize:10,fontWeight:700,textAlign:"center",
-        marginBottom:6,letterSpacing:0.5}}>{label}</div>}
-      {/* Spaltenköpfe */}
-      <div style={{display:"flex",justifyContent:"flex-end",gap:5,marginBottom:3}}>
-        <span style={{color:T.pos,fontSize:8,minWidth:52,textAlign:"right",opacity:0.7}}>Ein.</span>
-        <span style={{color:T.neg,fontSize:8,minWidth:52,textAlign:"right",opacity:0.7}}>Aus.</span>
+  // Layout: MITTE(Ein+Aus) | Label | ENDE(Ein+Aus)
+  const HalfCell = ({vIn, vOut, cntIn, cntOut, clrIn, clrOut, dim, onTapIn, onTapOut}) => (
+    <div style={{flex:2,display:"flex",gap:2}}>
+      <div style={{flex:1,textAlign:"center",...(onTapIn?tapStyle:{}),padding:"1px 0"}}
+        onClick={onTapIn||undefined}>
+        <Val v={vIn}  cnt={cntIn}  clr={clrIn||T.pos} dim={dim}/>
       </div>
-      <Row label="Buch." nIn={realInCount} nOut={realOutCount} vIn={totalIn} vOut={totalOut}/>
-      {(pendingIn>0||pendingOut>0)&&
-        <Row label="VM" nIn={pendingInCount} nOut={pendingOutCount} vIn={pendingIn||0} vOut={pendingOut||0}
-          clrIn={T.pos+"bb"} clrOut={T.neg+"bb"}/>}
-      {(uncatIn>0||uncatOut>0)&&
-        <Row label="unkat." nIn={uncatInCount} nOut={uncatOutCount} vIn={uncatIn||0} vOut={uncatOut||0}
-          clrIn={T.gold} clrOut={T.gold}/>}
-      <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"4px 0"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-        <span style={{color:subClr,fontSize:9}}>{prog!==undefined?"Prog.":"Saldo"}</span>
-        <span style={{color:prog!==undefined?saldoColor(prog):ms>=0?T.pos:T.neg,fontSize:14,fontWeight:800}}>
-          {prog!==undefined
-            ? prog!==null?fmt(prog)+" €":"–"
-            : fmt(Math.abs(ms))+" €"}
+      <div style={{flex:1,textAlign:"center",...(onTapOut?tapStyle:{}),padding:"1px 0"}}
+        onClick={onTapOut||undefined}>
+        <Val v={vOut} cnt={cntOut} clr={clrOut||T.neg} dim={dim}/>
+      </div>
+    </div>
+  );
+  const Row = ({label, mIn, mOut, eIn, eOut, cntIn, cntOut, clrIn, clrOut, onTapIn, onTapOut}) => (
+    <div style={{display:"flex",alignItems:"center",marginBottom:4}}>
+      <HalfCell vIn={mIn} vOut={mOut} cntIn={cntIn} cntOut={cntOut}
+        clrIn={clrIn} clrOut={clrOut} dim={true} onTapIn={onTapIn} onTapOut={onTapOut}/>
+      <div style={{width:52,flexShrink:0,textAlign:"center",color:subClr,fontSize:8}}>{label}</div>
+      <HalfCell vIn={eIn} vOut={eOut} cntIn={cntIn} cntOut={cntOut}
+        clrIn={clrIn} clrOut={clrOut} dim={false} onTapIn={onTapIn} onTapOut={onTapOut}/>
+    </div>
+  );
+
+  const PrognoseRow = ({pm, pe}) => (
+    <div style={{display:"flex",alignItems:"center"}}>
+      <div style={{flex:2,textAlign:"center",...tapStyle,padding:"2px 0"}}
+        onClick={()=>onDrillPrognose&&onDrillPrognose(true)}>
+        <span style={{color:saldoColor(pm),fontSize:13,fontWeight:800}}>
+          {pm!==null?fmt(pm)+" €":"–"}
+        </span>
+      </div>
+      <div style={{width:52,flexShrink:0,textAlign:"center",color:subClr,fontSize:9,fontWeight:700}}>Prog.</div>
+      <div style={{flex:2,textAlign:"center",...tapStyle,padding:"2px 0"}}
+        onClick={()=>onDrillPrognose&&onDrillPrognose(false)}>
+        <span style={{color:saldoColor(pe),fontSize:13,fontWeight:800}}>
+          {pe!==null?fmt(pe)+" €":"–"}
         </span>
       </div>
     </div>
@@ -6189,26 +6202,50 @@ function SaldoHero2({year, month, totalIn, totalOut, pendingIn, pendingOut,
       <div style={{position:"absolute",top:-30,right:-30,width:110,height:110,borderRadius:"50%",
         background:isLight?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.07)"}}/>
 
-      <button onClick={onSwitch} style={{position:"absolute",top:10,right:12,
-        background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,
-        padding:"3px 8px",cursor:"pointer",color:subClr,
-        fontSize:10,fontFamily:"inherit",zIndex:2}}>⇄ Detail</button>
-
-      {/* Kontostand groß – zentriert, ohne Label und Datum */}
-      <div style={{textAlign:"center",margin:"2px 0 10px"}}>
+      {/* Kontostand zentriert */}
+      <div style={{textAlign:"center",margin:"2px 0 8px"}}>
         <div style={{fontSize:34,fontWeight:800,letterSpacing:-1,color:ksColor}}>
           {ks!==null ? fmt(Math.abs(ks))+" €" : fmt(Math.abs(ms))+" €"}
         </div>
       </div>
 
-      {showPrognose ? (
-        <div style={{display:"flex",gap:8}}>
-          <Card label="MITTE" prog={prognoseMitte}/>
-          <Card label="ENDE"  prog={prognoseEnde}/>
-        </div>
-      ) : (
-        <Card prog={undefined}/>
-      )}
+      {/* Tabelle: MITTE-Ein | MITTE-Aus | Label | ENDE-Ein | ENDE-Aus */}
+      <div style={{background:"rgba(255,255,255,0.06)",borderRadius:14,padding:"8px 10px"}}>
+        {/* Kopfzeile: MITTE | Label | ENDE */}
+        {showPrognose&&<div style={{display:"flex",alignItems:"center",marginBottom:5}}>
+          <div style={{flex:2,textAlign:"center",color:T.mid,fontSize:10,fontWeight:700,letterSpacing:0.5}}>MITTE</div>
+          <div style={{width:52,flexShrink:0}}/>
+          <div style={{flex:2,textAlign:"center",color:T.gold,fontSize:10,fontWeight:700,letterSpacing:0.5}}>ENDE</div>
+        </div>}
+
+
+        <Row label="Buch."
+          mIn={buchInM} mOut={buchOutM} eIn={buchInE} eOut={buchOutE}
+          cntIn={buchInCnt} cntOut={buchOutCnt}
+          onTapIn={onDrillBuchIn} onTapOut={onDrillBuchOut}/>
+        {(pendInE>0||pendOutE>0)&&<Row label="VM"
+          mIn={pendInM} mOut={pendOutM} eIn={pendInE} eOut={pendOutE}
+          cntIn={pendInCnt} cntOut={pendOutCnt}
+          clrIn={T.pos+"aa"} clrOut={T.neg+"aa"}
+          onTapIn={onDrillPendIn} onTapOut={onDrillPendOut}/>}
+        {(uInE>0||uOutE>0)&&<Row label="unkat."
+          mIn={uInM} mOut={uOutM} eIn={uInE} eOut={uOutE}
+          cntIn={uInCnt} cntOut={uOutCnt}
+          clrIn={T.gold} clrOut={T.gold}
+          onTapIn={onDrillUncatIn} onTapOut={onDrillUncatOut}/>}
+
+        <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"4px 0"}}/>
+
+        {showPrognose
+          ? <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>
+          : <div style={{display:"flex",alignItems:"center"}}>
+              <div style={{flex:2,textAlign:"center"}}>
+                <span style={{color:ms>=0?T.pos:T.neg,fontSize:13,fontWeight:800}}>{fmt(Math.abs(ms))} €</span>
+              </div>
+              <div style={{width:52,flexShrink:0,textAlign:"center",color:subClr,fontSize:9,fontWeight:700}}>Saldo</div>
+              <div style={{flex:2}}/>
+            </div>}
+      </div>
     </div>
   );
 }
@@ -6456,7 +6493,6 @@ function DashboardScreen() {
     setDashDrillOpen,
   } = useContext(AppCtx);
 
-    const [useHero2, setUseHero2] = useState(false);
     const [dashDrill, _setDashDrill] = useState(null);
     // Wrapper: synct dashDrillOpen in FinanzApp für TopBar-zIndex
     const setDashDrill = (v) => { _setDashDrill(v); setDashDrillOpen(!!v); };
@@ -6795,56 +6831,39 @@ function DashboardScreen() {
           const prognoseMitte = base!=null ? base + _inMitte - _outMitte : null;
           const prognoseEnde  = base!=null ? base + _inEnde  - _outEnde  : null;
 
-          if(useHero2) {
-            const _uIn  = mTxs.filter(t=>txType(t)==="income" &&!dashLinkedChildIds.has(t.id)&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
-            const _uOut = mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id)&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+          {
+            const _h2txM = (t,lim) => { const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=lim; };
+            const _realIn  = mTxs.filter(t=>!t.pending&&txType(t)==="income" &&!dashLinkedChildIds.has(t.id));
+            const _realOut = mTxs.filter(t=>!t.pending&&txType(t)==="expense"&&!dashLinkedChildIds.has(t.id));
+            const _uIn     = mTxs.filter(t=>txType(t)==="income" &&!dashLinkedChildIds.has(t.id)&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+            const _uOut    = mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id)&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
             return (
             <SaldoHero2 year={year} month={month}
-              totalIn={totalIn} totalOut={totalOut}
-              pendingIn={pendingIn} pendingOut={pendingOut}
+              buchInM={_realIn.filter(t=>_h2txM(t,14)).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              buchOutM={_realOut.filter(t=>_h2txM(t,14)).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              buchInE={_realIn.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              buchOutE={_realOut.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              pendInM={pTxsIn.filter(t=>_h2txM(t,14)).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              pendOutM={pTxsOut.filter(t=>_h2txM(t,14)).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              pendInE={pendingIn} pendOutE={pendingOut}
+              uInM={_uIn.filter(t=>_h2txM(t,14)).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              uOutM={_uOut.filter(t=>_h2txM(t,14)).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              uInE={_uIn.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              uOutE={_uOut.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
+              pendInCnt={pTxsIn.length}   pendOutCnt={pTxsOut.length}
+              buchInCnt={_realIn.length}  buchOutCnt={_realOut.length}
+              uInCnt={_uIn.length}        uOutCnt={_uOut.length}
               prognoseMitte={prognoseMitte} prognoseEnde={prognoseEnde}
-              uncatIn={_uIn.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
-              uncatOut={_uOut.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)}
-              realInCount={mTxs.filter(t=>!t.pending&&txType(t)==="income"&&!dashLinkedChildIds.has(t.id)).length}
-              realOutCount={mTxs.filter(t=>!t.pending&&txType(t)==="expense"&&!dashLinkedChildIds.has(t.id)).length}
-              pendingInCount={pTxsIn.length} pendingOutCount={pTxsOut.length}
-              uncatInCount={_uIn.length} uncatOutCount={_uOut.length}
-              onSwitch={()=>setUseHero2(false)}/>
-            );
-          }
-          return (
-            <SaldoHero year={year} month={month}
-              prognoseMitte={prognoseMitte} prognoseEnde={prognoseEnde}
-              totalIn={totalIn} totalOut={totalOut}
-              pendingIn={pendingIn} pendingOut={pendingOut}
-              pTxsIn={pTxsIn} pTxsOut={pTxsOut}
-              mTxs={mTxs} dashLinkedChildIds={dashLinkedChildIds}
-              onSwitch={()=>setUseHero2(true)}
-              onDrillIn={()=>{
-                const txList=mTxs.filter(t=>txType(t)==="income"&&!dashLinkedChildIds.has(t.id));
-                const uncatList=txList.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-                setDashDrill({label:"Einnahmen",txList,isIncome:true,uncatCount:uncatList.length,cat:null,total:totalIn});setDashSearch("");
-              }}
-              onDrillOut={()=>{
-                const txList=mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id));
-                const uncatList=txList.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-                setDashDrill({label:"Ausgaben",txList,isIncome:false,uncatCount:uncatList.length,cat:null,total:totalOut});setDashSearch("");
-              }}
-              onDrillUncatIn={()=>{
-                const allIncome=mTxs.filter(t=>txType(t)==="income"&&!dashLinkedChildIds.has(t.id));
-                const uncatList=allIncome.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-                setDashDrill({label:"Einnahmen – unkategorisiert",txList:uncatList,isIncome:true,uncatCount:uncatList.length,cat:null,total:null});setDashSearch("");
-              }}
-              onDrillUncatOut={()=>{
-                const allExpense=mTxs.filter(t=>txType(t)==="expense"&&!dashLinkedChildIds.has(t.id));
-                const uncatList=allExpense.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId));
-                setDashDrill({label:"Ausgaben – unkategorisiert",txList:uncatList,isIncome:false,uncatCount:uncatList.length,cat:null,total:null});setDashSearch("");
-              }}
+              onDrillBuchIn={()=>{setDashDrill({label:"Einnahmen",txList:_realIn,isIncome:true,uncatCount:_uIn.length,cat:null,total:totalIn});setDashSearch("");}}
+              onDrillBuchOut={()=>{setDashDrill({label:"Ausgaben",txList:_realOut,isIncome:false,uncatCount:_uOut.length,cat:null,total:totalOut});setDashSearch("");}}
               onDrillPendIn={()=>{setDashDrill({label:"Einnahmen – Vormerkungen",txList:pTxsIn,isIncome:true,uncatCount:0,cat:null,total:pendingIn,isPending:true});setDashSearch("");}}
               onDrillPendOut={()=>{setDashDrill({label:"Ausgaben – Vormerkungen",txList:pTxsOut,isIncome:false,uncatCount:0,cat:null,total:pendingOut,isPending:true});setDashSearch("");}}
-              onOpenMatching={()=>setShowMatching(true)}
+              onDrillUncatIn={()=>{setDashDrill({label:"Einnahmen – unkategorisiert",txList:_uIn,isIncome:true,uncatCount:_uIn.length,cat:null,total:null});setDashSearch("");}}
+              onDrillUncatOut={()=>{setDashDrill({label:"Ausgaben – unkategorisiert",txList:_uOut,isIncome:false,uncatCount:_uOut.length,cat:null,total:null});setDashSearch("");}}
+              onDrillPrognose={(isMitte)=>setDashDrill({label:isMitte?"Prognose Mitte":"Prognose Ende",txList:[],isPrognose:true,progVal:isMitte?prognoseMitte:prognoseEnde,cat:null})}
             />
-          );
+            );
+          }
         })()}
 
         {/* ── Tagesgeld-Transfer Widget ── */}
