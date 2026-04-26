@@ -72,6 +72,113 @@
   #root {
     overflow-x: hidden;
   }
+  /* ── Brutalist-Theme ── */
+  .theme-brutalist * {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background-image: none !important;
+  }
+  /* Brutalist: NUR primäre Aktions-Buttons haben dicken Rahmen */
+  .theme-brutalist .nav-top {
+    background: #000000 !important;
+    border-bottom: 3px solid #FFEC3E !important;
+  }
+  .theme-brutalist .nav-top * {
+    color: #FFEC3E !important;
+  }
+  .theme-brutalist .nav-top button,
+  .theme-brutalist .nav-top select {
+    background: transparent !important;
+    border: none !important;
+  }
+  /* Karten/Flächen bekommen harte Kante oben/unten, nicht rundum */
+  .theme-brutalist .nav-bottom {
+    border-top: 3px solid #000000 !important;
+  }
+  /* Inputs und Selects: nur 2px unten — wie Unterstreichung */
+  .theme-brutalist input,
+  .theme-brutalist select,
+  .theme-brutalist textarea {
+    border: none !important;
+    border-bottom: 2px solid #000000 !important;
+    background: transparent !important;
+  }
+  .theme-brutalist input:focus,
+  .theme-brutalist textarea:focus {
+    border-bottom-color: #0000FF !important;
+    outline: none !important;
+  }
+
+  /* ── Terminal-Theme ── */
+  .theme-terminal * {
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+  /* Terminal: Struktur durch Hintergrundfarben, nicht durch Linien */
+  .theme-terminal .nav-top {
+    background: #0D0D0D !important;
+    border-bottom: 1px solid #00FF4133 !important;
+  }
+  .theme-terminal .nav-top button,
+  .theme-terminal .nav-top select {
+    background: transparent !important;
+    border: none !important;
+    color: #00FF41 !important;
+  }
+  .theme-terminal .nav-top span,
+  .theme-terminal .nav-top div {
+    color: #00FF41 !important;
+  }
+  .theme-terminal .nav-bottom {
+    border-top: 1px solid #00FF4133 !important;
+  }
+  /* Terminal: Inputs als reine Unterstreichung */
+  .theme-terminal input,
+  .theme-terminal select,
+  .theme-terminal textarea {
+    border: none !important;
+    border-bottom: 1px solid #00FF4166 !important;
+    background: transparent !important;
+    color: #00FF41 !important;
+  }
+  .theme-terminal input:focus,
+  .theme-terminal textarea:focus {
+    border-bottom-color: #00FF41 !important;
+    outline: none !important;
+  }
+  /* Alle generischen Buttons im Terminal: kein sichtbarer Rahmen */
+  .theme-terminal button {
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* ── Swiss-Theme ── */
+  .theme-swiss * {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+  .theme-swiss .nav-top {
+    border-bottom: 1.5px solid #111 !important;
+  }
+
+  /* ── Clean-Theme: keine Rundungen, keine Schatten ── */
+  .theme-clean * {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background-image: none !important;
+  }
+  .theme-clean input, .theme-clean select, .theme-clean textarea {
+    border-radius: 0 !important;
+  }
+  .theme-clean button {
+    border-radius: 0 !important;
+  }
+
   /* ── Randlos-Modus ── */
   .no-borders * {
     border-color: transparent !important;
@@ -656,8 +763,132 @@ const THEMES = {
     cond_neg:"#C0391A",  cond_warn:"#8A5A00",  cond_gold:"#A07000",  cond_pos:"#1A7A4A",
   },
 
+  // ── Clean — Minimalistisch, kein Schnörkel, reines SW ───────────────────
+  clean: {
+    name:"Clean",
+    bg:"#FFFFFF",
+    surf:"#F5F5F5",
+    surf2:"#EBEBEB",
+    surf3:"#F0F0F0",
+    bd:"#CCCCCC",
+    bds:"#999999",
+    txt:"#000000",
+    txt2:"#555555",
+    lbl:"#777777",
+    blue:"#0066CC",
+    pos:"#006600",
+    neg:"#CC0000",
+    gold:"#886600",
+    warn:"#886600",   override:"#664400",
+    on_accent:"#FFFFFF", disabled:"#CCCCCC",
+    cell_inc:"#006600",  cell_inc_bg:"#EEFFEE", cell_inc_bd:"#99CC99",
+    tab_exp:"#FFEEEE",   tab_inc:"#EEFFEE",    tab_pend:"#FFFFEE",
+    vorm_bg:"#FFFFF0",   vorm_bd:"#AAAAAA",
+    cf:"#0066CC",        mid:"#006699",
+    pal_inc_bg:"#EEFFEE", pal_inc_bd:"#99CC99", pal_inc_hdr:"#006600", pal_inc_fld:"#E0FFE0", pal_inc_val:"#003300",
+    pal_exp_bg:"#FFEEEE", pal_exp_bd:"#CC9999", pal_exp_fld:"#FFE0E0",
+    pal_tg_bg:"#EEF4FF",  pal_tg_bd:"#99BBEE",  pal_tg_hdr:"#0066CC",  pal_tg_fld:"#E0EEFF",  pal_tg_val:"#003399",
+    hero_bg:"#F5F5F5",
+    logo_c1:"#333333",   logo_c2:"#000000",
+    err:"#CC0000",       err_bg:"#FFEEEE",
+    cond_neg:"#CC0000",  cond_warn:"#886600",  cond_gold:"#886600",  cond_pos:"#006600",
+  },
+
+  // ── Brutalist / Anti-Design ───────────────────────────────────────────────
+  brutalist: {
+    name:"Brutalist",
+    bg:"#FFEC3E",
+    surf:"#FFFFFF",
+    surf2:"#F5E800",
+    surf3:"#FFF8A0",
+    bd:"#000000",
+    bds:"#000000",
+    txt:"#000000",
+    txt2:"#333333",
+    lbl:"#444444",
+    blue:"#000000",
+    pos:"#000000",
+    neg:"#CC0000",
+    gold:"#000000",
+    warn:"#CC0000",   override:"#880000",
+    on_accent:"#FFEC3E", disabled:"#CCCCCC",
+    cell_inc:"#000000",  cell_inc_bg:"#CCFFCC", cell_inc_bd:"#000000",
+    tab_exp:"#FFCCCC",   tab_inc:"#CCFFCC",    tab_pend:"#FFF8A0",
+    vorm_bg:"#FFF8A0",   vorm_bd:"#000000",
+    cf:"#000000",        mid:"#000000",
+    pal_inc_bg:"#CCFFCC", pal_inc_bd:"#000000", pal_inc_hdr:"#000000", pal_inc_fld:"#BBFFBB", pal_inc_val:"#000000",
+    pal_exp_bg:"#FFCCCC", pal_exp_bd:"#000000", pal_exp_fld:"#FFBBBB",
+    pal_tg_bg:"#E8F4FF",  pal_tg_bd:"#000000",  pal_tg_hdr:"#000000",  pal_tg_fld:"#D0EAFF",  pal_tg_val:"#000000",
+    hero_bg:"#FFEC3E",
+    logo_c1:"#000000",   logo_c2:"#333333",
+    err:"#CC0000",       err_bg:"#FFCCCC",
+    cond_neg:"#CC0000",  cond_warn:"#884400",  cond_gold:"#664400",  cond_pos:"#006600",
+  },
+
+  // ── Terminal / Hacker ─────────────────────────────────────────────────────
+  terminal: {
+    name:"Terminal",
+    bg:"#0D0D0D",
+    surf:"#111111",
+    surf2:"#1A1A1A",
+    surf3:"#0A0A0A",
+    bd:"#00FF4133",
+    bds:"#00FF4166",
+    txt:"#00FF41",
+    txt2:"#00AA2A",
+    lbl:"#007A1E",
+    blue:"#00FF41",
+    pos:"#00FF41",
+    neg:"#FF4444",
+    gold:"#FFD700",
+    warn:"#FFD700",   override:"#CC9900",
+    on_accent:"#0D0D0D", disabled:"#1A1A1A",
+    cell_inc:"#00FF41",  cell_inc_bg:"#001A00", cell_inc_bd:"#005500",
+    tab_exp:"#1A0000",   tab_inc:"#001A00",    tab_pend:"#1A1400",
+    vorm_bg:"#1A1400",   vorm_bd:"#FFD70066",
+    cf:"#00FF41",        mid:"#00CCFF",
+    pal_inc_bg:"#001A00", pal_inc_bd:"#005500", pal_inc_hdr:"#00FF41", pal_inc_fld:"#002200", pal_inc_val:"#44FF66",
+    pal_exp_bg:"#1A0000", pal_exp_bd:"#660000", pal_exp_fld:"#220000",
+    pal_tg_bg:"#001A1A",  pal_tg_bd:"#005555",  pal_tg_hdr:"#00CCFF",  pal_tg_fld:"#002222",  pal_tg_val:"#44DDFF",
+    hero_bg:"#0D0D0D",
+    logo_c1:"#007A1E",   logo_c2:"#00FF41",
+    err:"#FF4444",       err_bg:"#1A0000",
+    cond_neg:"#FF4444",  cond_warn:"#FFD700",  cond_gold:"#FFD700",  cond_pos:"#00FF41",
+  },
+
+  // ── Swiss / International Style ───────────────────────────────────────────
+  swiss: {
+    name:"Swiss",
+    bg:"#FFFFFF",
+    surf:"#FAFAFA",
+    surf2:"#F0F0F0",
+    surf3:"#F8F8F8",
+    bd:"#DDDDDD",
+    bds:"#AAAAAA",
+    txt:"#111111",
+    txt2:"#777777",
+    lbl:"#999999",
+    blue:"#111111",
+    pos:"#111111",
+    neg:"#111111",
+    gold:"#555555",
+    warn:"#555555",   override:"#333333",
+    on_accent:"#FFFFFF", disabled:"#CCCCCC",
+    cell_inc:"#111111",  cell_inc_bg:"#F0F0F0", cell_inc_bd:"#AAAAAA",
+    tab_exp:"#F5F5F5",   tab_inc:"#F0F0F0",    tab_pend:"#F8F8F8",
+    vorm_bg:"#F0F0F0",   vorm_bd:"#AAAAAA",
+    cf:"#111111",        mid:"#555555",
+    pal_inc_bg:"#F0F0F0", pal_inc_bd:"#AAAAAA", pal_inc_hdr:"#111111", pal_inc_fld:"#E8E8E8", pal_inc_val:"#111111",
+    pal_exp_bg:"#F5F5F5", pal_exp_bd:"#AAAAAA", pal_exp_fld:"#EEEEEE",
+    pal_tg_bg:"#F0F0F0",  pal_tg_bd:"#AAAAAA",  pal_tg_hdr:"#111111",  pal_tg_fld:"#E8E8E8",  pal_tg_val:"#111111",
+    hero_bg:"#FFFFFF",
+    logo_c1:"#555555",   logo_c2:"#111111",
+    err:"#111111",       err_bg:"#F5F5F5",
+    cond_neg:"#111111",  cond_warn:"#555555",  cond_gold:"#555555",  cond_pos:"#111111",
+  },
+
 };
-// Globales T — wird von getAppTheme() überschrieben, initialisiert mit dark
+// Globales T — wird von getAppTheme() überschrieben, initialisiert mit dark — wird von getAppTheme() überschrieben, initialisiert mit dark
 let T = THEMES.dark;
 
 function getTheme(name) {
@@ -691,7 +922,7 @@ function getTheme(name) {
   return t;
 }
 // INP: live getter damit Theme-Wechsel wirkt
-const _INP_BASE = ()=>({width:"100%",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.05)",border:`1px solid ${T.bd}`,borderRadius:11,padding:"6px 10px",color:T.txt,fontSize:14,outline:"none",marginBottom:9,boxSizing:"border-box"});
+const _INP_BASE = ()=>({width:"100%",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.05)",border:`1px solid ${T.bd}`,borderRadius:11,padding:"6px 10px",color:T.txt,fontSize:14,outline:"none",marginBottom:9,boxSizing:"border-box"});
 const INP = new Proxy({}, { get:(_,k)=>_INP_BASE()[k] });
 
 
@@ -835,11 +1066,11 @@ const Li = (name, size=16, color="currentColor") => {
 // ─── Shared UI components (defined outside app to avoid recreation) ───────────
 const Overlay = ({onClose,children}) => (
   <div onClick={onClose} style={{position:"fixed",inset:0,
-    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.45)":"rgba(0,0,0,0.78)",
+    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(0,0,0,0.45)":"rgba(0,0,0,0.78)",
     backdropFilter:"blur(12px)",zIndex:50,display:"flex",alignItems:"flex-start",justifyContent:"center",
     padding:"16px",paddingTop:"20px",overflowY:"auto"}}>
     <div onClick={e=>e.stopPropagation()} style={{
-      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"#F5F7F2":T.surf2,
+      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"#F5F7F2":T.surf2,
       borderRadius:20,padding:"20px 18px",width:"100%",maxWidth:480,maxHeight:"calc(100vh - 32px)",overflowY:"auto",boxSizing:"border-box",
       boxShadow:"0 20px 60px rgba(0,0,0,0.5)",border:`1px solid ${T.bds}`}}>
       {children}
@@ -888,7 +1119,7 @@ function MonthPicker({month, year, onMonth, onYear, yearOnly=false}) {
   const prevM = ()=>{ if(month>0){onMonth(month-1);}else{onMonth(11);onYear(year-1);} };
   const nextM = ()=>{ if(month<11){onMonth(month+1);}else{onMonth(0);onYear(year+1);} };
 
-  const isLightTheme = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand");
+  const isLightTheme = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss");
   const btnS = {
     background: isLightTheme?"#fff":T.surf3,
     border: isLightTheme?`1px solid ${T.bds}`:"none",
@@ -919,10 +1150,10 @@ function MonthPicker({month, year, onMonth, onYear, yearOnly=false}) {
       {/* Dropdown — öffnet nach unten (jetzt in der Titelleiste) */}
       {open&&(
         <div style={{position:"absolute",top:"110%",right:0,zIndex:200,
-          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"#fff":T.surf2,
+          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"#fff":T.surf2,
           border:`1px solid ${T.bds}`,borderRadius:14,
           padding:12,
-          boxShadow:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"0 -4px 24px rgba(0,0,0,0.15)":"0 -8px 32px rgba(0,0,0,0.6)",
+          boxShadow:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"0 -4px 24px rgba(0,0,0,0.15)":"0 -8px 32px rgba(0,0,0,0.6)",
           minWidth:200}}>
           {/* Jahr-Wähler */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
@@ -1663,7 +1894,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
                       <div style={{color:T.txt,fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                         {v.shortDesc}
                         {hasInterval&&<span style={{marginLeft:6,color:T.gold,fontSize:9,fontWeight:700,
-                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"1px 5px"}}>
+                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"1px 5px"}}>
                           {v.interval}
                         </span>}
                         {v.hasExistingVorm&&<span style={{marginLeft:4,color:T.blue,fontSize:9,fontWeight:700,
@@ -1727,7 +1958,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
                               const isManual = !!manualIntervals[v.vendor];
                               return (<>
                                 {effInterval&&<span style={{color:isManual?T.blue:T.gold,fontSize:9,
-                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
+                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
                                   borderRadius:4,padding:"1px 5px",fontWeight:700}}>
                                   {isManual?"✎ ":""}{effInterval}
                                 </span>}
@@ -2159,7 +2390,7 @@ function RecurringDetectionScreen({onClose, embedded=false, initialTab="vormerku
                               const isManual = !!manualIntervals[v.vendor];
                               return (<>
                                 {effInterval&&<span style={{color:isManual?T.blue:T.gold,fontSize:9,
-                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
+                                  background:isManual?"rgba(74,159,212,0.15)":(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
                                   borderRadius:4,padding:"1px 5px",fontWeight:700}}>
                                   {isManual?"✎ ":""}{effInterval}
                                 </span>}
@@ -2318,7 +2549,7 @@ function VormHubSecToggle({label, icon, active, onToggle, accent}) {
   return (
     <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",
       padding:"11px 14px",borderBottom:`1px solid ${T.bd}`,userSelect:"none",
-      background:active?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(170,204,0,0.06)":"rgba(170,204,0,0.04)"):"transparent"}}>
+      background:active?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(170,204,0,0.06)":"rgba(170,204,0,0.04)"):"transparent"}}>
       <div style={{width:28,height:28,borderRadius:9,
         background:active?`${accent||T.pos}22`:"rgba(255,255,255,0.06)",
         display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -2982,7 +3213,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                     <button key={val} onClick={()=>{setCsvType(val);setCatId("");setSubId("");}}
                       style={{flex:1,padding:"8px",borderRadius:10,cursor:"pointer",fontSize:13,fontWeight:700,
                         border:`2px solid ${active?col:T.bd}`,
-                        background:active?col:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
+                        background:active?col:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
                         color:active?"#fff":T.txt2,fontFamily:"inherit",transition:"all 0.15s"}}>
                       {label}
                     </button>
@@ -3081,7 +3312,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       <input type="date" value={endDate}
                         onChange={e=>{setEndDate(e.target.value);if(e.target.value)setCount("");}}
                         style={{...INP,marginBottom:0,flex:1,
-                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
+                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"light":"dark"}}/>
                       <button onClick={()=>setEndDate("")}
                         style={{background:"none",border:"none",color:T.neg,cursor:"pointer",padding:"4px"}}>
                         {Li("x",10)}
@@ -3109,7 +3340,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                   <div style={{display:"flex",gap:2,alignItems:"center"}}>
                     <input type="date" value={valueDate} onChange={e=>setValueDate(e.target.value)}
                       style={{...INP,marginBottom:0,flex:1,
-                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
+                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"light":"dark"}}/>
                     {valueDate&&<button onClick={()=>setValueDate("")}
                       style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:"4px",flexShrink:0}}>
                       {Li("x",11)}
@@ -3122,7 +3353,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                   </div>
                   <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
                     style={{...INP,marginBottom:0,width:"100%",boxSizing:"border-box",
-                      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
+                      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"light":"dark"}}/>
                 </div>
               </div>
 
@@ -3276,7 +3507,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
 
               {/* Scope-Auswahl im Bearbeiten-Modus */}
               {isEdit&&editVorm._seriesId&&(()=>{
-                const isLight2=T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand";
+                const isLight2=T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss";
                 const csD={colorScheme:isLight2?"light":"dark"};
                 const inpStyle={...INP,marginBottom:0,width:"100%",boxSizing:"border-box",...csD,
                   border:`1px solid ${T.blue}66`};
@@ -3443,7 +3674,7 @@ function VormerkungHub({onClose, editVorm=null, mobileMode=false}) {
                       <input type="date" value={exStartDate}
                         onChange={e=>setExStartDate(e.target.value)}
                         style={{...INP,marginBottom:8,width:"100%",boxSizing:"border-box",
-                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
+                          colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"light":"dark"}}/>
 
                       {/* Rhythmus */}
                       <div style={{color:T.txt2,fontSize:10,marginBottom:3}}>Rhythmus</div>
@@ -5210,7 +5441,7 @@ function EditPopup() {
                   <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                     {Li("link",12,T.blue)}
                     <span style={{color:T.blue,fontSize:11,fontWeight:700}}>Verknüpfte Vormerkung</span>
-                    {total>1&&pend._seriesIdx&&pend._seriesTyp==="finanzierung"&&<span style={{color:T.gold,fontSize:10,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
+                    {total>1&&pend._seriesIdx&&pend._seriesTyp==="finanzierung"&&<span style={{color:T.gold,fontSize:10,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",
                       borderRadius:4,padding:"1px 6px",fontWeight:700,marginLeft:"auto"}}>
                       {Li("repeat",9,T.gold)} Zahlung {thisIdx+1} von {total}
                     </span>}
@@ -5266,7 +5497,7 @@ function EditPopup() {
                     {" · "}Differenz: <b style={{color:T.neg}}>{fmt(Math.abs(mm.pendAmt-mm.realAmt))}</b>
                   </div>
                   {pend&&<button onClick={()=>{ setEditTx(null); setTimeout(()=>setEditTx(pend),50); }}
-                    style={{marginTop:6,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}44`,
+                    style={{marginTop:6,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}44`,
                       color:T.gold,borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:700,
                       cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:"inherit"}}>
                     {Li("edit",10,T.gold)} Vormerkung bearbeiten
@@ -5334,7 +5565,7 @@ function EditPopup() {
                 <input type="date" value={editTx.valueDate||""}
                   onChange={e=>setEditTx(p=>({...p,valueDate:e.target.value||undefined}))}
                   style={{...INP,marginBottom:0,flex:1,
-                    colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
+                    colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"light":"dark"}}/>
                 {editTx.valueDate&&(
                   <button onClick={()=>setEditTx(p=>{const u={...p};delete u.valueDate;return u;})}
                     style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:4}}>
@@ -5559,7 +5790,7 @@ function EditPopup() {
             const endeAmt  = isMitte ? (endePartner?endePartner.totalAmount:0) : pn(editTx.totalAmount);
             const gesamtAmt = mitteAmt + endeAmt;
             return (
-            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:11,padding:"6px 10px",marginBottom:8,border:`1px solid ${T.gold}33`}}>
+            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:11,padding:"6px 10px",marginBottom:8,border:`1px solid ${T.gold}33`}}>
               <div style={{color:T.gold,fontSize:11,fontWeight:700,marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
                 {Li("target",11,T.gold)} Budget-Platzhalter
                 <span style={{color:T.txt2,fontSize:10,fontWeight:400,marginLeft:4}}>— Budget-Bindung lösen?</span>
@@ -5676,7 +5907,7 @@ function EditPopup() {
                 {/* Gesamtbetrag-Eingabe wenn Finanzierung */}
                 {(editTx._seriesTyp==="finanzierung"&&editTx._seriesIdx&&editTx._seriesTotal)&&(
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
-                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:8,padding:"7px 10px",
+                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderRadius:8,padding:"7px 10px",
                     border:`1px solid ${T.gold}33`}}>
                     <span style={{color:T.txt2,fontSize:11,flex:1}}>Gesamtbetrag Serie</span>
                     <input
@@ -5999,130 +6230,6 @@ function PendingList({pTxs, getCat, txType, openEdit, dayOf, pendOpenAmt, getSub
   );
 }
 
-function SaldoHero({year, month, totalIn, totalOut, pendingIn, pendingOut,
-  pTxsIn, pTxsOut, mTxs, dashLinkedChildIds,
-  onDrillIn, onDrillOut, onDrillUncatIn, onDrillUncatOut, onDrillPendIn, onDrillPendOut,
-  onOpenMatching, prognoseMitte, prognoseEnde, onSwitch}) {
-  const { getKumulierterSaldo, getPrognoseSaldoDetail, txs, getCat, getSub } = useContext(AppCtx);
-  const ks = getKumulierterSaldo(year, month);
-  const ms = totalIn - totalOut;
-  const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
-  const isCurrent = year===nowY && month===nowM;
-  const isFuture  = year>nowY || (year===nowY && month>nowM);
-  // Prognose: von außen übergeben (einfache Formel: Vormonat + Einnahmen - Ausgaben)
-  // detailMitte/detailEnde nur noch für den Drilldown-Inhalt (Buchungsliste)
-  const detailMitte = (isCurrent||isFuture) ? getPrognoseSaldoDetail(year,month,true)  : null;
-  const detailEnde  = (isCurrent||isFuture) ? getPrognoseSaldoDetail(year,month,false) : null;
-  const saldoMitte = (isCurrent||isFuture) ? prognoseMitte ?? null : null;
-  const saldoEnde  = (isCurrent||isFuture) ? prognoseEnde  ?? null : null;
-  const ksColor = ks===null ? T.txt : ks<0 ? T.cond_neg : ks<=500 ? T.cond_warn : ks<=1000 ? T.cond_gold : T.cond_pos;
-  const uncatIn  = (mTxs||[]).filter(t=>t._csvType==="income"||false).length; // computed inline below
-  const uncatOut = 0;
-
-  return (
-    <div style={{margin:"6px 10px 4px",
-      background:T.hero_bg,
-      borderRadius:22,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:-30,right:-30,width:110,height:110,borderRadius:"50%",
-        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.07)"}}/>
-      {/* Switch-Button oben rechts */}
-      {onSwitch&&<button onClick={onSwitch} style={{position:"absolute",top:10,right:12,
-        background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,
-        padding:"3px 8px",cursor:"pointer",color:"rgba(255,255,255,0.7)",
-        fontSize:10,fontFamily:"inherit",zIndex:2}}>⇄ Kompakt</button>}
-      <div style={{color:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.8)":T.txt2,fontSize:11,marginBottom:1}}>{MONTHS_F[month]} {year}</div>
-
-      {/* Kontostand groß */}
-      <div style={{fontSize:32,fontWeight:800,letterSpacing:-1,color:ksColor}}>
-        {ks!==null ? <>{ks>=0?"+":"-"}{fmt(Math.abs(ks))} €</> : <>{ms>0?"+":ms<0?"−":""}{fmt(Math.abs(ms))} €</>}
-      </div>
-      <div style={{color:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(255,255,255,0.75)":T.txt2,fontSize:10,marginBottom:8}}>{ks!==null?"Kontostand":"Monatssaldo"}</div>
-
-      {/* Einnahmen | Ausgaben | Monatssaldo */}
-      <div style={{display:"flex",gap:16,marginBottom:(saldoMitte!==null)?6:0}}>
-        <div style={{cursor:"pointer",flex:1}}>
-          <div style={{color:T.lbl||T.txt2,fontSize:10}}>Einnahmen</div>
-          <div onClick={onDrillIn} style={{color:T.pos,fontSize:15,fontWeight:700}}>+{fmt(totalIn)}</div>
-          {pendingIn>0&&<div onClick={onDrillPendIn} style={{color:T.gold,fontSize:9,cursor:"pointer"}}>
-            {pTxsIn.length} vorgemerkt · +{fmt(pendingIn)} ›
-          </div>}
-          {(()=>{const uc=(mTxs||[]).filter(t=>t._csvType==="income"&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));return uc.length>0&&(
-            <div onClick={onDrillUncatIn} style={{color:T.pos,fontSize:9,opacity:0.7,cursor:"pointer"}}>
-              {uc.length} unkat. ›
-            </div>
-          );})()}
-        </div>
-        <div style={{cursor:"pointer",flex:1}}>
-          <div style={{color:T.lbl||T.txt2,fontSize:10}}>Ausgaben</div>
-          <div onClick={onDrillOut} style={{color:T.neg,fontSize:15,fontWeight:700}}>−{fmt(totalOut)}</div>
-          {pendingOut>0&&<div onClick={onDrillPendOut} style={{color:T.gold,fontSize:9,cursor:"pointer"}}>
-            {pTxsOut.length} vorgemerkt · −{fmt(pendingOut)} ›
-          </div>}
-          {(()=>{const uc=(mTxs||[]).filter(t=>!t.pending&&!t._csvType?.includes("income")&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));return uc.length>0&&(
-            <div onClick={onDrillUncatOut} style={{color:T.neg,fontSize:9,opacity:0.7,cursor:"pointer"}}>
-              {uc.length} unkat. ›
-            </div>
-          );})()}
-        </div>
-        <div style={{flex:1}}>
-          <div style={{color:T.txt2,fontSize:10}}>Monatssaldo</div>
-          <div style={{color:ms>=0?T.pos:T.neg,fontSize:15,fontWeight:700}}>
-            {ms>0?"+":ms<0?"−":""}{fmt(Math.abs(ms))}
-          </div>
-        </div>
-      </div>
-
-      {/* Saldo-Prognose Mitte / Ende — mit Drilldown */}
-      {detailMitte&&<SaldoPrognose year={year} month={month} txs={txs} detailMitte={detailMitte} detailEnde={detailEnde} saldoMitte={saldoMitte} saldoEnde={saldoEnde} getCat={getCat} getSub={getSub}/>}
-      {/* Warnungen: offene Vormerkungen die noch nicht zugeordnet wurden */}
-      {isCurrent&&(()=>{
-        const today = new Date();
-        const todayD = today.getDate();
-        const lastDay = new Date(year, month+1, 0).getDate();
-        // Offene konkrete Vormerkungen = pending, kein _linkedTo, kein _budgetSubId
-        const offene = txs.filter(t=>{
-          if(!t.pending||t._linkedTo||t._budgetSubId) return false;
-          const d=new Date(t.date);
-          return d.getFullYear()===year&&d.getMonth()===month;
-        });
-        const offeneMitte = offene.filter(t=>new Date(t.date).getDate()<=14);
-        const offeneEnde  = offene.filter(t=>new Date(t.date).getDate()<=lastDay);
-        const warnMitte = todayD>=15 && offeneMitte.length>0;
-        const warnEnde  = todayD>=lastDay && offeneEnde.length>0;
-        if(!warnMitte && !warnEnde) return null;
-        return (
-          <div style={{marginTop:6,display:"flex",flexDirection:"column",gap:4}}>
-            {warnMitte&&(
-              <button onClick={onOpenMatching}
-                style={{background:"rgba(245,166,35,0.2)",border:"1px solid rgba(245,166,35,0.5)",
-                  borderRadius:10,padding:"6px 10px",cursor:"pointer",fontFamily:"inherit",
-                  display:"flex",alignItems:"center",gap:6,width:"100%",textAlign:"left"}}>
-                {Li("alert-triangle",12,T.warn)}
-                <span style={{color:T.warn,fontSize:10,fontWeight:700,flex:1}}>
-                  {offeneMitte.length} offene Vormerkung{offeneMitte.length!==1?"en":""} vor dem 15. noch nicht zugeordnet
-                </span>
-                {Li("chevron-right",10,T.warn)}
-              </button>
-            )}
-            {warnEnde&&(
-              <button onClick={onOpenMatching}
-                style={{background:"rgba(245,166,35,0.2)",border:"1px solid rgba(245,166,35,0.5)",
-                  borderRadius:10,padding:"6px 10px",cursor:"pointer",fontFamily:"inherit",
-                  display:"flex",alignItems:"center",gap:6,width:"100%",textAlign:"left"}}>
-                {Li("alert-triangle",12,T.warn)}
-                <span style={{color:T.warn,fontSize:10,fontWeight:700,flex:1}}>
-                  {offeneEnde.length} offene Vormerkung{offeneEnde.length!==1?"en":""} vor Monatsende noch nicht zugeordnet
-                </span>
-                {Li("chevron-right",10,T.warn)}
-              </button>
-            )}
-          </div>
-        );
-      })()}
-    </div>
-  );
-}
-
 // ══════════════════════════════════════════════════════════════════════
 // ── SaldoHero2: Kompakter Hero ───────────────────────────────────────
 function SaldoHero2({year, month,
@@ -6137,15 +6244,209 @@ function SaldoHero2({year, month,
   const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
   const isCurrent = year===nowY && month===nowM;
   const isFuture  = year>nowY || (year===nowY && month>nowM);
-  const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand";
-  const subClr = isLight?"rgba(255,255,255,0.75)":T.txt2;
+  const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss";
+  const subClr = isLight?"rgba(0,0,0,0.45)":T.txt2;
   const ksColor = ks===null?T.txt:ks<0?T.cond_neg:ks<=500?T.cond_warn:ks<=1000?T.cond_gold:T.cond_pos;
   const showPrognose = isCurrent || isFuture;
   const saldoColor = v => v===null?T.txt2:v<0?T.cond_neg:v<=500?T.cond_warn:v<=1000?T.cond_gold:T.cond_pos;
   const ms = buchInE - buchOutE;
+  const [progDrill, setProgDrill] = React.useState(null);
 
+  // ── TERMINAL LAYOUT ──────────────────────────────────────────────────────
+  if(T.themeName==="terminal") {
+    const G = T.pos;
+    const R = T.neg;
+    const A = T.txt;
+    const D = T.txt2;
+    const fmtT = v => v>0 ? fmt(v) : "─";
+    const saldo = ks!==null ? ks : ms;
+    const saldoStr = (saldo>=0?"+":"-") + fmt(Math.abs(saldo)) + " EUR";
+    const saldoC = saldo<0?R:saldo<=500?T.gold:G;
+    const MONTHS_ABBR=["JAN","FEB","MAR","APR","MAI","JUN","JUL","AUG","SEP","OKT","NOV","DEZ"];
+    const monthStr = MONTHS_ABBR[month]+" "+year;
+
+    // Zeile: Label linksbündig, 2 Werte rechtsbündig — kein Box-Rahmen, nur Hintergrund
+    const Row2 = ({label, vIn, vOut, cIn, cOut, onIn, onOut, dim}) => (
+      <div style={{display:"flex",alignItems:"baseline",padding:"1px 12px",
+        opacity:dim?0.65:1}}>
+        <span style={{color:D,fontSize:10,minWidth:88,letterSpacing:0.5}}>{label}</span>
+        <span onClick={vIn>0&&onIn?onIn:undefined}
+          style={{color:cIn||G,fontSize:12,fontWeight:700,flex:1,textAlign:"right",
+            fontFamily:"monospace",cursor:vIn>0&&onIn?"pointer":"default"}}>
+          {vIn>0?"+"+fmtT(vIn):fmtT(0)}
+        </span>
+        <span style={{color:D,fontSize:10,padding:"0 8px"}}>/</span>
+        <span onClick={vOut>0&&onOut?onOut:undefined}
+          style={{color:cOut||R,fontSize:12,fontWeight:700,flex:1,textAlign:"right",
+            fontFamily:"monospace",cursor:vOut>0&&onOut?"pointer":"default"}}>
+          {vOut>0?"-"+fmtT(vOut):fmtT(0)}
+        </span>
+      </div>
+    );
+
+    return (
+      <div style={{margin:"0",background:"#0D0D0D",fontFamily:"monospace"}}>
+        {/* Saldo-Block — eigener dunkler Hintergrund, keine Umrandung */}
+        <div style={{background:"#111",padding:"10px 12px 8px",
+          borderBottom:`1px solid ${G}22`}}>
+          <div style={{color:D,fontSize:9,letterSpacing:2,marginBottom:2}}>
+            {">"} SALDO {ks!==null?"[kumuliert]":"[monatlich]"} :: {monthStr}
+          </div>
+          <div style={{color:saldoC,fontSize:32,fontWeight:700,letterSpacing:-1,lineHeight:1}}>
+            {saldoStr}
+          </div>
+        </div>
+        {/* Datenzeilen — nur durch vertikalen Rhythmus gegliedert */}
+        <div style={{padding:"6px 0 4px"}}>
+          <div style={{color:D,fontSize:9,letterSpacing:2,padding:"0 12px",marginBottom:3}}>
+            {"// EINNAHMEN / AUSGABEN"}
+          </div>
+          <Row2 label="BUCHUNGEN" vIn={buchInE} vOut={buchOutE}
+            onIn={buchInE>0&&onDrillBuchIn?()=>onDrillBuchIn(false):null}
+            onOut={buchOutE>0&&onDrillBuchOut?()=>onDrillBuchOut(false):null}/>
+          {(pendInE>0||pendOutE>0)&&(
+            <Row2 label="VORMERKUNG" vIn={pendInE} vOut={pendOutE}
+              cIn={G+"99"} cOut={R+"99"} dim
+              onIn={pendInE>0&&onDrillPendIn?()=>onDrillPendIn(false):null}
+              onOut={pendOutE>0&&onDrillPendOut?()=>onDrillPendOut(false):null}/>
+          )}
+          {(uInE>0||uOutE>0)&&(
+            <Row2 label="UNKAT." vIn={uInE} vOut={uOutE}
+              cIn={T.gold} cOut={T.gold} dim/>
+          )}
+        </div>
+        {/* Prognose / Saldo-Zeile — eigener Block, leicht heller */}
+        {showPrognose ? (
+          <div style={{background:"#111",borderTop:`1px solid ${G}22`,padding:"6px 12px 8px"}}>
+            <div style={{color:D,fontSize:9,letterSpacing:2,marginBottom:4}}>
+              {"// PROGNOSE"}
+            </div>
+            <div style={{display:"flex",gap:0}}>
+              <div style={{flex:1}}>
+                <div style={{color:D,fontSize:9,letterSpacing:1,marginBottom:2}}>MITTE</div>
+                <div onClick={prognoseMitte!==null?()=>setProgDrill(v=>v==="Mitte"?null:"Mitte"):undefined}
+                  style={{color:saldoColor(prognoseMitte),fontSize:16,fontWeight:700,
+                    fontFamily:"monospace",cursor:prognoseMitte!==null?"pointer":"default"}}>
+                  {prognoseMitte!==null?(prognoseMitte>=0?"+":"-")+fmt(Math.abs(prognoseMitte))+"€":"─"}
+                </div>
+              </div>
+              <div style={{width:1,background:`${G}22`,margin:"0 16px"}}/>
+              <div style={{flex:1}}>
+                <div style={{color:D,fontSize:9,letterSpacing:1,marginBottom:2}}>ENDE</div>
+                <div onClick={prognoseEnde!==null?()=>setProgDrill(v=>v==="Ende"?null:"Ende"):undefined}
+                  style={{color:saldoColor(prognoseEnde),fontSize:16,fontWeight:700,
+                    fontFamily:"monospace",cursor:prognoseEnde!==null?"pointer":"default"}}>
+                  {prognoseEnde!==null?(prognoseEnde>=0?"+":"-")+fmt(Math.abs(prognoseEnde))+"€":"─"}
+                </div>
+              </div>
+            </div>
+            {progDrill&&(
+              <div style={{marginTop:8,paddingTop:8,borderTop:`1px solid ${G}22`}}>
+                <SaldoPrognose year={year} month={month} txs={[]}
+                  detailMitte={detailMitte} detailEnde={detailEnde}
+                  saldoMitte={saldoMitte} saldoEnde={saldoEnde}
+                  getCat={()=>null} getSub={()=>null}
+                  initialOpen={progDrill}/>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{background:"#111",borderTop:`1px solid ${G}22`,
+            padding:"6px 12px",display:"flex",alignItems:"baseline",gap:8}}>
+            <span style={{color:D,fontSize:9,letterSpacing:2}}>MONATS-SALDO</span>
+            <span style={{color:ms>=0?G:R,fontSize:16,fontWeight:700,fontFamily:"monospace",marginLeft:"auto"}}>
+              {(ms>=0?"+":"-")+fmt(Math.abs(ms))+" EUR"}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── BRUTALIST LAYOUT ─────────────────────────────────────────────────────
+  if(T.themeName==="brutalist") {
+    const BK = "#000000";
+    const BY = "#FFEC3E";
+    const BR = "#CC0000";
+    const BG = "#006600";
+    const saldo = ks!==null ? ks : ms;
+    const saldoC = saldo<0?BR:BG;
+    const MONTHS_ABBR=["JAN","FEB","MRZ","APR","MAI","JUN","JUL","AUG","SEP","OKT","NOV","DEZ"];
+
+    // Kachel: Hintergrund zeigt Zugehörigkeit, kein Einzelrahmen
+    const Tile = ({label, val, col, bg, onClick, grow}) => (
+      <div onClick={onClick}
+        style={{background:bg||"#fff",padding:"8px 10px",
+          flex:grow||1,minWidth:0,cursor:onClick?"pointer":"default"}}>
+        <div style={{fontSize:8,fontWeight:900,color:col==="#fff"?BK+"88":BK+"66",
+          letterSpacing:1,textTransform:"uppercase",marginBottom:3}}>{label}</div>
+        <div style={{fontSize:16,fontWeight:900,color:col||BK,fontFamily:"monospace",lineHeight:1}}>{val||"—"}</div>
+      </div>
+    );
+
+    return (
+      <div style={{margin:"0",background:BY}}>
+        {/* Titel-Streifen — einzige starke Linie: oben und unten je 3px */}
+        <div style={{background:BK,padding:"7px 12px",
+          display:"flex",alignItems:"center",justifyContent:"space-between",
+          borderBottom:`3px solid ${BY}`}}>
+          <span style={{color:BY,fontWeight:900,fontSize:10,letterSpacing:2}}>
+            BUDGET {MONTHS_ABBR[month]} {year}
+          </span>
+          <span style={{color:saldoC===BR?BR:BY,fontWeight:900,fontSize:22,fontFamily:"monospace"}}>
+            {(saldo>=0?"+":"-")+fmt(Math.abs(saldo))+" €"}
+          </span>
+        </div>
+        {/* Buchungen-Zeile: 3 Flächen nebeneinander, durch Hintergrundfarbe getrennt */}
+        <div style={{display:"flex",gap:2,padding:2,paddingBottom:0}}>
+          <Tile label="Einnahmen" val={buchInE>0?"+"+fmt(buchInE):"—"} col={BG}
+            bg="#E8FFE8"
+            onClick={buchInE>0&&onDrillBuchIn?()=>onDrillBuchIn(false):null}/>
+          <Tile label="Ausgaben" val={buchOutE>0?"-"+fmt(buchOutE):"—"} col={BR}
+            bg="#FFE8E8"
+            onClick={buchOutE>0&&onDrillBuchOut?()=>onDrillBuchOut(false):null}/>
+          <Tile label="Saldo" val={(ms>=0?"+":"-")+fmt(Math.abs(ms))} col={ms>=0?BG:BR}
+            bg="#FFFFFF"/>
+        </div>
+        {/* Zeile 2: VM + Prognose — optional, kompakter */}
+        {(pendInE>0||pendOutE>0||showPrognose)&&(
+          <div style={{display:"flex",gap:2,padding:"2px 2px 0"}}>
+            {pendInE>0&&<Tile label="VM. Ein" val={"+"+fmt(pendInE)}
+              col={BG+"bb"} bg="#F0FFF0"
+              onClick={onDrillPendIn?()=>onDrillPendIn(false):null}/>}
+            {pendOutE>0&&<Tile label="VM. Aus" val={"-"+fmt(pendOutE)}
+              col={BR+"bb"} bg="#FFF0F0"
+              onClick={onDrillPendOut?()=>onDrillPendOut(false):null}/>}
+            {showPrognose&&<>
+              <Tile label="Prog. Mitte"
+                val={prognoseMitte!==null?(prognoseMitte>=0?"+":"-")+fmt(Math.abs(prognoseMitte)):"—"}
+                col={saldoColor(prognoseMitte)} bg="#FAFAFA"
+                onClick={prognoseMitte!==null?()=>setProgDrill(v=>v==="Mitte"?null:"Mitte"):null}/>
+              <Tile label="Prog. Ende"
+                val={prognoseEnde!==null?(prognoseEnde>=0?"+":"-")+fmt(Math.abs(prognoseEnde)):"—"}
+                col={saldoColor(prognoseEnde)} bg="#F5F5F5"
+                onClick={prognoseEnde!==null?()=>setProgDrill(v=>v==="Ende"?null:"Ende"):null}/>
+            </>}
+          </div>
+        )}
+        {progDrill&&(
+          <div style={{background:"#fff",padding:8,margin:"2px 2px 0"}}>
+            <SaldoPrognose year={year} month={month} txs={[]}
+              detailMitte={detailMitte} detailEnde={detailEnde}
+              saldoMitte={saldoMitte} saldoEnde={saldoEnde}
+              getCat={()=>null} getSub={()=>null}
+              initialOpen={progDrill}/>
+          </div>
+        )}
+        {/* untere Abschlusslinie */}
+        <div style={{height:3,background:BK,marginTop:2}}/>
+      </div>
+    );
+  }
+
+  // ── DEFAULT / ALLE ANDEREN THEMES ───────────────────────────────────────
   const tapStyle = {cursor:"pointer",borderRadius:8,transition:"background 0.1s"};
-  const LBL_W = 42; // Label-Spalte in der Mitte
+  const LBL_W = 42;
   const Val = ({v, clr, dim}) => (
     <div style={{flex:1,textAlign:"center"}}>
       <span style={{color:clr,fontSize:17,fontWeight:700,opacity:dim?0.55:1}}>
@@ -6153,7 +6454,6 @@ function SaldoHero2({year, month,
       </span>
     </div>
   );
-
   const HalfCell = ({vIn, vOut, clrIn, clrOut, dim, isMitte, onTapIn, onTapOut}) => (
     <div style={{flex:2,display:"flex"}}>
       <div style={{flex:1,textAlign:"center",...(onTapIn&&vIn>0?tapStyle:{}),padding:"3px 0"}}
@@ -6166,7 +6466,6 @@ function SaldoHero2({year, month,
       </div>
     </div>
   );
-
   const Row = ({label, mIn, mOut, eIn, eOut, clrIn, clrOut, onTapIn, onTapOut}) => (
     <div style={{display:"flex",alignItems:"center",marginBottom:6}}>
       <HalfCell vIn={mIn} vOut={mOut} clrIn={clrIn} clrOut={clrOut}
@@ -6176,8 +6475,6 @@ function SaldoHero2({year, month,
         dim={false} isMitte={false} onTapIn={onTapIn} onTapOut={onTapOut}/>
     </div>
   );
-
-  const [progDrill, setProgDrill] = React.useState(null); // "Mitte"|"Ende"|null
   const PrognoseRow = ({pm, pe}) => (
     <>
       <div style={{display:"flex",alignItems:"center"}}>
@@ -6204,11 +6501,9 @@ function SaldoHero2({year, month,
       )}
     </>
   );
-
   return (
     <div style={{margin:"4px 0 0",background:T.hero_bg,
       borderRadius:0,padding:"12px 0 0",position:"relative",overflow:"hidden"}}>
-      {/* Kontostand mit MITTE/ENDE als Hintergrund */}
       <div style={{position:"relative",textAlign:"center",margin:"0 0 0",padding:"8px 14px 10px"}}>
         {showPrognose&&<>
           <div style={{position:"absolute",left:0,top:"50%",transform:"translateY(-50%)",
@@ -6221,11 +6516,7 @@ function SaldoHero2({year, month,
           {ks!==null ? fmt(Math.abs(ks))+" €" : fmt(Math.abs(ms))+" €"}
         </div>
       </div>
-
-      {/* Tabelle */}
       <div style={{background:"rgba(255,255,255,0.06)",borderRadius:0,padding:"10px 0 10px"}}>
-        {false&&<div/>}
-
         <Row label="Buch."
           mIn={buchInM} mOut={buchOutM} eIn={buchInE} eOut={buchOutE}
           onTapIn={onDrillBuchIn} onTapOut={onDrillBuchOut}/>
@@ -6237,9 +6528,7 @@ function SaldoHero2({year, month,
           mIn={uInM} mOut={uOutM} eIn={uInE} eOut={uOutE}
           clrIn={T.gold} clrOut={T.gold}
           onTapIn={onDrillUncatIn} onTapOut={onDrillUncatOut}/>}
-
         <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"6px 0 4px"}}/>
-
         {showPrognose
           ? <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>
           : <div style={{display:"flex",alignItems:"center"}}>
@@ -6891,6 +7180,9 @@ function DashboardScreen() {
           }
         })()}
 
+        {/* ── Kontostand-Warnung ── */}
+        <KontoWarnungWidget showFolgemonateToggle={true}/>
+
         {/* ── Tagesgeld-Transfer Widget ── */}
         <TagesgeldWidget year={year} month={month}/>
 
@@ -6940,10 +7232,10 @@ function DashboardScreen() {
                     <div key={t.id} onClick={()=>openEdit(t)}
                       style={{display:"flex",gap:8,alignItems:"center",padding:"5px 6px",
                         borderRadius:6,cursor:"pointer",marginBottom:2,
-                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}>
+                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}>
                       <span style={{color:T.txt2,fontSize:9,flexShrink:0}}>{t.date}</span>
                       <span style={{color:T.gold,fontSize:9,flexShrink:0,
-                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
+                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
                         borderRadius:3,padding:"1px 4px",fontWeight:700}}>
                         {t.totalAmount<0?"−":"+"} → {cat?.type==="income"?"Einnahme":"Ausgabe"}
                       </span>
@@ -6982,7 +7274,7 @@ function DashboardScreen() {
                   style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:6,cursor:"pointer",
                     fontFamily:"inherit",border:"none",
                     background:catSortMode===mode?T.blue:"rgba(255,255,255,0.07)",
-                    color:catSortMode===mode?(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"?"#fff":T.bg):T.txt2}}>
+                    color:catSortMode===mode?(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss"?"#fff":T.bg):T.txt2}}>
                   {lbl}
                 </button>
               ))}
@@ -7318,7 +7610,7 @@ function DashboardScreen() {
                   const trafficLight = (amt, bgt) => {
                     if(!bgt || bgt===0) return null;
                     const r = amt/bgt*100;
-                    const isLight = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand");
+                    const isLight = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss");
                     if(r<=25)  return isLight?"#C8E6C9":"#1B5E20";
                     if(r<=50)  return isLight?"#81C784":"#2E7D32";
                     if(r<=75)  return isLight?"#FFF176":"#827717";
@@ -7329,7 +7621,7 @@ function DashboardScreen() {
                   const trafficTxt = (amt, bgt) => {
                     if(!bgt) return T.txt;
                     const r = amt/bgt*100;
-                    return r>75 ? ((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"#1A1A1A":"#fff") : T.txt;
+                    return r>75 ? ((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"#1A1A1A":"#fff") : T.txt;
                   };
                   const budgetMitte = (cat.subs||[]).reduce((s,sub)=>{
                     const g=getBudgetForMonth(sub.id,year,month), m=getBudgetForMonth(sub.id+"_mitte",year,month);
@@ -7456,7 +7748,7 @@ function DashboardScreen() {
                       </div>
                       {bgt>0&&(
                         <div style={{
-                          color:bg?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.65)"):T.txt2,
+                          color:bg?((T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.65)"):T.txt2,
                           fontSize:8,marginTop:2,fontWeight:600,whiteSpace:"nowrap",
                           borderTop:`1px solid ${bg?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.08)"}`,
                           paddingTop:2}}>
@@ -7663,7 +7955,7 @@ function DashboardScreen() {
                                   <div key={lbl} onClick={e=>{e.stopPropagation();if(val>0)onCellClick();}}
                                     style={{textAlign:"center",cursor:val>0?"pointer":"default",
                                     minWidth:50,padding:"3px 5px",borderRadius:7,
-                                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
+                                    background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.04)",
                                     border:`1px solid ${onlyPend?T.gold:T.bd}`,
                                     position:"relative",overflow:"hidden",
                                     display:"flex",flexDirection:"column",gap:1}}>
@@ -7718,7 +8010,7 @@ function DashboardScreen() {
                               borderBottom:`1px solid ${T.bd}`}}>
                               {/* Balken */}
                               <div style={{height:6,borderRadius:3,
-                                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.1)",
+                                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.1)",
                                 overflow:"hidden",marginBottom:6}}>
                                 <div style={{height:"100%",borderRadius:3,
                                   background:barCol,
@@ -7897,7 +8189,7 @@ function DashboardScreen() {
                               {tx._seriesTyp==="finanzierung"?"Finanzierung":tx._seriesId?"wiederkehrend":"vorgemerkt"}
                             </span>}
                             {tx._seriesId&&tx._seriesTotal>1&&tx._seriesIdx&&tx._seriesTyp==="finanzierung"&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
-                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:4,padding:"0 4px"}}>
+                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:4,padding:"0 4px"}}>
                               {tx._seriesIdx} / {tx._seriesTotal}
                             </span>}
                             {(tx.linkedIds||[]).map(lid=>{
@@ -8300,7 +8592,7 @@ function TransactionsScreen() {
               )}
               {selectedCount===2&&(
                 <button onClick={applyLink}
-                  style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}66`,
+                  style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",border:`1px solid ${T.gold}66`,
                     borderRadius:8,padding:"4px 9px",color:T.gold,
                     fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",gap:3}}>
                   {Li("link",12,T.gold)} Verknüpfen
@@ -8478,7 +8770,7 @@ function TransactionsScreen() {
                               const catIncome=cat.type==="income"||cat.type==="tagesgeld";
                               const subName=getSub((tx.splits||[])[0]?.catId,(tx.splits||[])[0]?.subId)?.name||cat.name;
                               if((isNeg&&catIncome)||(!isNeg&&!catIncome)) return (
-                                <span style={{fontSize:9,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
+                                <span style={{fontSize:9,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",
                                   color:T.gold,borderRadius:4,padding:"1px 6px",fontWeight:700,
                                   display:"inline-flex",alignItems:"center",gap:3,
                                   border:`1px solid ${T.gold}44`}}>
@@ -9114,14 +9406,14 @@ function SubRow({sub, si, arr, cat}) {
           })()}
         </div>
         {budgets[sub.id]&&(
-          <span style={{color:T.gold,fontSize:10,fontWeight:700,flexShrink:0,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:5,padding:"1px 5px"}}>
+          <span style={{color:T.gold,fontSize:10,fontWeight:700,flexShrink:0,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",borderRadius:5,padding:"1px 5px"}}>
             {Li("target",9,T.gold)} {fmt(budgets[sub.id].amount)} {budgets[sub.id].months===1?"mtl.":budgets[sub.id].months===3?"quartl.":budgets[sub.id].months===6?"halbj.":"jährl."}{budgets[sub.id].startDate?` · ${budgets[sub.id].startDate.split("-")[2]}.`:""}
           </span>
         )}
         <button onClick={()=>{if(window.confirm(`"${sub.name}" wirklich löschen?`)) deleteSub(cat.id,sub.id);}} style={{background:"none",border:"none",color:T.neg,opacity:0.55,cursor:"pointer",fontSize:15,flexShrink:0,display:"flex",alignItems:"center"}}>{Li("trash-2",14)}</button>
       </div>
       {subEdit==="budget"&&(
-        <div style={{borderTop:`1px solid ${T.bd}`,padding:"10px 10px 12px",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}}>
+        <div style={{borderTop:`1px solid ${T.bd}`,padding:"10px 10px 12px",background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,gap:8}}>
             <div style={{color:T.gold,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",gap:5}}>
               {Li("target",11,T.gold)} Budget & Vormerkungen für „{sub.name}"
@@ -9142,20 +9434,20 @@ function SubRow({sub, si, arr, cat}) {
               <input value={budgetInputMitte} onChange={e=>setBudgetInputMitte(e.target.value)}
                 placeholder="z.B. 125" inputMode="decimal"
                 style={{...INP,marginBottom:0,width:"100%",fontSize:13,
-                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
+                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
             </div>
             <div style={{flex:1}}>
               <div style={{color:T.txt2,fontSize:9,marginBottom:2}}>Gesamt/Monat (Ende) €</div>
               <input value={budgetInput} onChange={e=>setBudgetInput(e.target.value)}
                 placeholder="z.B. 250" inputMode="decimal"
                 style={{...INP,marginBottom:0,width:"100%",fontSize:13,
-                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
+                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)"}}/>
             </div>
             <div style={{flex:1}}>
               <div style={{color:T.txt2,fontSize:9,marginBottom:2}}>Startdatum</div>
               <input type="date" value={budgetStartDate} onChange={e=>setBudgetStartDate(e.target.value)}
                 style={{...INP,marginBottom:0,fontSize:11,padding:"6px 6px",width:"100%",
-                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
+                  border:`1px solid ${T.gold}44`,background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
                   colorScheme:"dark"}}/>
             </div>
             <div style={{flex:1}}>
@@ -9169,8 +9461,8 @@ function SubRow({sub, si, arr, cat}) {
                       min={new Date(Date.now()+86400000).toISOString().slice(0,10)}
                       style={{...INP,marginBottom:0,fontSize:11,padding:"6px 6px",flex:1,
                         border:`1px solid ${T.blue+"66"}`,
-                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
-                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark"}}/>
+                        background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
+                        colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"light":"dark"}}/>
                     <button onClick={()=>setBudgetEndDate("")}
                       style={{background:"none",border:"none",color:T.neg,
                         cursor:"pointer",padding:"2px",flexShrink:0}}>
@@ -9181,7 +9473,7 @@ function SubRow({sub, si, arr, cat}) {
                   <button onClick={()=>setBudgetEndDate(new Date(Date.now()+365*24*60*60*1000).toISOString().slice(0,10))}
                     style={{...INP,marginBottom:0,fontSize:11,padding:"6px 6px",flex:1,
                       border:`1px solid ${T.gold+"44"}`,cursor:"pointer",textAlign:"left",
-                      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
+                      background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",
                       color:T.txt2,fontFamily:"inherit"}}>
                     kein Enddatum (7 Jahre)
                   </button>
@@ -9195,7 +9487,7 @@ function SubRow({sub, si, arr, cat}) {
             {[{k:"h1",l:"1.H"},{k:"h2",l:"2.H"},{k:"w1",l:"W1"},{k:"w2",l:"W2"},{k:"w3",l:"W3"},{k:"w4",l:"W4"}].map(({k,l})=>(
               <button key={k} onClick={()=>applyQuickDate(k)}
                 style={{padding:"3px 6px",borderRadius:5,border:`1px solid ${T.gold}44`,
-                  background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",color:T.gold,fontSize:9,fontWeight:700,cursor:"pointer"}}>
+                  background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",color:T.gold,fontSize:9,fontWeight:700,cursor:"pointer"}}>
                 {l}
               </button>
             ))}
@@ -13111,6 +13403,227 @@ function WerkzeugeSection() {
   );
 }
 
+// ── KontoWarnungWidget — zeigt Minus-Tage des aktuellen Monats ───────────────
+function KontoWarnungWidget({showFolgemonateToggle=false}) {
+  const { txs, cats, year, month, getKumulierterSaldo, getPrognoseSaldo, getCat, budgets } = useContext(AppCtx);
+  const [folgemonate, setFolgemonate] = React.useState(false);
+
+  const warnings = React.useMemo(()=>{
+    // Gleiche PrognoseE-Logik wie Dashboard (getProgEnde)
+    const getProgEndeW = (y, m) => {
+      const tb = new Date();
+      if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth()))
+        return getKumulierterSaldo(y, m);
+      const pY=m===0?y-1:y, pM=m===0?11:m-1;
+      const prev = getProgEndeW(pY, pM);
+      if(prev===null||prev===undefined) return null;
+      const lastD=new Date(y,m+1,0).getDate();
+      const todayY=tb.getFullYear(),todayM=tb.getMonth(),todayD=tb.getDate();
+      const isCur=y===todayY&&m===todayM,isPastM=y<todayY||(y===todayY&&m<todayM);
+      const endeAbg=isPastM||(isCur&&todayD>=lastD);
+      const inc=cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+        s+txs.filter(t=>{
+          if(t._linkedTo||t._budgetSubId) return false;
+          if(endeAbg&&t.pending) return false;
+          const d=new Date(t.date);
+          return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+          .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0)
+      ,0);
+      const out=cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+        if(endeAbg) return s+txs.filter(t=>{
+          if(t._linkedTo||t._budgetSubId) return false;
+          if(t.pending&&t._seriesTyp!=="finanzierung") return false;
+          const d=new Date(t.date);
+          return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+          .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+        const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
+        const subTotal=(cat.subs||[]).reduce((cs,sub)=>{
+          const bG=pn(budgets?.[sub.id]?.amount)||0;
+          const real=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+          const pend=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+          return cs+(bG>0?Math.max(bG,real+pend):real+pend);
+        },0);
+        const pendNoSub=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!new Set((cat.subs||[]).map(s=>s.id)).has(sp.subId)));}).reduce((ss,t)=>ss+Math.abs(t.totalAmount),0);
+        const realNoSub=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!new Set((cat.subs||[]).map(s=>s.id)).has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+        return s+subTotal+pendNoSub+realNoSub;
+      },0);
+      return prev + inc - out;
+    };
+
+    const result = [];
+    // Immer vom echten aktuellen Monat ausgehen (unabhängig vom angezeigten Monat)
+    const todayReal = new Date();
+    const curY = todayReal.getFullYear(), curM = todayReal.getMonth();
+    const months = [[curY, curM]];
+    if(folgemonate) {
+      for(let i=1;i<=3;i++) {
+        const m=(curM+i)%12, y=curY+Math.floor((curM+i)/12);
+        months.push([y,m]);
+      }
+    }
+    months.forEach(([y,m])=>{
+      const prevY = m===0 ? y-1 : y, prevM = m===0 ? 11 : m-1;
+      const baseSaldo = getProgEndeW(prevY, prevM)
+        ?? (m===0 ? getKumulierterSaldo(y-1,11) : getKumulierterSaldo(y,m-1));
+      if(baseSaldo===null||baseSaldo===undefined) return;
+      const lastDay = new Date(y,m+1,0).getDate();
+      const pad2 = n=>String(n).padStart(2,"0");
+      const pfx = `${y}-${pad2(m+1)}-`;
+      const mTxs = txs.filter(t=>{
+        if(t._linkedTo) return false;
+        const d=new Date(t.date);
+        return d.getFullYear()===y && d.getMonth()===m;
+      });
+      const signed = t => {
+        const ct=t._csvType||(()=>{const s=(t.splits||[]).filter(sp=>sp.catId);if(s.length>0){const c=getCat(s[0].catId);if(c)return(c.type==="income"||c.type==="tagesgeld")?"income":"expense";}return t.totalAmount>=0?"income":"expense";})();
+        return ct==="income"?+Math.abs(t.totalAmount):-Math.abs(t.totalAmount);
+      };
+      // Einmalig openBudget berechnen — identisch zu MonatScreen
+      const calcOpenBudget = (maxDay) => {
+        let total = 0;
+        const dayStr = `${pfx}${pad2(maxDay)}`;
+        cats.filter(c=>c.type==="expense"||c.type==="income").forEach(cat=>{
+          (cat.subs||[]).forEach(sub=>{
+            const mittePx=txs.find(t=>t.pending&&t._budgetSubId===sub.id+"_mitte"&&t.date.startsWith(pfx));
+            const hasAnyMittePx=txs.some(t=>t.pending&&t._budgetSubId===sub.id+"_mitte");
+            const mitteAmt=mittePx?Math.abs(pn(mittePx.totalAmount)):(hasAnyMittePx?0:(pn(budgets?.[sub.id+"_mitte"]?.amount)||0));
+            const hasSplit=mitteAmt>0;
+            let bgt=0;
+            if(maxDay===14){if(!hasSplit)return;bgt=mitteAmt;}
+            else{
+              if(hasSplit){
+                const endePx=txs.find(t=>t.pending&&t._budgetSubId===sub.id&&t.date.startsWith(pfx));
+                const hasAnyEndePx=txs.some(t=>t.pending&&t._budgetSubId===sub.id);
+                bgt=mitteAmt+(endePx?Math.abs(pn(endePx.totalAmount)):(hasAnyEndePx?0:(pn(budgets?.[sub.id]?.amount)||0)));
+              } else {
+                const px=txs.find(t=>t.pending&&t._budgetSubId===sub.id&&t.date.startsWith(pfx));
+                const hasAnyPx=txs.some(t=>t.pending&&t._budgetSubId===sub.id);
+                bgt=px?Math.abs(pn(px.totalAmount)):(hasAnyPx?0:(pn(budgets?.[sub.id]?.amount)||0));
+              }
+            }
+            if(bgt<=0)return;
+            const spent=mTxs.filter(t=>!t.pending&&!t._linkedTo&&!t._budgetSubId&&t.date<=dayStr&&
+              (t.splits||[]).some(sp=>sp.subId===sub.id))
+              .reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+            const pendS=mTxs.filter(t=>t.pending&&!t._linkedTo&&!t._budgetSubId&&t.date<=dayStr&&
+              (t.splits||[]).some(sp=>sp.subId===sub.id))
+              .reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||Math.abs(t.totalAmount)),0);
+            if(cat.type==="expense") total+=Math.max(0,bgt-spent-pendS);
+          });
+        });
+        return total;
+      };
+      const openBudgetMitte = calcOpenBudget(14);
+      const openBudgetEnde  = calcOpenBudget(lastDay);
+      const saldoAt = (dayStr) => {
+        const dayNum = parseInt(dayStr.split("-")[2]);
+        const real=mTxs.filter(t=>!t.pending&&!t._budgetSubId&&t.date<=dayStr).reduce((s,t)=>s+signed(t),0);
+        const pend=mTxs.filter(t=>t.pending&&!t._budgetSubId&&t.date<=dayStr).reduce((s,t)=>s+signed(t),0);
+        const budgetDeduct = dayNum>=lastDay ? -openBudgetEnde : dayNum>=14 ? -openBudgetMitte : 0;
+        return baseSaldo+real+pend+budgetDeduct;
+      };
+      const dayStrs = Array.from({length:lastDay},(_,i)=>`${pfx}${pad2(i+1)}`);
+      // Nur Tage mit Buchungen/Vormerkungen warnen — identisch zum Monat-Tab (byDate)
+      const daysWithTxs = new Set(mTxs.map(t=>t.date));
+      dayStrs.forEach((ds, idx) => {
+        if(!daysWithTxs.has(ds)) return; // kein Eintrag in diesem Monat → überspringen
+        const saldo = saldoAt(ds);
+        if(saldo < 0) {
+          let nextPos = null;
+          for(let j=idx+1; j<dayStrs.length; j++) {
+            if(saldoAt(dayStrs[j]) >= 0) {
+              const inc = mTxs.filter(t=>t.date===dayStrs[j]&&
+                (t._csvType==="income"||(()=>{const c=getCat((t.splits||[])[0]?.catId);return c&&(c.type==="income"||c.type==="tagesgeld");})()));
+              nextPos = {date:dayStrs[j], name:inc[0]?.desc||getCat((inc[0]?.splits||[])[0]?.catId)?.name||null};
+              break;
+            }
+          }
+          result.push({year:y, month:m, date:ds, deficit:Math.abs(saldo), nextPos});
+        }
+      });
+    });
+    return result;
+  }, [txs, cats, folgemonate, getKumulierterSaldo, getCat, budgets]);
+
+  if(!warnings.length && !showFolgemonateToggle) return null;
+  if(!warnings.length) return (
+    showFolgemonateToggle ? (
+      <div style={{margin:"4px 10px 0",display:"flex",alignItems:"center",
+        justifyContent:"flex-end",gap:6}}>
+        <span style={{color:T.txt2,fontSize:10}}>Folgemonate prüfen</span>
+        <div onClick={()=>setFolgemonate(v=>!v)}
+          style={{width:32,height:18,borderRadius:9,cursor:"pointer",position:"relative",
+            background:folgemonate?T.neg:"rgba(255,255,255,0.12)",transition:"background 0.2s"}}>
+          <div style={{position:"absolute",top:2,left:folgemonate?14:2,width:14,height:14,
+            borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+        </div>
+      </div>
+    ) : null
+  );
+
+  const MONTHS_S=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+
+  return (
+    <div style={{margin:"4px 10px 0"}}>
+      {showFolgemonateToggle&&(
+        <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",
+          gap:6,marginBottom:4}}>
+          <span style={{color:T.txt2,fontSize:10}}>Folgemonate</span>
+          <div onClick={()=>setFolgemonate(v=>!v)}
+            style={{width:32,height:18,borderRadius:9,cursor:"pointer",position:"relative",
+              background:folgemonate?T.neg:"rgba(255,255,255,0.12)",transition:"background 0.2s"}}>
+            <div style={{position:"absolute",top:2,left:folgemonate?14:2,width:14,height:14,
+              borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+          </div>
+        </div>
+      )}
+      {warnings.map((w,i)=>{
+        const [,wm,wd]=(w.nextPos?.date||"").split("-");
+        const nextLabel=w.nextPos?`${parseInt(wd)}.${parseInt(wm)}.`:null;
+        const [,dm,dd]=w.date.split("-");
+        const fromLabel=`${parseInt(dd)}.${parseInt(dm)}.`;
+        const isFuture=w.year!==year||w.month!==month;
+        return (
+          <div key={i} style={{
+            margin:"2px 0 3px",
+            background:`${T.neg}18`,
+            border:`1px solid ${T.neg}44`,
+            borderRadius:8,
+            padding:"7px 10px",
+            display:"flex",alignItems:"center",gap:10,
+          }}>
+            <div style={{flexShrink:0,width:28,height:28,borderRadius:8,
+              background:`${T.neg}22`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {Li("alert-triangle",14,T.neg)}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{color:T.neg,fontSize:12,fontWeight:700,lineHeight:1.3}}>
+                {isFuture&&<span style={{color:T.gold,fontSize:10,marginRight:6}}>{MONTHS_S[w.month]} {w.year}</span>}
+                Ab <span style={{fontFamily:"monospace"}}>{fromLabel}</span> Kontostand im Minus: −{fmt(w.deficit)} €
+              </div>
+              <div style={{color:T.txt2,fontSize:10,marginTop:2,lineHeight:1.4}}>
+                {w.nextPos
+                  ? <>Ausgleichen bis <span style={{color:T.gold,fontWeight:700}}>{nextLabel}</span>
+                    {w.nextPos.name&&<span> ({w.nextPos.name})</span>}
+                    {" — mindestens "}<span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>
+                      {fmt(w.deficit)} €
+                    </span>{" einplanen"}</>
+                  : <>Kein Ausgleich im Monat — mindestens{" "}
+                    <span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>
+                      {fmt(w.deficit)} €
+                    </span>{" fehlen"}</>
+                }
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function MonatScreen() {
   const { cats,setCats,groups,setGroups,txs,setTxs,accounts,setAccounts,
     yearData,setYearData,year,setYear,month,setMonth,isLand,
@@ -13185,15 +13698,42 @@ function MonatScreen() {
       cats.filter(c=>c.type==="expense"||c.type==="income").forEach(cat=>{
         (cat.subs||[]).forEach(sub=>{
           const isMitte = maxDay===14;
-          const budgetKey = isMitte ? sub.id+"_mitte" : sub.id;
-          // Lese Budget aus Platzhalter des aktuellen Monats
           const pad2m = n=>String(n).padStart(2,"0");
           const pfx = `${year}-${pad2m(month+1)}-`;
-          const px = txs.find(t=>t.pending&&t._budgetSubId===budgetKey&&t.date.startsWith(pfx));
-          // Nur Fallback auf Template wenn gar keine Platzhalter für diese Sub existieren
-          const hasAnyPx = txs.some(t=>t.pending&&t._budgetSubId===budgetKey);
-          const bgt = px ? Math.abs(pn(px.totalAmount)) : (hasAnyPx ? 0 : (pn(budgets[budgetKey]?.amount)||0));
+
+          // Prüfe ob dieses Budget einen Mitte-Split hat
+          const mittePx = txs.find(t=>t.pending&&t._budgetSubId===sub.id+"_mitte"&&t.date.startsWith(pfx));
+          const hasAnyMittePx = txs.some(t=>t.pending&&t._budgetSubId===sub.id+"_mitte");
+          const mitteFromTemplate = pn(budgets[sub.id+"_mitte"]?.amount)||0;
+          const mitteAmt = mittePx ? Math.abs(pn(mittePx.totalAmount))
+            : (hasAnyMittePx ? 0 : mitteFromTemplate);
+          const hasSplit = mitteAmt > 0;
+
+          let bgt = 0;
+          if(isMitte) {
+            // Am 14.: Mitte-Budget anzeigen (nur wenn Split vorhanden)
+            if(!hasSplit) return; // kein Mitte-Split → nicht am 14. anzeigen
+            bgt = mitteAmt;
+          } else {
+            // Am Monatsletzten: Gesamt-Budget anzeigen (mit oder ohne Split)
+            if(hasSplit) {
+              // Split-Budget: Gesamt = Mitte-Platzhalter + Ende-Platzhalter (sub.id)
+              const endePx = txs.find(t=>t.pending&&t._budgetSubId===sub.id&&t.date.startsWith(pfx));
+              const hasAnyEndePx = txs.some(t=>t.pending&&t._budgetSubId===sub.id);
+              const endeAmt = endePx ? Math.abs(pn(endePx.totalAmount))
+                : (hasAnyEndePx ? 0 : (pn(budgets[sub.id]?.amount)||0));
+              // Gesamtbudget = Mitte + Ende-Hälfte
+              bgt = mitteAmt + endeAmt;
+            } else {
+              // Kein Split: einfaches Monats-Budget
+              const budgetKey = sub.id;
+              const px = txs.find(t=>t.pending&&t._budgetSubId===budgetKey&&t.date.startsWith(pfx));
+              const hasAnyPx = txs.some(t=>t.pending&&t._budgetSubId===budgetKey);
+              bgt = px ? Math.abs(pn(px.totalAmount)) : (hasAnyPx ? 0 : (pn(budgets[budgetKey]?.amount)||0));
+            }
+          }
           if(bgt<=0) return;
+
           const real = txs.filter(t=>{
             if(t.pending||t._linkedTo||t._budgetSubId) return false;
             const d=new Date(t.date);
@@ -13224,11 +13764,52 @@ function MonatScreen() {
     const fmtD    = iso=>{ const[,m,d]=iso.split("-"); return `${d}.${m}.`; };
     const dayName = iso=>["So","Mo","Di","Mi","Do","Fr","Sa"][new Date(iso).getDay()];
 
-    // Tagessaldo: Basis (Ende Vormonat) + alle echten Buchungen bis einschl. diesem Tag
-    // + Vormerkungen bis zu diesem Tag (Prognose)
-    const baseSaldo = month===0
-      ? getKumulierterSaldo(year-1, 11)
-      : getKumulierterSaldo(year, month-1);
+    // Tagessaldo-Basis: PrognoseE des Vormonats — gleiche Logik wie Dashboard (getProgEnde)
+    // Vergangene Monate → echter Endkontostand; aktuell/zukünftig → rekursive Prognose
+    const _getProgEndeM = (y, m) => {
+      const tb = new Date();
+      if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth()))
+        return getKumulierterSaldo(y, m);
+      const pY=m===0?y-1:y, pM=m===0?11:m-1;
+      const prev = _getProgEndeM(pY, pM);
+      if(prev===null||prev===undefined) return null;
+      const lastD=new Date(y,m+1,0).getDate();
+      const todayY=tb.getFullYear(),todayM=tb.getMonth(),todayD=tb.getDate();
+      const isCur=y===todayY&&m===todayM, isPastM=y<todayY||(y===todayY&&m<todayM);
+      const endeAbg=isPastM||(isCur&&todayD>=lastD);
+      const inc=cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+        s+txs.filter(t=>{
+          if(t._linkedTo||t._budgetSubId) return false;
+          if(endeAbg&&t.pending) return false;
+          const d=new Date(t.date);
+          return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+          .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0)
+      ,0);
+      const out=cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+        if(endeAbg) return s+txs.filter(t=>{
+          if(t._linkedTo||t._budgetSubId) return false;
+          if(t.pending&&t._seriesTyp!=="finanzierung") return false;
+          const d=new Date(t.date);
+          return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+          .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+        const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
+        const subTotal=(cat.subs||[]).reduce((cs,sub)=>{
+          const bG=getBudgetForMonth(sub.id,y,m);
+          const real=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+          const pend=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+          return cs+(bG>0?Math.max(bG,real+pend):real+pend);
+        },0);
+        const pendNoSub=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+        const realNoSub=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+        return s+subTotal+pendNoSub+realNoSub;
+      },0);
+      return prev + inc - out;
+    };
+    const prevY2 = month===0 ? year-1 : year, prevM2 = month===0 ? 11 : month-1;
+    const baseSaldo = _getProgEndeM(prevY2, prevM2)
+      ?? (month===0 ? getKumulierterSaldo(year-1, 11) : getKumulierterSaldo(year, month-1));
 
     const getDaySaldo = (isoDate) => {
       if(baseSaldo===null||baseSaldo===undefined) return null;
@@ -13261,7 +13842,35 @@ function MonatScreen() {
                          : 0;
       return baseSaldo + realSum + pendSum + budgetDeduct;
     };
-    const hatch   = (color) => ({backgroundImage:`repeating-linear-gradient(45deg,${color}22 0,${color}22 2px,transparent 0,transparent 50%)`,backgroundSize:"8px 8px"});
+    // Für die Minus-Warnung: ersten zukünftigen Tag mit positivem Saldo finden
+    // (= Datum an dem z.B. das Gehalt eingeht und den Saldo dreht)
+    const warningDates = new Map(); // isoDate → {deficit, nextPosDate, nextPosName, neededAmount}
+    if(baseSaldo !== null && baseSaldo !== undefined) {
+      const allDates = [...dates].sort((a,b)=>a.localeCompare(b)); // aufsteigend
+      allDates.forEach((d, idx) => {
+        const saldo = getDaySaldo(d);
+        if(saldo !== null && saldo < 0) {
+          // Nächsten Tag mit positivem Saldo finden (in diesem oder Folgemonat)
+          let nextPos = null;
+          for(let i = idx+1; i < allDates.length; i++) {
+            const s2 = getDaySaldo(allDates[i]);
+            if(s2 !== null && s2 >= 0) {
+              // Name der Einnahme an diesem Tag
+              const dayIncomeTxs = (byDate[allDates[i]]||[]).filter(t=>txType(t)==="income"||t._csvType==="income");
+              const name = dayIncomeTxs.length>0
+                ? (dayIncomeTxs[0].desc || getCat((dayIncomeTxs[0].splits||[])[0]?.catId)?.name || "Einnahme")
+                : null;
+              nextPos = {date: allDates[i], name};
+              break;
+            }
+          }
+          warningDates.set(d, {
+            deficit: Math.abs(saldo),
+            nextPos,
+          });
+        }
+      });
+    }
 
     const createNew = () => {
       const iso = `${year}-${String(month+1).padStart(2,"0")}-${String(new Date().getDate()).padStart(2,"0")}`;
@@ -13275,25 +13884,104 @@ function MonatScreen() {
     return (<>
       <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}} onTouchStart={onTS} onTouchEnd={onTE}>
 
-        {/* Hero — gleiche Darstellung wie Dashboard */}
+        {/* Hero — SaldoHero2 wie Dashboard */}
         {(()=>{
-          const realTxs = allMTxs.filter(t=>!t.pending);
-          const pTxsOut = allMTxs.filter(t=>t.pending&&(txType(t)==="expense"||(t._csvType==="expense")));
-          const pTxsIn  = allMTxs.filter(t=>t.pending&&(txType(t)==="income"||(t._csvType==="income")));
-          const pOut = pTxsOut.reduce((s,t)=>s+t.totalAmount,0);
-          const pIn  = pTxsIn.reduce((s,t)=>s+t.totalAmount,0);
+          const _tb=new Date(),_todayY=_tb.getFullYear(),_todayM=_tb.getMonth(),_todayD=_tb.getDate();
+          const _isCurS=year===_todayY&&month===_todayM,_isPastS=year<_todayY||(year===_todayY&&month<_todayM);
+          const _lastDayS=new Date(year,month+1,0).getDate();
+          const _mitteAbg=_isPastS||(_isCurS&&_todayD>14),_endeAbg=_isPastS||(_isCurS&&_todayD>=_lastDayS);
+          const _h2 = t => { const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=14; };
+          const _calcInc=(maxDay,onlyReal=false)=>{
+            const isMC=maxDay===14;
+            if(onlyReal||(isMC&&_mitteAbg)||(!isMC&&_endeAbg)){
+              return cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+                s+txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&(t.splits||[]).some(sp=>sp.catId===cat.id);})
+                .reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0),0);
+            }
+            return cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+              s+txs.filter(t=>{if(t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&(t.splits||[]).some(sp=>sp.catId===cat.id);})
+              .reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0),0);
+          };
+          const _calcOut=(maxDay,onlyReal=false)=>{
+            const isMC=maxDay===14;
+            return cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+              if(onlyReal||(isMC&&_mitteAbg)||(!isMC&&_endeAbg)){
+                return s+txs.filter(t=>{if(t._linkedTo||t._budgetSubId)return false;if(t.pending&&t._seriesTyp!=="finanzierung")return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&(t.splits||[]).some(sp=>sp.catId===cat.id);})
+                .reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+              }
+              const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
+              const subTotal=(cat.subs||[]).reduce((cs,sub)=>{
+                const bG=getBudgetForMonth(sub.id,year,month);
+                const real=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+                const pend=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+                return cs+(bG>0?Math.max(bG,real+pend):real+pend);
+              },0);
+              const pendNoSub=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+              const realNoSub=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+              return s+subTotal+pendNoSub+realNoSub;
+            },0);
+          };
+          const _inMitte=_calcInc(14),_inEnde=_calcInc(_lastDayS);
+          const _outMitte=_calcOut(14),_outEnde=_calcOut(_lastDayS);
+          const _getProgEndeM2=(y,m)=>{
+            if(y<_todayY||(y===_todayY&&m<_todayM)) return getKumulierterSaldo(y,m);
+            const pY=m===0?y-1:y,pM=m===0?11:m-1;
+            const prev=_getProgEndeM2(pY,pM);
+            if(prev===null||prev===undefined) return null;
+            const lD=new Date(y,m+1,0).getDate();
+            const isCr=y===_todayY&&m===_todayM,isPst=y<_todayY||(y===_todayY&&m<_todayM);
+            const eAbg=isPst||(isCr&&_todayD>=lD);
+            const i2=cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>s+txs.filter(t=>{if(t._linkedTo||t._budgetSubId)return false;if(eAbg&&t.pending)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0),0);
+            const o2=cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+              if(eAbg) return s+txs.filter(t=>{if(t._linkedTo||t._budgetSubId)return false;if(t.pending&&t._seriesTyp!=="finanzierung")return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+              const sIds=new Set((cat.subs||[]).map(s=>s.id));
+              const st=(cat.subs||[]).reduce((cs,sub)=>{const bG=getBudgetForMonth(sub.id,y,m);const r=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);const p=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);return cs+(bG>0?Math.max(bG,r+p):r+p);},0);
+              const pNS=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!sIds.has(sp.subId)));}).reduce((ss,t)=>ss+Math.abs(t.totalAmount),0);
+              const rNS=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!sIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+              return s+st+pNS+rNS;
+            },0);
+            return prev+i2-o2;
+          };
+          const prevY=month===0?year-1:year,prevM=month===0?11:month-1;
+          const base=_getProgEndeM2(prevY,prevM);
+          const prognoseMitte=base!=null?base+_inMitte-_outMitte:null;
+          const prognoseEnde =base!=null?base+_inEnde -_outEnde :null;
+          const _isCurH=year===_todayY&&month===_todayM,_isFutH=year>_todayY||(year===_todayY&&month>_todayM);
+          const detailMitte=(_isCurH||_isFutH)?getPrognoseSaldoDetail(year,month,true):null;
+          const detailEnde =(_isCurH||_isFutH)?getPrognoseSaldoDetail(year,month,false):null;
+          const saldoMitte =(_isCurH||_isFutH)?prognoseMitte??null:null;
+          const saldoEnde  =(_isCurH||_isFutH)?prognoseEnde ??null:null;
+          const _realIn =allMTxs.filter(t=>!t.pending&&txType(t)==="income");
+          const _realOut=allMTxs.filter(t=>!t.pending&&txType(t)==="expense");
+          const _uIn =allMTxs.filter(t=>txType(t)==="income" &&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+          const _uOut=allMTxs.filter(t=>txType(t)==="expense"&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+          const _sum=arr=>arr.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0);
+          const _realInM =_realIn.filter(_h2),_realOutM=_realOut.filter(_h2);
+          // Exakt wie Dashboard: pTxs aus txs (ohne _budgetSubId-Filter), pendOpenAmt = totalAmount
+          const _pTxs    = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&t.pending; });
+          const pTxsOut2 = _pTxs.filter(t=>txType(t)==="expense"||(t._csvType==="expense"&&!txType(t)==="income"));
+          const pTxsIn2  = _pTxs.filter(t=>txType(t)==="income"||(t._csvType==="income"));
+          const _pTxsInM =_mitteAbg?[]:pTxsIn2.filter(_h2),_pTxsOutM=_mitteAbg?[]:pTxsOut2.filter(_h2);
+          const _uInM2=_mitteAbg?[]:_uIn.filter(_h2),_uOutM2=_mitteAbg?[]:_uOut.filter(_h2);
+          const pendingIn2 = pTxsIn2.reduce((s,t)=>s+t.totalAmount, 0);
+          const pendingOut2= pTxsOut2.reduce((s,t)=>s+t.totalAmount, 0);
           return (
-            <SaldoHero year={year} month={month}
-              totalIn={totalIn} totalOut={totalOut}
-              pendingIn={pIn} pendingOut={pOut}
-              pTxsIn={pTxsIn} pTxsOut={pTxsOut}
-              mTxs={allMTxs} dashLinkedChildIds={new Set()}
-              onDrillIn={()=>setFilt("income")}
-              onDrillOut={()=>setFilt("expense")}
-              onDrillUncatIn={()=>setFilt("uncat")}
-              onDrillUncatOut={()=>setFilt("uncat")}
-              onDrillPendIn={()=>setFilt("pending")}
-              onDrillPendOut={()=>setFilt("pending")}
+            <SaldoHero2 year={year} month={month}
+              buchInM={_sum(_realInM)}  buchOutM={_sum(_realOutM)}
+              buchInE={_sum(_realIn)}   buchOutE={_sum(_realOut)}
+              pendInM={_sum(_pTxsInM)}  pendOutM={_sum(_pTxsOutM)}
+              pendInE={pendingIn2}       pendOutE={pendingOut2}
+              uInM={_sum(_uInM2)}        uOutM={_sum(_uOutM2)}
+              uInE={_sum(_uIn)}          uOutE={_sum(_uOut)}
+              prognoseMitte={prognoseMitte} prognoseEnde={prognoseEnde}
+              detailMitte={detailMitte} detailEnde={detailEnde}
+              saldoMitte={saldoMitte}   saldoEnde={saldoEnde}
+              onDrillBuchIn ={(isMitte)=>setFilt(isMitte?"income":"income")}
+              onDrillBuchOut={(isMitte)=>setFilt(isMitte?"expense":"expense")}
+              onDrillPendIn ={(isMitte)=>setFilt("pending")}
+              onDrillPendOut={(isMitte)=>setFilt("pending")}
+              onDrillUncatIn ={(isMitte)=>setFilt("uncat")}
+              onDrillUncatOut={(isMitte)=>setFilt("uncat")}
             />
           );
         })()}
@@ -13531,6 +14219,49 @@ function MonatScreen() {
                     </span>
                   )}
                 </div>
+                {/* ── Minus-Warnung ── */}
+                {(()=>{
+                  const w = warningDates.get(date);
+                  if(!w) return null;
+                  const [,wm,wd] = (w.nextPos?.date||"").split("-");
+                  const nextLabel = w.nextPos
+                    ? `${parseInt(wd)}.${parseInt(wm)}.`
+                    : null;
+                  return (
+                    <div style={{
+                      margin:"2px 0 3px",
+                      background:`${T.neg}18`,
+                      border:`1px solid ${T.neg}44`,
+                      borderRadius:8,
+                      padding:"7px 10px",
+                      display:"flex",alignItems:"center",gap:10,
+                    }}>
+                      <div style={{flexShrink:0,width:28,height:28,borderRadius:8,
+                        background:`${T.neg}22`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        {Li("alert-triangle",14,T.neg)}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{color:T.neg,fontSize:12,fontWeight:700,lineHeight:1.3}}>
+                          Kontostand im Minus: −{fmt(w.deficit)} €
+                        </div>
+                        <div style={{color:T.txt2,fontSize:10,marginTop:2,lineHeight:1.4}}>
+                          {w.nextPos
+                            ? <>Fehlbetrag ausgleichen bis <span style={{color:T.gold,fontWeight:700}}>{nextLabel}</span>
+                              {w.nextPos.name&&<span> ({w.nextPos.name})</span>}
+                              {" — mindestens "}<span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>
+                                {fmt(w.deficit)} €
+                              </span>{" einplanen"}</>
+                            : <>Kein positiver Saldo-Tag im Monat gefunden — mindestens{" "}
+                              <span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>
+                                {fmt(w.deficit)} €
+                              </span>{" fehlen"}</>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Einnahmen zuerst — vor den Restbudgets */}
                 {dayTxs.filter(tx=>txType(tx)==="income").map(tx=>{
                   const cat   = getCat((tx.splits||[])[0]?.catId);
@@ -13761,7 +14492,40 @@ function MonatScreen() {
             );
           })
         }
-        <div style={{height:24}}/>
+        <div style={{height:8}}/>
+        {/* ── Ankerpunkt-Info ── */}
+        {(()=>{
+          const prevY3 = month===0?year-1:year, prevM3 = month===0?11:month-1;
+          const progVal = _getProgEndeM(prevY3, prevM3);
+          const ksVal   = month===0?getKumulierterSaldo(year-1,11):getKumulierterSaldo(year,month-1);
+          const MONTHS_S2=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+          const label = `${MONTHS_S2[prevM3]} ${prevY3}`;
+          const diff = (progVal!==null&&ksVal!==null) ? Math.abs(progVal-ksVal) : null;
+          const abweichung = diff!==null && diff>0.01;
+          return (
+            <div style={{margin:"4px 10px 8px",padding:"8px 12px",
+              background:"rgba(255,255,255,0.04)",borderRadius:8,
+              border:`1px solid ${abweichung?T.gold+"66":T.bd+"44"}`}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                <span style={{color:T.txt2,fontSize:9,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>
+                  Ankerpunkt ({label})
+                </span>
+                <span style={{color:T.txt,fontSize:13,fontWeight:700,fontFamily:"monospace"}}>
+                  {progVal!==null?(progVal>=0?"+":"")+fmt(progVal)+" €":"—"}
+                </span>
+                <span style={{color:T.txt2,fontSize:9}}>PrognoseE Vormonat</span>
+                {abweichung&&(
+                  <span style={{color:T.gold,fontSize:10,fontWeight:700,
+                    background:T.gold+"18",borderRadius:5,padding:"2px 7px",marginLeft:4}}>
+                    {Li("alert-triangle",10,T.gold)}{" "}
+                    Abweichung vom Endkontostand: {ksVal>=0?"+":""}{fmt(ksVal)} € (Δ {fmt(diff)} €)
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+        <div style={{height:16}}/>
       </div>
       {budgetEditSub&&budgetEditSub.id&&<BudgetEditorModal
         key={`${budgetEditKey}-${year}-${month}`}
@@ -13993,7 +14757,7 @@ function JahrScreen({forceSingle=false}) {
             const cellBg = "transparent";
             const isFutureGiroSaldo = row.id==="giro_saldo" && sub!=="D" &&
               (year > nowYear || (year===nowYear && mi >= nowMonth));
-            const emptyCol = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")
+            const emptyCol = (T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")
               ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.12)";
             const textCol = isEmpty             ? emptyCol
                           : isOverride          ? T.gold
@@ -14290,7 +15054,7 @@ function JahrScreen({forceSingle=false}) {
                 </div>
               )}
               {drilldown.linkPendId&&(
-                <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",border:`1px solid ${T.gold}44`,
+                <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.15)":"rgba(245,166,35,0.12)",border:`1px solid ${T.gold}44`,
                   borderRadius:10,margin:"0 12px 8px",padding:"8px 12px",
                   color:T.gold,fontSize:11,display:"flex",alignItems:"center",gap:8}}>
                   {Li("link",12,T.gold)}
@@ -14348,7 +15112,7 @@ function JahrScreen({forceSingle=false}) {
                       return (
                         <div key={tx.id} style={{display:"flex",alignItems:"center",gap:10,
                           padding:"8px 14px",borderBottom:`1px solid ${T.bd}`,cursor:"pointer",
-                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}} onClick={()=>{setDrilldown(null);openEdit(tx);}}>
+                          background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.06)":"rgba(245,166,35,0.04)"}} onClick={()=>{setDrilldown(null);openEdit(tx);}}>
                           <div style={{width:36,height:36,borderRadius:11,flexShrink:0,
                             background:(cat2?.color||"#888")+"33",display:"flex",alignItems:"center",justifyContent:"center"}}>
                             {Li(cat2?.icon||"target",16,cat2?.color||T.gold)}
@@ -14430,7 +15194,7 @@ function JahrScreen({forceSingle=false}) {
                           </div>
                           <div style={{color:T.txt2,fontSize:10,marginTop:1,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                             <span>{tx.date}</span>
-                            {tx.pending&&<span style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",color:T.gold,
+                            {tx.pending&&<span style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",color:T.gold,
                               borderRadius:4,padding:"0 4px",fontSize:9,fontWeight:700}}>
                               {isSelectedPend?"✓ ausgewählt":"Vormerkung – antippen zum Verknüpfen"}
                             </span>}
@@ -16024,7 +16788,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
 
           {/* Auto-Vorschläge Vergleichspanel */}
           {showAutoSugg&&(parsed.autoSuggestions||[]).length>0&&(
-            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderBottom:`1px solid ${T.gold}33`,
+            <div style={{background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.08)":"rgba(245,166,35,0.06)",borderBottom:`1px solid ${T.gold}33`,
               padding:"10px 16px",flexShrink:0,maxHeight:220,overflowY:"auto"}}>
               <div style={{color:T.gold,fontSize:MFSl,fontWeight:700,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
                 {Li("git-compare",13,T.gold)} Automatische Verknüpfungsvorschläge — nur zur Ansicht, nichts wird automatisch übernommen
@@ -16169,7 +16933,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                           <div style={{color:T.txt2,fontSize:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                             <span>{r.isoDate}</span>
                             {r._paypalRows>1&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
-                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"0 4px"}}>
+                              background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"rgba(192,120,0,0.18)":"rgba(245,166,35,0.15)",borderRadius:4,padding:"0 4px"}}>
                               {r._paypalRows} Zeilen zusammengefasst{r._paypalTypes?" · "+r._paypalTypes:""}
                             </span>}
                             {r._detailNote&&<span style={{color:T.blue,fontSize:9,fontWeight:600,
@@ -16901,6 +17665,133 @@ function MobileActionPicker({onClose, onSelect}) {
     {id:"kategorien",   label:"Kategorien & Budget", icon:"tag", color:T.blue,  sub:"Kategorien & Budgets verwalten"},
   ];
 
+  // ── TERMINAL ────────────────────────────────────────────────────────────
+  if(T.themeName==="terminal") {
+    const G=T.pos, D=T.txt2, A=T.txt;
+    const shortcuts = {csv:"1",vormerken:"2",wiederkehrend:"3",finanzierung:"4",kategorien:"5"};
+    return (
+      <div style={{position:"fixed",inset:0,top:44,background:"#0D0D0D",zIndex:300,
+        display:"flex",flexDirection:"column",fontFamily:"monospace"}}>
+        {/* Header */}
+        <div style={{background:"#111",borderBottom:`2px solid ${G}`,
+          padding:"10px 12px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+          <button onClick={onClose}
+            style={{background:"transparent",border:`1px solid ${G}44`,color:G,
+              width:40,height:40,cursor:"pointer",fontSize:16,fontFamily:"monospace",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            ✕
+          </button>
+          <div style={{flex:1}}>
+            <div style={{color:G,fontSize:14,fontWeight:700,letterSpacing:1}}>
+              {">"} AKTION WÄHLEN
+            </div>
+            <div style={{color:D,fontSize:10,marginTop:2}}>{"// tippe 1-5 oder wähle unten"}</div>
+          </div>
+        </div>
+        {/* Box */}
+        <div style={{flex:1,overflowY:"auto",padding:"12px 8px"}}>
+          <div style={{color:D,fontSize:11,marginBottom:4}}>{"┌"+"─".repeat(42)+"┐"}</div>
+          {actions.map(({id,label,icon,sub},i)=>(
+            <div key={id}>
+              <button onClick={()=>onSelect(id)}
+                style={{width:"100%",background:"transparent",border:"none",
+                  cursor:"pointer",padding:0,display:"flex",fontFamily:"monospace",
+                  WebkitTapHighlightColor:"transparent"}}>
+                <span style={{color:D,fontSize:11,lineHeight:"2"}}>│ </span>
+                <span style={{color:G,fontSize:11,minWidth:14,lineHeight:"2"}}>{shortcuts[id]}.</span>
+                <span style={{color:A,fontSize:14,fontWeight:700,flex:1,textAlign:"left",
+                  lineHeight:"2"}}>{label.toUpperCase()}</span>
+                <span style={{color:D,fontSize:10,lineHeight:"2",paddingRight:2}}>{">"}</span>
+                <span style={{color:D,fontSize:11,lineHeight:"2"}}> │</span>
+              </button>
+              <div style={{color:D,fontSize:11,paddingLeft:4}}>
+                {"│   "}<span style={{color:D,fontSize:9}}>{sub}</span>
+                {"                        ".slice(sub.length)}{"│"}
+              </div>
+              {i<actions.length-1&&<div style={{color:D,fontSize:11}}>{"├"+"─".repeat(42)+"┤"}</div>}
+            </div>
+          ))}
+          <div style={{color:D,fontSize:11,marginTop:0}}>{"└"+"─".repeat(42)+"┘"}</div>
+          {/* Direct new tx */}
+          <button onClick={()=>onSelect("addTx")}
+            style={{width:"100%",marginTop:12,background:"transparent",
+              border:`1px solid ${G}`,color:G,fontSize:13,fontWeight:700,
+              fontFamily:"monospace",padding:"10px",cursor:"pointer",
+              letterSpacing:1}}>
+            {">"} NEUE BUCHUNG DIREKT
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── BRUTALIST ────────────────────────────────────────────────────────────
+  if(T.themeName==="brutalist") {
+    const BK="#000", BY="#FFEC3E", BR="#CC0000";
+    return (
+      <div style={{position:"fixed",inset:0,top:44,background:BY,zIndex:300,
+        display:"flex",flexDirection:"column"}}>
+        {/* Header */}
+        <div style={{background:BK,padding:"10px 12px",
+          display:"flex",alignItems:"center",gap:10,flexShrink:0,
+          borderBottom:`4px solid ${BK}`}}>
+          <button onClick={onClose}
+            style={{background:BY,border:`3px solid ${BY}`,color:BK,
+              width:44,height:44,cursor:"pointer",fontSize:20,fontWeight:900,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            ✕
+          </button>
+          <div style={{color:BY,fontSize:20,fontWeight:900,letterSpacing:1,flex:1}}>
+            WAS TUN?
+          </div>
+        </div>
+        {/* Action Grid */}
+        <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:0}}>
+          {/* Direct tx — top, biggest */}
+          <button onClick={()=>onSelect("addTx")}
+            style={{width:"100%",background:BK,border:"none",
+              borderBottom:`4px solid ${BK}`,
+              padding:"18px 16px",cursor:"pointer",
+              display:"flex",alignItems:"center",gap:12,
+              WebkitTapHighlightColor:"transparent"}}>
+            <span style={{background:BY,color:BK,fontSize:28,fontWeight:900,
+              width:52,height:52,display:"flex",alignItems:"center",justifyContent:"center",
+              flexShrink:0}}>+</span>
+            <div style={{textAlign:"left"}}>
+              <div style={{color:BY,fontSize:22,fontWeight:900}}>NEUE BUCHUNG</div>
+              <div style={{color:"rgba(255,236,62,0.6)",fontSize:11,marginTop:2}}>direkt erfassen</div>
+            </div>
+          </button>
+          {/* 2-column grid for other actions */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
+            {actions.map(({id,label,icon,color,sub},i)=>(
+              <button key={id} onClick={()=>onSelect(id)}
+                style={{
+                  background:i%2===0?"#FFEC3E":"#F5E800",
+                  border:`3px solid ${BK}`,
+                  borderTop:"none",
+                  borderLeft:i%2===1?`3px solid ${BK}`:"none",
+                  padding:"14px 12px",cursor:"pointer",
+                  display:"flex",flexDirection:"column",gap:6,
+                  textAlign:"left",
+                  WebkitTapHighlightColor:"transparent"}}>
+                <div style={{width:36,height:36,background:BK,
+                  display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {Li(icon,18,BY)}
+                </div>
+                <div style={{color:BK,fontSize:14,fontWeight:900,lineHeight:1.2}}>
+                  {label.toUpperCase()}
+                </div>
+                <div style={{color:"rgba(0,0,0,0.5)",fontSize:10}}>{sub}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── DEFAULT ───────────────────────────────────────────────────────────────
   return (
     <div style={{position:"fixed",inset:0,top:44,background:T.bg,zIndex:300,
       display:"flex",flexDirection:"column"}}>
@@ -18198,7 +19089,7 @@ window.FinanzApp = function FinanzApp() {
   const [activeStructurTab, setActiveStructurTab] = useState("einstellungen");
   const [hideEmptyRows, setHideEmptyRows] = useState(true);
   const [themeName, setThemeName] = useState(()=>localStorage.getItem("mbt_theme")||"dark");
-  const [noBorders, setNoBorders] = useState(()=>localStorage.getItem("mbt_noborders")==="1");
+  const [noBorders, setNoBorders] = useState(()=>localStorage.getItem("mbt_noborders")==="0" ? false : true);
   const [themeRev, setThemeRev] = useState(0); // incremented to force re-render on same theme
   const [handedness, setHandedness] = useState(()=>localStorage.getItem("mbt_handedness")||"right");
   // T als reaktive Variable — alle Komponenten die T nutzen re-rendern durch Context
@@ -20203,9 +21094,9 @@ Abbrechen = ${remoteName}-Stand laden`
   return (
   <AppCtx.Provider value={cx}>
     <>
-    <div className={noBorders?"no-borders":undefined}
+    <div className={[noBorders?"no-borders":null, themeName==="clean"?"theme-clean":null, themeName==="brutalist"?"theme-brutalist":null, themeName==="terminal"?"theme-terminal":null, themeName==="swiss"?"theme-swiss":null].filter(Boolean).join(" ")||undefined}
       style={{background:T.bg,height:"100vh",maxHeight:"100vh",
-      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?"light":"dark",
+      colorScheme:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss")?"light":"dark",
       display:"flex",flexDirection:"column",
       fontFamily:"'SF Pro Text',-apple-system,BlinkMacSystemFont,sans-serif",
       userSelect:"none",overflow:"hidden"}}>
@@ -20245,6 +21136,37 @@ Abbrechen = ${remoteName}-Stand laden`
               cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
             {Li("smartphone",14,mobileMode?T.blue:T.txt2)}
           </button>
+
+          {/* ── Design-Schnell-Toggle (Brutalist / Terminal / Swiss / Zurück) ── */}
+          {(()=>{
+            const DESIGN_THEMES=["brutalist","terminal","swiss","clean"];
+            const isDesign=DESIGN_THEMES.includes(themeName);
+            const LABELS={brutalist:"▓ BRUT",terminal:"█ TERM",swiss:"— SWISS",clean:"○ CLEAN"};
+            const COLORS={brutalist:{bg:"#FFEC3E",txt:"#000000",bd:"#000000"},terminal:{bg:"#0D0D0D",txt:"#00FF41",bd:"#00FF41"},swiss:{bg:"#FFFFFF",txt:"#111111",bd:"#111111"},clean:{bg:"#000000",txt:"#FFFFFF",bd:"#000000"}};
+            const c=isDesign?COLORS[themeName]:{bg:"transparent",txt:T.txt2,bd:T.bd};
+            return (
+              <button
+                onClick={()=>{
+                  if(isDesign){
+                    const prev=localStorage.getItem("mbt_prev_theme")||"dark";
+                    setThemeName(prev);
+                    localStorage.setItem("mbt_theme",prev);
+                  } else {
+                    localStorage.setItem("mbt_prev_theme",themeName);
+                    setThemeName("brutalist");
+                    localStorage.setItem("mbt_theme","brutalist");
+                  }
+                }}
+                title={isDesign?"Zurück zum vorherigen Theme":"Design-Themes"}
+                style={{height:26,borderRadius:4,border:`1.5px solid ${c.bd}`,
+                  background:c.bg,cursor:"pointer",display:"flex",alignItems:"center",
+                  justifyContent:"center",padding:"0 8px",flexShrink:0}}>
+                <span style={{fontSize:11,fontWeight:700,letterSpacing:0.5,color:c.txt,fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                  {isDesign?LABELS[themeName]:"○ DESIGN"}
+                </span>
+              </button>
+            );
+          })()}
 
           {/* ── Theme-Dropdown ── */}
           <ThemeDropdown themeName={themeName} setThemeName={setThemeName}/>
@@ -20507,17 +21429,134 @@ Abbrechen = ${remoteName}-Stand laden`
 
       {/* ── BOTTOM NAV BAR — 5 Tabs + + Button ── */}
       {(()=>{
+        const doPlus = () => {
+          setNewTx({
+            date: new Date().toISOString().split("T")[0],
+            totalAmount:"", desc:"", note:"",
+            _csvType:"expense",
+            pending: false, repeatMonths: 1, accountId: "acc-giro",
+            splits:[{id:uid(),catId:"",subId:"",amount:""}],
+          });
+          setModal("addTx");
+          if(mobileMode) { setModal(null); setShowMobilePicker(true); }
+        };
+        const onTap = (t) => {
+          if(t.id==="home")      { setMainTab("erfassen"); setSubTab("dashboard"); }
+          else if(t.id==="monat")     { setMainTab("erfassen"); setSubTab("monat"); }
+          else if(t.id==="buchungen") { setMainTab("buchungen"); }
+          else if(t.id==="jahr")      { setMainTab("erfassen"); setSubTab("jahr"); }
+          else if(t.id==="mehr")      { setMainTab("mehr"); }
+        };
+
+        // ── TERMINAL NAV ──────────────────────────────────────────────────
+        if(T.themeName==="terminal") {
+          const G = T.pos; const D = T.txt2;
+          const items = (handedness==="left")
+            ? [NAV_TABS[0], "plus", NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], NAV_TABS[4]]
+            : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], "plus", NAV_TABS[4]];
+          return (
+            <div className="nav-bottom" style={{
+              background:"#0D0D0D",
+              borderTop:`1px solid ${G}22`,
+              display:"flex", alignItems:"stretch", flexShrink:0, zIndex:10,
+              fontFamily:"monospace",
+              paddingLeft:0, paddingRight:0}}>
+              {items.map((item,idx) => {
+                if(item==="plus") return (
+                  <div key="plus" style={{flex:1,display:"flex",alignItems:"center",
+                    justifyContent:"center",
+                    background:"rgba(0,255,65,0.08)",
+                    WebkitTapHighlightColor:"transparent"}}>
+                    <button onClick={doPlus}
+                      style={{width:"100%",height:"100%",
+                        background:"transparent", border:"none",
+                        color:G,cursor:"pointer",
+                        display:"flex",flexDirection:"column",alignItems:"center",
+                        justifyContent:"center",gap:1,
+                        fontFamily:"monospace",
+                        WebkitTapHighlightColor:"transparent"}}>
+                      <span style={{fontSize:20,lineHeight:1,fontWeight:700}}>+</span>
+                      <span style={{fontSize:8,letterSpacing:1,color:G+"99"}}>NEW</span>
+                    </button>
+                  </div>
+                );
+                const isActive = activeNavTab===item.id;
+                const labels = {home:"HOME",monat:"MONAT",buchungen:"BUCH.",jahr:"JAHR",mehr:"MEHR"};
+                return (
+                  <div key={item.id} onClick={()=>onTap(item)}
+                    style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",
+                      justifyContent:"center",gap:2,cursor:"pointer",padding:"5px 0 4px",
+                      background:isActive?"rgba(0,255,65,0.05)":"transparent",
+                      WebkitTapHighlightColor:"transparent"}}>
+                    {/* aktiver Tab: grüner Strich oben statt Rahmen */}
+                    <div style={{height:2,width:24,
+                      background:isActive?G:"transparent",
+                      marginBottom:3,transition:"background 0.15s"}}/>
+                    {Li(item.icon,16,isActive?G:D,isActive?2:1.5)}
+                    <span style={{fontSize:8,fontWeight:isActive?700:400,
+                      color:isActive?G:D,whiteSpace:"nowrap",letterSpacing:0.5}}>
+                      {labels[item.id]||item.label.toUpperCase()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        // ── BRUTALIST NAV ─────────────────────────────────────────────────
+        if(T.themeName==="brutalist") {
+          const BK="#000", BY="#FFEC3E";
+          const items = (handedness==="left")
+            ? [NAV_TABS[0], "plus", NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], NAV_TABS[4]]
+            : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], "plus", NAV_TABS[4]];
+          return (
+            <div className="nav-bottom" style={{
+              background:BY,
+              borderTop:`3px solid ${BK}`,
+              display:"flex", alignItems:"stretch", flexShrink:0, zIndex:10,
+              paddingLeft:0, paddingRight:0}}>
+              {items.map((item,idx) => {
+                if(item==="plus") return (
+                  <div key="plus" style={{flex:1,display:"flex",alignItems:"center",
+                    justifyContent:"center",
+                    background:BK,
+                    WebkitTapHighlightColor:"transparent"}}>
+                    <button onClick={doPlus}
+                      style={{width:"100%",height:"100%",
+                        background:"transparent", border:"none",
+                        color:BY,cursor:"pointer",
+                        display:"flex",flexDirection:"column",alignItems:"center",
+                        justifyContent:"center",gap:1,
+                        fontFamily:"inherit",
+                        WebkitTapHighlightColor:"transparent"}}>
+                      <span style={{fontSize:26,lineHeight:1,fontWeight:900}}>+</span>
+                      <span style={{fontSize:7,letterSpacing:2,color:BY+"cc",fontWeight:900}}>NEU</span>
+                    </button>
+                  </div>
+                );
+                const isActive = activeNavTab===item.id;
+                return (
+                  <div key={item.id} onClick={()=>onTap(item)}
+                    style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",
+                      justifyContent:"center",gap:2,cursor:"pointer",padding:"4px 2px 3px",
+                      background:isActive?BK:BY,
+                      WebkitTapHighlightColor:"transparent"}}>
+                    {Li(item.icon,17,isActive?BY:BK,isActive?2.5:2)}
+                    <span style={{fontSize:8,fontWeight:900,
+                      color:isActive?BY:BK,whiteSpace:"nowrap",
+                      textTransform:"uppercase",letterSpacing:0.3}}>{item.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
         const navTab = (t) => {
           const isActive = activeNavTab===t.id;
-          const onTap = () => {
-            if(t.id==="home")      { setMainTab("erfassen"); setSubTab("dashboard"); }
-            else if(t.id==="monat")     { setMainTab("erfassen"); setSubTab("monat"); }
-            else if(t.id==="buchungen") { setMainTab("buchungen"); }
-            else if(t.id==="jahr")      { setMainTab("erfassen"); setSubTab("jahr"); }
-            else if(t.id==="mehr")      { setMainTab("mehr"); }
-          };
           return (
-            <div key={t.id} onClick={onTap}
+            <div key={t.id} onClick={()=>onTap(t)}
               style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",
                 justifyContent:"center",gap:2,cursor:"pointer",padding:"6px 0px 4px",minWidth:0,
                 WebkitTapHighlightColor:"transparent"}}>
@@ -20537,28 +21576,18 @@ Abbrechen = ${remoteName}-Stand laden`
           <div key="plus" style={{flex:1,display:"flex",alignItems:"center",
             justifyContent:"center",overflow:"hidden",
             WebkitTapHighlightColor:"transparent"}}>
-            <button onClick={()=>{
-              setNewTx({
-                date: new Date().toISOString().split("T")[0],
-                totalAmount:"", desc:"", note:"",
-                _csvType:"expense",
-                pending: false, repeatMonths: 1, accountId: "acc-giro",
-                splits:[{id:uid(),catId:"",subId:"",amount:""}],
-              });
-              setModal("addTx");
-              if(mobileMode) { setModal(null); setShowMobilePicker(true); }
-            }}
+            <button onClick={doPlus}
               style={{
                 width:60, height:60, borderRadius:"50%",
                 border:`3px solid ${T.surf}`,
-                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")
+                background:(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="swiss")
                   ?"linear-gradient(135deg,#9CC800,#AADD00)"
                   :`linear-gradient(135deg,${T.blue},${T.blue}BB)`,
                 cursor:"pointer", flexShrink:0,
                 display:"flex",alignItems:"center",justifyContent:"center",
                 boxShadow:"0 -2px 12px rgba(0,0,0,0.25)",
                 WebkitTapHighlightColor:"transparent"}}>
-              {Li("plus",30,(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand")?T.on_accent:"#000",2.5)}
+              {Li("plus",30,(T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="swiss")?T.on_accent:"#000",2.5)}
             </button>
           </div>
         );
