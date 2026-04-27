@@ -6715,7 +6715,6 @@ function SaldoHero2({year, month,
         })()}
         <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"6px 0 4px"}}/>
         {showPrognose ? (()=>{
-          const fmt2 = v => v==null?"null":v.toFixed(2);
           const prevY=month===0?year-1:year, prevM=month===0?11:month-1;
           const linkedChIds = new Set(); (txs||[]).forEach(t=>(t.linkedIds||[]).forEach(id=>linkedChIds.add(id)));
           const todayD3=new Date().getDate();
@@ -6759,49 +6758,17 @@ function SaldoHero2({year, month,
             return {base,mSum:inc-out,eSum:E-base,M,E,count:all.length,txs:all};
           };
           if(!selAcc) {
-            // Wenn nur ein Konto → Dashboard-Werte direkt anzeigen mit Debug
-            if(accIds.length <= 1) return (<>
-              <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>
-              <div style={{padding:"4px 10px",fontSize:8,fontFamily:"monospace",color:T.txt2,background:"rgba(255,200,0,0.06)",lineHeight:1.7}}>
-                <div style={{color:T.gold}}>GESAMT (1 Konto) | year={year} month={month} prevY={prevY} prevM={prevM}</div>
-                <div style={{color:T.blue}}>Dashboard: M={fmt2(prognoseMitte)} E={fmt2(prognoseEnde)}</div>
-                <div>getProgEndeAcc Vormonat: {fmt2(getProgEndeAcc(prevY,prevM,accIds[0]))}</div>
-              </div>
-            </>);
+            if(accIds.length <= 1) return <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>;
             const results=accIds.map(aId=>({aId,name:accounts.find(a=>a.id===aId)?.name||aId,...calcAcc(aId)}));
             if(results.some(r=>!r||r.base==null)) return <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>;
             const totalM=results.reduce((s,r)=>s+r.M,0), totalE=results.reduce((s,r)=>s+r.E,0);
-            return (<>
-              <PrognoseRow pm={totalM} pe={totalE}/>
-              <div style={{padding:"4px 10px",fontSize:8,fontFamily:"monospace",color:T.txt2,background:"rgba(255,200,0,0.06)",lineHeight:1.7}}>
-                <div style={{color:T.gold}}>GESAMT | year={year} month={month} prevY={prevY} prevM={prevM}</div>
-                {results.map((r,i)=><div key={i}>{r.name}: base={fmt2(r.base)} mSum={fmt2(r.mSum)} eSum={fmt2(r.eSum)} → M={fmt2(r.M)} E={fmt2(r.E)}</div>)}
-                <div style={{color:T.pos}}>GESAMT neu: M={fmt2(totalM)} E={fmt2(totalE)}</div>
-                <div style={{color:T.blue}}>Dashboard: M={fmt2(prognoseMitte)} E={fmt2(prognoseEnde)}</div>
-                <div style={{color:T.blue}}>Differenz E: {fmt2(totalE - prognoseEnde)}</div>
-              </div>
-            </>);
+            return <PrognoseRow pm={totalM} pe={totalE}/>;
           }
           if(!ksAcc[selAcc] && ksAcc[selAcc] !== 0) return null; // Kein Ankerpunkt → keine Prognose
           const r=calcAcc(selAcc);
           if(!r) return null; // Keine Prognose berechenbar
           const accName=accounts.find(a=>a.id===selAcc)?.name||selAcc;
-          const baseApr=getProgEndeAcc(2026,3,selAcc);
-          const baseMar=getKumulierterSaldo(2026,2,selAcc);
-          return (<>
-            <PrognoseRow pm={r.M} pe={r.E}/>
-            <div style={{padding:"4px 10px",fontSize:8,fontFamily:"monospace",color:T.txt2,background:"rgba(255,200,0,0.06)",lineHeight:1.7}}>
-              <div style={{color:T.gold}}>{accName} | year={year} month={month} prevY={prevY} prevM={prevM}</div>
-              <div>KS März: {fmt2(baseMar)} | ProgEnde Apr hardcoded: {fmt2(baseApr)}</div>
-              <div>calcAcc base (=getProgEndeAcc({prevY},{prevM})): {fmt2(r.base)}</div>
-              <div>mSum={fmt2(r.mSum)} eSum={fmt2(r.eSum)}</div>
-              <div style={{color:T.pos}}>→ M={fmt2(r.M)} E={fmt2(r.E)}</div>
-              <div style={{color:T.blue}}>Dashboard: M={fmt2(prognoseMitte)} E={fmt2(prognoseEnde)}</div>
-              <div>Buchungen {year}/{month+1}: {r.count} (VM: {r.txs.filter(t=>t.pending).length}, echt: {r.txs.filter(t=>!t.pending).length})</div>
-              <div style={{color:T.gold}}>getProgEndeAcc Kette: März={fmt2(getKumulierterSaldo(2026,2,selAcc))} → Apr={fmt2(getProgEndeAcc(2026,3,selAcc))} → Mai={fmt2(getProgEndeAcc(2026,4,selAcc))}</div>
-              {r.txs.slice(0,6).map((t,i)=><div key={i} style={{color:signAmt2(t)>0?T.pos:T.neg}}>{t.date} {t.pending?"VM":"B"} {signAmt2(t)>0?"+":""}{signAmt2(t).toFixed(2)} {(t.desc||"").slice(0,22)}</div>)}
-            </div>
-          </>);
+          return <PrognoseRow pm={r.M} pe={r.E}/>;
         })() : (selAcc && displayKs===null) ? null : <div style={{display:"flex",alignItems:"center"}}>
               <div style={{flex:2,textAlign:"center"}}>
                 <span style={{color:ms>=0?T.pos:T.neg,fontSize:17,fontWeight:800}}>{fmt(Math.abs(ms))} €</span>
