@@ -5074,9 +5074,11 @@ function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAm
 
               {/* Step 0: Gruppen + Neue Gruppe */}
               {step===0&&<>
-                {groups.filter(g=>!filterType||(filterType==="income"
+                {groups.filter(g=>!filterType||(filterType==="tagesgeld"
+                  ? (g.behavior==="tagesgeld"||g.type==="tagesgeld")
+                  : filterType==="income"
                   ? (g.behavior==="income"||g.behavior==="tagesgeld"||g.type==="income"||g.type==="tagesgeld")
-                  : (g.behavior==="expense"||g.type==="expense"||(!g.behavior&&g.type!=="income"&&g.type!=="tagesgeld"))
+                  : (g.behavior==="expense"||g.behavior==="tagesgeld"||g.type==="expense"||g.type==="tagesgeld"||(!g.behavior&&g.type!=="income"))
                 )).map(g=>(
                   <button key={g.id} onClick={()=>{setSelGrp(g);setStep(1);}} style={{...btnS(false,g.accent)}}>
                     <span style={{display:"flex",alignItems:"center",justifyContent:"center",width:18,flexShrink:0}}>{Li(g.icon,15,g.accent||T.txt2)}</span>
@@ -6239,14 +6241,117 @@ function SaldoHero2({year, month,
   prognoseMitte, prognoseEnde, detailMitte, detailEnde, saldoMitte, saldoEnde,
   onDrillBuchIn, onDrillBuchOut, onDrillPendIn, onDrillPendOut,
   onDrillUncatIn, onDrillUncatOut}) {
-  const { getKumulierterSaldo } = useContext(AppCtx);
+  const { getKumulierterSaldo, accounts, startBalances, txs, cats, getBudgetForMonth, budgets } = useContext(AppCtx);
   const ks = getKumulierterSaldo(year, month);
+
+  // Konto-spezifische Prognose-Ende Berechnung mit Budget-Floor-Logik
+  const getProgEndeAcc = (y, m, accId) => {
+    const tb = new Date();
+    // Vergangener Monat: echter Kontostand für dieses Konto
+    if(y < tb.getFullYear() || (y === tb.getFullYear() && m < tb.getMonth()))
+      return getKumulierterSaldo(y, m, accId);
+    // Aktueller/zukünftiger Monat: rekursiv
+    const pY = m===0?y-1:y, pM = m===0?11:m-1;
+    const prevEnde = getProgEndeAcc(pY, pM, accId);
+    if(prevEnde===null||prevEnde===undefined) return null;
+    const lastD = new Date(y,m+1,0).getDate();
+    const todayY=tb.getFullYear(), todayM=tb.getMonth(), todayD=tb.getDate();
+    const isCur=y===todayY&&m===todayM, isPastM=y<todayY||(y===todayY&&m<todayM);
+    const endeAbg=isPastM||(isCur&&todayD>=lastD);
+    // Filter: Buchung gehört zu diesem Konto
+    const isAcc = t => t.accountId===accId || (!t.accountId && accId==="acc-giro");
+    const signAmt = t => {
+      const type = t._csvType||(t.totalAmount>=0?"income":"expense");
+      return type==="income" ? Math.abs(t.totalAmount) : -Math.abs(t.totalAmount);
+    };
+    // Unkategorisierte Buchungen direkt zählen (z.B. CSV-importierte Tagesgeld-Buchungen)
+    const uncatTxs = (txs||[]).filter(t=>{
+      if(t._linkedTo||t._budgetSubId) return false;
+      if(endeAbg&&t.pending) return false;
+      if(!isAcc(t)) return false;
+      const d=new Date(t.date);
+      if(d.getFullYear()!==y||d.getMonth()!==m) return false;
+      return (t.splits||[]).length===0 || (t.splits||[]).every(sp=>!sp.catId);
+    });
+    const uncatSum = uncatTxs.reduce((s,t)=>s+signAmt(t), 0);
+    // Einnahmen: income-Kategorien für Giro, tagesgeld-Kategorien für Tagesgeld
+    const inc = (cats||[]).filter(c=>accId==="acc-giro" ? (c.type==="income") : (c.type==="tagesgeld"||c.type==="income")).reduce((s,cat)=>{
+      return s+(txs||[]).filter(t=>{
+        if(t._linkedTo||t._budgetSubId) return false;
+        if(endeAbg&&t.pending) return false;
+        if(!isAcc(t)) return false;
+        const d=new Date(t.date);
+        return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+      }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+        .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+    },0);
+    // Ausgaben: Budget-Floor-Logik nur für Giro, andere Konten nur echte Buchungen
+    const out = (cats||[]).filter(c=>c.type==="expense").reduce((s,cat)=>{
+      if(endeAbg) {
+        return s+(txs||[]).filter(t=>{
+          if(t._linkedTo||t._budgetSubId) return false;
+          if(t.pending&&t._seriesTyp!=="finanzierung") return false;
+          if(!isAcc(t)) return false;
+          const d=new Date(t.date);
+          return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+        }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
+          .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+      }
+      // Budget-Floor nur für Giro-Konto
+      if(accId !== "acc-giro") {
+        // Nur echte Buchungen + Vormerkungen, kein Budget-Floor
+        const real=(txs||[]).filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+        const pend=(txs||[]).filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+        return s+real+pend;
+      }
+      const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
+      const subTotal=(cat.subs||[]).reduce((catSum,sub)=>{
+        const bG=getBudgetForMonth(sub.id,y,m);
+        // Budget-Floor nur wenn das Budget für dieses Konto gilt
+        const budgetAccId = (budgets||{})[sub.id]?.accountId || "acc-giro";
+        const effectiveBG = (bG>0 && budgetAccId===accId) ? bG : 0;
+        const real=(txs||[]).filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+        const pend=(txs||[]).filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+        return catSum+(effectiveBG>0?Math.max(effectiveBG,real+pend):real+pend);
+      },0);
+      const pendNoSub=(txs||[]).filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+      const realNoSub=(txs||[]).filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+      return s+subTotal+pendNoSub+realNoSub;
+    },0);
+    return prevEnde + inc - out + uncatSum;
+  };
+
+  // Nur Konten mit eigenem Ankerpunkt anzeigen
+  const accountsWithAnchor = React.useMemo(()=>{
+    const result = new Set();
+    Object.values(startBalances||{}).forEach(yearVal=>{
+      if(!yearVal || typeof yearVal !== "object") return;
+      Object.values(yearVal).forEach(monthVal=>{
+        if(typeof monthVal === "number") { result.add("acc-giro"); return; } // altes Format
+        if(!monthVal || typeof monthVal !== "object") return;
+        Object.keys(monthVal).forEach(accId=>result.add(accId));
+      });
+    });
+    // In Konto-Reihenfolge zurückgeben
+    return accounts.filter(a=>result.has(a.id)).map(a=>a.id);
+  }, [startBalances, accounts]);
+  // Konto-Toggle: null = Gesamt, sonst accountId — nur Konten mit eigenem Ankerpunkt
+  const [selAcc, setSelAcc] = React.useState(null);
+  const accIds = accountsWithAnchor; // nur Konten mit Ankerpunkt
+  const allAccIds = [null, ...accIds];
+  const ksAcc = React.useMemo(()=>{
+    const res = {};
+    accIds.forEach(id=>{ res[id] = getKumulierterSaldo(year, month, id); });
+    return res;
+  }, [year, month, accIds, getKumulierterSaldo]);
+  const displayKs = selAcc===null ? ks : ksAcc[selAcc];
+  const displayColor = v => v===null?T.txt:v<0?T.cond_neg:v<=500?T.cond_warn:v<=1000?T.cond_gold:T.cond_pos;
   const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
   const isCurrent = year===nowY && month===nowM;
   const isFuture  = year>nowY || (year===nowY && month>nowM);
   const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss";
   const subClr = isLight?"rgba(0,0,0,0.45)":T.txt2;
-  const ksColor = ks===null?T.txt:ks<0?T.cond_neg:ks<=500?T.cond_warn:ks<=1000?T.cond_gold:T.cond_pos;
+  const ksColor = displayColor(displayKs);
   const showPrognose = isCurrent || isFuture;
   const saldoColor = v => v===null?T.txt2:v<0?T.cond_neg:v<=500?T.cond_warn:v<=1000?T.cond_gold:T.cond_pos;
   const ms = buchInE - buchOutE;
@@ -6511,27 +6616,193 @@ function SaldoHero2({year, month,
           <div style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",
             color:T.gold,fontSize:11,fontWeight:700,letterSpacing:1,opacity:0.5,paddingRight:14}}>ENDE</div>
         </>}
-        <div style={{fontSize:40,fontWeight:800,letterSpacing:-1,color:ksColor,
-          textShadow:"0 2px 12px rgba(0,0,0,0.4)",position:"relative",zIndex:1}}>
-          {ks!==null ? fmt(Math.abs(ks))+" €" : fmt(Math.abs(ms))+" €"}
+        <div onClick={()=>{
+            if(allAccIds.length<=1) return; // kein Toggle ohne Konten mit Ankerpunkt
+            const idx = allAccIds.indexOf(selAcc);
+            setSelAcc(allAccIds[(idx+1)%allAccIds.length]);
+          }}
+          style={{fontSize:40,fontWeight:800,letterSpacing:-1,color:ksColor,
+            textShadow:"0 2px 12px rgba(0,0,0,0.4)",position:"relative",zIndex:1,
+            cursor:"pointer",userSelect:"none"}}>
+          {displayKs!==null ? fmt(Math.abs(displayKs))+" €" : selAcc ? "—" : fmt(Math.abs(ms))+" €"}
+        </div>
+        {/* Konto-Label + Unterzeilen */}
+        <div style={{marginTop:2,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+          {/* Aktives Label */}
+          <div style={{display:"flex",alignItems:"center",gap:4}}>
+            {selAcc===null
+              ? <span style={{color:T.txt2,fontSize:9,fontWeight:700,letterSpacing:0.5}}>GESAMT {Li("refresh-cw",8,T.txt2)}</span>
+              : <span style={{color:T.blue,fontSize:9,fontWeight:700,letterSpacing:0.5}}>
+                  {accounts.find(a=>a.id===selAcc)?.name?.toUpperCase()||selAcc} {Li("refresh-cw",8,T.blue)}
+                </span>
+            }
+          </div>
+          {/* Unterzeilen: alle Konten mit Ankerpunkt wenn Gesamt aktiv */}
+          {selAcc===null && accIds.length>0 && ks!==null && (
+            <div style={{display:"flex",gap:12,marginTop:2}}>
+              {accIds.map(id=>{
+                const a = accounts.find(ac=>ac.id===id);
+                const v = ksAcc[id];
+                if(v===null||!a) return null;
+                const col=displayColor(v);
+                return (
+                  <div key={id} onClick={e=>{e.stopPropagation();setSelAcc(id);}}
+                    style={{cursor:"pointer",textAlign:"center"}}>
+                    <div style={{color:T.txt2,fontSize:8}}>{a.name}</div>
+                    <div style={{color:col,fontSize:11,fontWeight:700,fontFamily:"monospace"}}>
+                      {v>=0?"+":"−"}{fmt(Math.abs(v))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
       <div style={{background:"rgba(255,255,255,0.06)",borderRadius:0,padding:"10px 0 10px"}}>
-        <Row label="Buch."
-          mIn={buchInM} mOut={buchOutM} eIn={buchInE} eOut={buchOutE}
-          onTapIn={onDrillBuchIn} onTapOut={onDrillBuchOut}/>
-        {(pendInE>0||pendOutE>0)&&<Row label="VM"
-          mIn={pendInM} mOut={pendOutM} eIn={pendInE} eOut={pendOutE}
-          clrIn={T.pos+"aa"} clrOut={T.neg+"aa"}
-          onTapIn={onDrillPendIn} onTapOut={onDrillPendOut}/>}
-        {(uInE>0||uOutE>0)&&<Row label="unkat."
-          mIn={uInM} mOut={uOutM} eIn={uInE} eOut={uOutE}
-          clrIn={T.gold} clrOut={T.gold}
-          onTapIn={onDrillUncatIn} onTapOut={onDrillUncatOut}/>}
+        {(()=>{
+          // Wenn kein Konto gewählt → Props nutzen (Gesamt)
+          if(!selAcc) return (<>
+            <Row label="Buch." mIn={buchInM} mOut={buchOutM} eIn={buchInE} eOut={buchOutE}
+              onTapIn={onDrillBuchIn} onTapOut={onDrillBuchOut}/>
+            {(pendInE>0||pendOutE>0)&&<Row label="VM"
+              mIn={pendInM} mOut={pendOutM} eIn={pendInE} eOut={pendOutE}
+              clrIn={T.pos+"aa"} clrOut={T.neg+"aa"}
+              onTapIn={onDrillPendIn} onTapOut={onDrillPendOut}/>}
+            {(uInE>0||uOutE>0)&&<Row label="unkat."
+              mIn={uInM} mOut={uOutM} eIn={uInE} eOut={uOutE}
+              clrIn={T.gold} clrOut={T.gold}
+              onTapIn={onDrillUncatIn} onTapOut={onDrillUncatOut}/>}
+          </>);
+          // Konto-spezifisch: Buchungen nach accountId filtern
+          const inM = t => { const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month; };
+          const isAcc = t => t.accountId===selAcc;
+          const bis14 = t => new Date(t.date).getDate()<=14;
+          const txType = t => t._csvType || (t.totalAmount>=0?"income":"expense");
+          const linkedChildIds = new Set();
+          (txs||[]).forEach(t=>(t.linkedIds||[]).forEach(id=>linkedChildIds.add(id)));
+          const allM = (txs||[]).filter(t=>inM(t)&&isAcc(t)&&!t._linkedTo&&!linkedChildIds.has(t.id));
+          const realIn  = allM.filter(t=>!t.pending&&txType(t)==="income");
+          const realOut = allM.filter(t=>!t.pending&&txType(t)!=="income");
+          const pendIn  = allM.filter(t=>t.pending&&txType(t)==="income");
+          const pendOut = allM.filter(t=>t.pending&&txType(t)!=="income");
+          const uIn  = allM.filter(t=>txType(t)==="income"&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+          const uOut = allM.filter(t=>txType(t)!=="income"&&((t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)));
+          const s = arr => arr.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0);
+          // Mitte abgelaufen wenn aktueller Monat und heute > 14, oder vergangener Monat
+          const todayD2 = new Date().getDate();
+          const mitteAbg = (isCurrent && todayD2 > 14) || (!isCurrent && !isFuture);
+          const bIM=s(realIn.filter(bis14)), bOM=s(realOut.filter(bis14));
+          const bIE=s(realIn), bOE=s(realOut);
+          // VM Mitte: wenn Mitte abgelaufen → keine Platzhalter; sonst nur _mitte-Platzhalter
+          const accPendInM  = mitteAbg ? [] : pendIn.filter(t=>bis14(t)&&(!t._budgetSubId||t._budgetSubId.endsWith("_mitte")));
+          const accPendOutM = mitteAbg ? [] : pendOut.filter(t=>bis14(t)&&(!t._budgetSubId||t._budgetSubId.endsWith("_mitte")));
+          const pIM=s(accPendInM), pOM=s(accPendOutM);
+          const pIE=s(pendIn), pOE=s(pendOut);
+          const uIM=s(uIn.filter(bis14)), uOM=s(uOut.filter(bis14));
+          const uIE=s(uIn), uOE=s(uOut);
+          return (<>
+            <Row label="Buch." mIn={bIM} mOut={bOM} eIn={bIE} eOut={bOE}
+              onTapIn={onDrillBuchIn} onTapOut={onDrillBuchOut}/>
+            {(pIE>0||pOE>0)&&<Row label="VM" mIn={pIM} mOut={pOM} eIn={pIE} eOut={pOE}
+              clrIn={T.pos+"aa"} clrOut={T.neg+"aa"}
+              onTapIn={(isMitte)=>onDrillPendIn&&onDrillPendIn(isMitte)}
+              onTapOut={(isMitte)=>onDrillPendOut&&onDrillPendOut(isMitte)}/>}
+            {(uIE>0||uOE>0)&&<Row label="unkat." mIn={uIM} mOut={uOM} eIn={uIE} eOut={uOE}
+              clrIn={T.gold} clrOut={T.gold}
+              onTapIn={onDrillUncatIn} onTapOut={onDrillUncatOut}/>}
+          </>);
+        })()}
         <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"6px 0 4px"}}/>
-        {showPrognose
-          ? <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>
-          : <div style={{display:"flex",alignItems:"center"}}>
+        {showPrognose ? (()=>{
+          const fmt2 = v => v==null?"null":v.toFixed(2);
+          const prevY=month===0?year-1:year, prevM=month===0?11:month-1;
+          const linkedChIds = new Set(); (txs||[]).forEach(t=>(t.linkedIds||[]).forEach(id=>linkedChIds.add(id)));
+          const todayD3=new Date().getDate();
+          const mitteAbg2=(isCurrent&&todayD3>14)||(!isCurrent&&!isFuture);
+          const signAmt2=t=>{const type=t._csvType||(t.totalAmount>=0?"income":"expense");return type==="income"?Math.abs(t.totalAmount):-Math.abs(t.totalAmount);};
+          const calcAcc=(aId)=>{
+            const E=getProgEndeAcc(year,month,aId);
+            if(E===null||E===undefined) return null;
+            const base=getProgEndeAcc(prevY,prevM,aId);
+            if(base===null||base===undefined) return null;
+            // PrognoseM: base + inc bis 14 - out bis 14 (mit Budget-Mitte-Logic)
+            const isAcc2 = t => t.accountId===aId||(!t.accountId&&aId==="acc-giro");
+            const inc=(cats||[]).filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>{
+              return s+(txs||[]).filter(t=>{
+                if(t._linkedTo||t._budgetSubId)return false;
+                if(mitteAbg2&&t.pending)return false;
+                if(!isAcc2(t))return false;
+                const d=new Date(t.date);
+                return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=14&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+              }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+            },0);
+            const out=(cats||[]).filter(c=>c.type==="expense").reduce((s,cat)=>{
+              if(mitteAbg2){
+                return s+(txs||[]).filter(t=>{if(t._linkedTo||t._budgetSubId)return false;if(t.pending&&t._seriesTyp!=="finanzierung")return false;if(!isAcc2(t))return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=14&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+              }
+              const subIds=new Set((cat.subs||[]).map(s=>s.id));
+              const subTotal=(cat.subs||[]).reduce((cs,sub)=>{
+                const bG=getBudgetForMonth(sub.id+"_mitte",year,month)||0;
+                const budgetAccId2=(budgets||{})[sub.id+"_mitte"]?.accountId||(budgets||{})[sub.id]?.accountId||"acc-giro";
+                const effectiveBG2=(bG>0&&budgetAccId2===aId)?bG:0;
+                const real=(txs||[]).filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc2(t))return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=14&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+                const pend=(txs||[]).filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc2(t))return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=14&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+                return cs+(effectiveBG2>0?Math.max(effectiveBG2,real+pend):real+pend);
+              },0);
+              const pendNoSub=(txs||[]).filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc2(t))return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=14&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+Math.abs(t.totalAmount),0);
+              const realNoSub=(txs||[]).filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc2(t))return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=14&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0)),0);
+              return s+subTotal+pendNoSub+realNoSub;
+            },0);
+            const M=base+inc-out;
+            const all=(txs||[]).filter(t=>{if(t._linkedTo||t._budgetSubId||linkedChIds.has(t.id))return false;if(!t.accountId&&aId==="acc-giro"){}else if(t.accountId!==aId)return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;});
+            return {base,mSum:inc-out,eSum:E-base,M,E,count:all.length,txs:all};
+          };
+          if(!selAcc) {
+            // Wenn nur ein Konto → Dashboard-Werte direkt anzeigen mit Debug
+            if(accIds.length <= 1) return (<>
+              <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>
+              <div style={{padding:"4px 10px",fontSize:8,fontFamily:"monospace",color:T.txt2,background:"rgba(255,200,0,0.06)",lineHeight:1.7}}>
+                <div style={{color:T.gold}}>GESAMT (1 Konto) | year={year} month={month} prevY={prevY} prevM={prevM}</div>
+                <div style={{color:T.blue}}>Dashboard: M={fmt2(prognoseMitte)} E={fmt2(prognoseEnde)}</div>
+                <div>getProgEndeAcc Vormonat: {fmt2(getProgEndeAcc(prevY,prevM,accIds[0]))}</div>
+              </div>
+            </>);
+            const results=accIds.map(aId=>({aId,name:accounts.find(a=>a.id===aId)?.name||aId,...calcAcc(aId)}));
+            if(results.some(r=>!r||r.base==null)) return <PrognoseRow pm={prognoseMitte} pe={prognoseEnde}/>;
+            const totalM=results.reduce((s,r)=>s+r.M,0), totalE=results.reduce((s,r)=>s+r.E,0);
+            return (<>
+              <PrognoseRow pm={totalM} pe={totalE}/>
+              <div style={{padding:"4px 10px",fontSize:8,fontFamily:"monospace",color:T.txt2,background:"rgba(255,200,0,0.06)",lineHeight:1.7}}>
+                <div style={{color:T.gold}}>GESAMT | year={year} month={month} prevY={prevY} prevM={prevM}</div>
+                {results.map((r,i)=><div key={i}>{r.name}: base={fmt2(r.base)} mSum={fmt2(r.mSum)} eSum={fmt2(r.eSum)} → M={fmt2(r.M)} E={fmt2(r.E)}</div>)}
+                <div style={{color:T.pos}}>GESAMT neu: M={fmt2(totalM)} E={fmt2(totalE)}</div>
+                <div style={{color:T.blue}}>Dashboard: M={fmt2(prognoseMitte)} E={fmt2(prognoseEnde)}</div>
+                <div style={{color:T.blue}}>Differenz E: {fmt2(totalE - prognoseEnde)}</div>
+              </div>
+            </>);
+          }
+          if(!ksAcc[selAcc] && ksAcc[selAcc] !== 0) return null; // Kein Ankerpunkt → keine Prognose
+          const r=calcAcc(selAcc);
+          if(!r) return null; // Keine Prognose berechenbar
+          const accName=accounts.find(a=>a.id===selAcc)?.name||selAcc;
+          const baseApr=getProgEndeAcc(2026,3,selAcc);
+          const baseMar=getKumulierterSaldo(2026,2,selAcc);
+          return (<>
+            <PrognoseRow pm={r.M} pe={r.E}/>
+            <div style={{padding:"4px 10px",fontSize:8,fontFamily:"monospace",color:T.txt2,background:"rgba(255,200,0,0.06)",lineHeight:1.7}}>
+              <div style={{color:T.gold}}>{accName} | year={year} month={month} prevY={prevY} prevM={prevM}</div>
+              <div>KS März: {fmt2(baseMar)} | ProgEnde Apr hardcoded: {fmt2(baseApr)}</div>
+              <div>calcAcc base (=getProgEndeAcc({prevY},{prevM})): {fmt2(r.base)}</div>
+              <div>mSum={fmt2(r.mSum)} eSum={fmt2(r.eSum)}</div>
+              <div style={{color:T.pos}}>→ M={fmt2(r.M)} E={fmt2(r.E)}</div>
+              <div style={{color:T.blue}}>Dashboard: M={fmt2(prognoseMitte)} E={fmt2(prognoseEnde)}</div>
+              <div>Buchungen {year}/{month+1}: {r.count} (VM: {r.txs.filter(t=>t.pending).length}, echt: {r.txs.filter(t=>!t.pending).length})</div>
+              <div style={{color:T.gold}}>getProgEndeAcc Kette: März={fmt2(getKumulierterSaldo(2026,2,selAcc))} → Apr={fmt2(getProgEndeAcc(2026,3,selAcc))} → Mai={fmt2(getProgEndeAcc(2026,4,selAcc))}</div>
+              {r.txs.slice(0,6).map((t,i)=><div key={i} style={{color:signAmt2(t)>0?T.pos:T.neg}}>{t.date} {t.pending?"VM":"B"} {signAmt2(t)>0?"+":""}{signAmt2(t).toFixed(2)} {(t.desc||"").slice(0,22)}</div>)}
+            </div>
+          </>);
+        })() : (selAcc && displayKs===null) ? null : <div style={{display:"flex",alignItems:"center"}}>
               <div style={{flex:2,textAlign:"center"}}>
                 <span style={{color:ms>=0?T.pos:T.neg,fontSize:17,fontWeight:800}}>{fmt(Math.abs(ms))} €</span>
               </div>
@@ -6697,89 +6968,386 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
 }
 
 function TagesgeldWidget({year, month}) {
-  const { getPrognoseSaldo } = useContext(AppCtx);
+  const { getPrognoseSaldo, getKumulierterSaldo, txs, setTxs, cats, accounts, getAcc, budgets, getCat, getBudgetForMonth } = useContext(AppCtx);
   const MONTHS_G=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
 
   const [puffer,    setPuffer]   = useState(()=>parseInt(localStorage.getItem("mbt_tagesgeld_puffer")||"200"));
-  const [showEdit,  setShowEdit] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
+  const [result,    setResult]   = useState(null);
+  const [computing, setComputing]= useState(false);
+  const [monate,    setMonate]   = useState(()=>parseInt(localStorage.getItem("mbt_sparen_monate")||"3"));
+  const [sparCatId, setSparCatId]   = useState(()=>localStorage.getItem("mbt_spar_catid")||"");
+  const [sparSubId, setSparSubId]   = useState(()=>localStorage.getItem("mbt_spar_subid")||"");
+  const [sparAccId, setSparAccId]   = useState(()=>localStorage.getItem("mbt_spar_accid")||"");
+  const [sparTgtCatId, setSparTgtCatId] = useState(()=>localStorage.getItem("mbt_spar_tgt_catid")||"");
+  const [sparTgtSubId, setSparTgtSubId] = useState(()=>localStorage.getItem("mbt_spar_tgt_subid")||"");
 
   const nowY=new Date().getFullYear(), nowM=new Date().getMonth();
   const isCurr = year===nowY && month===nowM;
-  const nextM = month===11 ? 0 : month+1;
-  const nextY = month===11 ? year+1 : year;
 
-  const saldoJetzt        = isCurr ? getPrognoseSaldo(year, month, false) : null;
-  const saldoNaechstMitte = isCurr ? getPrognoseSaldo(nextY, nextM, true)  : null;
-  const saldoNaechstEnde  = isCurr ? getPrognoseSaldo(nextY, nextM, false) : null;
+  // ── Caches — müssen vor jedem return stehen (React Hook-Regel) ────────
+  const progEndeCache = React.useRef({});
+  React.useEffect(()=>{ progEndeCache.current = {}; }, [txs]);
+  const minTagCache = React.useRef({});
+  React.useEffect(()=>{ minTagCache.current = {}; }, [txs]);
+  const [progress, setProgress] = useState(0);
 
   if(!isCurr) return null;
-  if(saldoJetzt===null && saldoNaechstMitte===null) return null;
 
-  const candidates = [saldoJetzt, saldoNaechstMitte, saldoNaechstEnde].filter(v=>v!==null);
-  const minSaldo = candidates.length ? Math.min(...candidates) : null;
-  const maxTransfer = minSaldo !== null ? Math.floor(Math.max(0, minSaldo - puffer)) : null;
+  const getProgEndeW = (y, m) => {
+    const key = `${y}-${m}`;
+    if(key in progEndeCache.current) return progEndeCache.current[key];
+    const tb = new Date();
+    if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth()))
+      return getKumulierterSaldo(y, m);
+    const pY=m===0?y-1:y, pM=m===0?11:m-1;
+    const prev = getProgEndeW(pY, pM);
+    if(prev===null||prev===undefined) return null;
+    const lastD=new Date(y,m+1,0).getDate();
+    const todayY=tb.getFullYear(),todayM=tb.getMonth(),todayD=tb.getDate();
+    const isCr=y===todayY&&m===todayM,isPstM=y<todayY||(y===todayY&&m<todayM);
+    const endeAbg=isPstM||(isCr&&todayD>=lastD);
+    const inc=cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+      s+txs.filter(t=>{
+        if(t._linkedTo||t._budgetSubId)return false;
+        if(endeAbg&&t.pending)return false;
+        const d=new Date(t.date);
+        return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
+      }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0)
+    ,0);
+    const out=cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+      if(endeAbg)return s+txs.filter(t=>{if(t._linkedTo||t._budgetSubId)return false;if(t.pending&&t._seriesTyp!=="finanzierung")return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+      const subIds=new Set((cat.subs||[]).map(s=>s.id));
+      const st=(cat.subs||[]).reduce((cs,sub)=>{const bG=getBudgetForMonth(sub.id,y,m);const r=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);const p=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);return cs+(bG>0?Math.max(bG,r+p):r+p);},0);
+      const pNS=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+Math.abs(t.totalAmount),0);
+      const rNS=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+      return s+st+pNS+rNS;
+    },0);
+    const val = prev+inc-out;
+    progEndeCache.current[key] = val;
+    return val;
+  };
 
-  const col = maxTransfer===null ? T.txt2
-    : maxTransfer<=0 ? T.neg
-    : maxTransfer<500 ? T.warn
-    : T.pos;
+  // Tagesgenauen Minimalsaldo eines Monats berechnen
+  const getMinTagessaldo = (y, m) => {
+    const key = `${y}-${m}`;
+    if(key in minTagCache.current) return minTagCache.current[key];
+    const prevY=m===0?y-1:y, prevM=m===0?11:m-1;
+    const baseSaldo = getProgEndeW(prevY, prevM);
+    if(baseSaldo===null||baseSaldo===undefined) return {min:null, saldoEnde:null};
+    const lastDay = new Date(y,m+1,0).getDate();
+    const pad2 = n=>String(n).padStart(2,"0");
+    const pfx = `${y}-${pad2(m+1)}-`;
+    const mTxs = txs.filter(t=>{
+      if(t._linkedTo) return false;
+      const d=new Date(t.date);
+      return d.getFullYear()===y && d.getMonth()===m;
+    });
+    const signed = t => {
+      const ct=t._csvType||(()=>{const s=(t.splits||[]).filter(sp=>sp.catId);if(s.length>0){const c=getCat(s[0].catId);if(c)return(c.type==="income"||c.type==="tagesgeld")?"income":"expense";}return t.totalAmount>=0?"income":"expense";})();
+      return ct==="income"?+Math.abs(t.totalAmount):-Math.abs(t.totalAmount);
+    };
+    // openBudget einmalig für Mitte + Ende
+    const calcOpenBudget = (maxDay) => {
+      let total=0;
+      const dayStr=`${pfx}${pad2(maxDay)}`;
+      cats.filter(c=>c.type==="expense"||c.type==="income").forEach(cat=>{
+        (cat.subs||[]).forEach(sub=>{
+          const mittePx=txs.find(t=>t.pending&&t._budgetSubId===sub.id+"_mitte"&&t.date.startsWith(pfx));
+          const hasAnyMittePx=txs.some(t=>t.pending&&t._budgetSubId===sub.id+"_mitte");
+          const mitteAmt=mittePx?Math.abs(pn(mittePx.totalAmount)):(hasAnyMittePx?0:(pn(budgets?.[sub.id+"_mitte"]?.amount)||0));
+          const hasSplit=mitteAmt>0;
+          let bgt=0;
+          if(maxDay===14){if(!hasSplit)return;bgt=mitteAmt;}
+          else{if(hasSplit){const endePx=txs.find(t=>t.pending&&t._budgetSubId===sub.id&&t.date.startsWith(pfx));const hasAnyEndePx=txs.some(t=>t.pending&&t._budgetSubId===sub.id);bgt=mitteAmt+(endePx?Math.abs(pn(endePx.totalAmount)):(hasAnyEndePx?0:(pn(budgets?.[sub.id]?.amount)||0)));}else{const px=txs.find(t=>t.pending&&t._budgetSubId===sub.id&&t.date.startsWith(pfx));const hasAnyPx=txs.some(t=>t.pending&&t._budgetSubId===sub.id);bgt=px?Math.abs(pn(px.totalAmount)):(hasAnyPx?0:(pn(budgets?.[sub.id]?.amount)||0));}}
+          if(bgt<=0)return;
+          const spent=mTxs.filter(t=>!t.pending&&!t._linkedTo&&!t._budgetSubId&&t.date<=dayStr&&(t.splits||[]).some(sp=>sp.subId===sub.id)).reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+          const pendS=mTxs.filter(t=>t.pending&&!t._linkedTo&&!t._budgetSubId&&t.date<=dayStr&&(t.splits||[]).some(sp=>sp.subId===sub.id)).reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||Math.abs(t.totalAmount)),0);
+          if(cat.type==="expense") total+=Math.max(0,bgt-spent-pendS);
+        });
+      });
+      return total;
+    };
+    const obMitte=calcOpenBudget(14), obEnde=calcOpenBudget(lastDay);
+    const saldoAt = (dayStr) => {
+      const dayNum=parseInt(dayStr.split("-")[2]);
+      const real=mTxs.filter(t=>!t.pending&&!t._budgetSubId&&t.date<=dayStr).reduce((s,t)=>s+signed(t),0);
+      const pend=mTxs.filter(t=>t.pending&&!t._budgetSubId&&t.date<=dayStr).reduce((s,t)=>s+signed(t),0);
+      const bd=dayNum>=lastDay?-obEnde:dayNum>=14?-obMitte:0;
+      return baseSaldo+real+pend+bd;
+    };
+    // Alle Tage mit Buchungen prüfen + synthetische Budget-Checkpoints am 14. und Monatsletzt
+    const daysWithTxs=new Set(mTxs.map(t=>t.date));
+    [`${pfx}14`,`${pfx}${pad2(lastDay)}`].forEach(d=>daysWithTxs.add(d));
+    const allDays=[...daysWithTxs].sort();
+    let minVal=null;
+    allDays.forEach(ds=>{
+      const s=saldoAt(ds);
+      if(minVal===null||s<minVal) minVal=s;
+    });
+    const saldoEnde=saldoAt(`${pfx}${pad2(lastDay)}`);
+    const result2 = {min:minVal, saldoEnde};
+    minTagCache.current[key] = result2;
+    return result2;
+  };
+
+  const berechnen = () => {
+    setComputing(true);
+    setResult(null);
+    setProgress(0);
+    const CHUNK = 6;
+    let i = 0;
+    let kumuliert = 0;
+    const rows = [];
+    const total = monate + 1;
+    const step = () => {
+      const end = Math.min(i + CHUNK, total);
+      for(; i < end; i++){
+        const m=(nowM+i)%12, y=nowY+Math.floor((nowM+i)/12);
+        const {min:minTag, saldoEnde} = getMinTagessaldo(y,m);
+        const minNach = minTag!==null ? minTag - kumuliert : null;
+        // Wenn minNach < puffer: kumuliert zu hoch — nach unten korrigieren
+        // sodass minNach genau = puffer (kein Minus möglich)
+        if(minNach!==null && minNach < puffer) {
+          const korrektur = puffer - minNach; // wieviel muss kumuliert sinken?
+          kumuliert = Math.max(0, kumuliert - korrektur);
+        }
+        const minNachKorr = minTag!==null ? minTag - kumuliert : null;
+        // Zusätzlich sparbarer Betrag diesen Monat
+        const zusaetzlich = minNachKorr!==null
+          ? Math.floor(Math.max(0, minNachKorr - puffer))
+          : null;
+        kumuliert += zusaetzlich ?? 0;
+        rows.push({y, m, minTag, minNach: minNachKorr, saldoEnde, zusaetzlich, kumuliert});
+      }
+      setProgress(Math.round(i/total*100));
+      if(i < total) {
+        requestAnimationFrame(step);
+      } else {
+        setResult([...rows]);
+        setComputing(false);
+      }
+    };
+    requestAnimationFrame(step);
+  };
+
+  const maxTransfer = result?.[0]?.zusaetzlich ?? null;
+  const col = maxTransfer===null?T.txt2:maxTransfer<=0?T.txt2:maxTransfer<500?T.warn:T.pos;
 
   return (
     <div style={{margin:"4px 10px",background:T.surf2,borderRadius:16,
       padding:"9px 12px",border:`1px solid ${T.bd}`}}>
+
+      {/* Header */}
       <div onClick={()=>setCollapsed(v=>!v)}
-        style={{display:"flex",alignItems:"center",gap:8,marginBottom:collapsed?0:6,cursor:"pointer"}}>
+        style={{display:"flex",alignItems:"center",gap:8,marginBottom:collapsed?0:8,cursor:"pointer"}}>
         <div style={{width:30,height:30,borderRadius:9,background:"rgba(74,159,212,0.15)",
           display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           {Li("piggy-bank",15,T.blue)}
         </div>
         <div style={{flex:1}}>
-          <div style={{color:T.txt,fontSize:12,fontWeight:700}}>Tagesgeld-Transfer</div>
-          <div style={{color:T.txt2,fontSize:9}}>Sicherer Überschuss für Tagesgeld</div>
+          <div style={{color:T.txt,fontSize:12,fontWeight:700}}>Sparen</div>
+          <div style={{color:T.txt2,fontSize:9}}>Tagesgenaue Sparvorschläge</div>
         </div>
-        <button onClick={e=>{e.stopPropagation();setShowEdit(v=>!v);}}
-          style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:4}}>
-          {Li("settings",12,T.txt2)}
-        </button>
         {Li(collapsed?"chevron-down":"chevron-up",12,T.txt2)}
       </div>
 
       {!collapsed&&<>
-      {showEdit&&(
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
-          background:"rgba(0,0,0,0.15)",borderRadius:9,padding:"6px 8px"}}>
-          <span style={{color:T.txt2,fontSize:10,flex:1}}>Mindest-Puffer (€)</span>
-          <input type="number" value={puffer}
-            onChange={e=>{const v=parseInt(e.target.value)||0;setPuffer(v);localStorage.setItem("mbt_tagesgeld_puffer",String(v));}}
-            style={{...INP,marginBottom:0,width:80,textAlign:"right",fontSize:12,padding:"4px 8px"}}/>
-        </div>
-      )}
-
-      <div style={{display:"flex",alignItems:"center",gap:10,
-        background:"rgba(0,0,0,0.15)",borderRadius:10,padding:"8px 10px"}}>
-        <div style={{flex:1}}>
-          <div style={{color:T.txt2,fontSize:9,marginBottom:2}}>Du kannst heute sicher überweisen:</div>
-          <div style={{color:col,fontSize:22,fontWeight:800,fontFamily:"monospace",letterSpacing:-0.5}}>
-            {maxTransfer===null?"—":maxTransfer<=0?"0":fmt(maxTransfer)} €
+        {/* Einstellungen — immer sichtbar */}
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{color:T.txt2,fontSize:10,flex:1}}>Mindest-Puffer (€)</span>
+            <input type="number" value={puffer}
+              onChange={e=>{const v=parseInt(e.target.value)||0;setPuffer(v);localStorage.setItem("mbt_tagesgeld_puffer",String(v));setResult(null);}}
+              style={{...INP,marginBottom:0,width:80,textAlign:"right",fontSize:12,padding:"4px 8px"}}/>
           </div>
-          {maxTransfer!==null&&maxTransfer<=0&&(
-            <div style={{color:T.neg,fontSize:9,marginTop:2}}>
-              Kein Spielraum — Puffer {fmt(puffer)} benötigt
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{color:T.txt2,fontSize:10,flex:1}}>Vorschau (Monate, max. 120)</span>
+            <input type="number" min="1" max="120" value={monate}
+              onChange={e=>{const v=Math.max(1,Math.min(120,parseInt(e.target.value)||3));setMonate(v);localStorage.setItem("mbt_sparen_monate",String(v));setResult(null);}}
+              style={{...INP,marginBottom:0,width:80,textAlign:"right",fontSize:12,padding:"4px 8px"}}/>
+          </div>
+        </div>
+
+        {/* Sofort-Betrag + Neuberechnen-Button */}
+        <div style={{background:"rgba(0,0,0,0.15)",borderRadius:10,padding:"10px 12px",
+          marginBottom:6,display:"flex",alignItems:"center",gap:12}}>
+          <div style={{flex:1}}>
+            <div style={{color:T.txt2,fontSize:9,marginBottom:4}}>
+              Heute sicher sparen (Monat 1):
             </div>
-          )}
+            <div style={{color:col,fontSize:26,fontWeight:800,fontFamily:"monospace",letterSpacing:-0.5}}>
+              {computing?"…":maxTransfer===null?"—":maxTransfer<=0?"0":fmt(maxTransfer)} €
+            </div>
+            {result&&<div style={{color:T.pos,fontSize:9,marginTop:2}}>
+              ∑ {monate+1} Monate: <span style={{fontWeight:700,fontFamily:"monospace"}}>
+                {fmt(result[result.length-1]?.kumuliert??0)} €
+              </span>
+            </div>}
+          </div>
+          <div style={{flexShrink:0,display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
+            <button onClick={berechnen} disabled={computing}
+              style={{padding:"8px 14px",borderRadius:10,border:"none",
+                background:computing?"rgba(255,255,255,0.1)":T.blue,
+                color:computing?T.txt2:"#fff",fontSize:12,fontWeight:700,
+                cursor:computing?"default":"pointer",
+                display:"flex",alignItems:"center",gap:6}}>
+              {Li(computing?"loader":"refresh-cw",13,computing?T.txt2:"#fff")}
+              {computing?`${progress}%`:"Neuberechnen"}
+            </button>
+            {computing&&(
+              <div style={{width:120,height:3,borderRadius:2,background:"rgba(255,255,255,0.1)"}}>
+                <div style={{height:"100%",borderRadius:2,background:T.blue,
+                  width:`${progress}%`,transition:"width 0.1s"}}/>
+              </div>
+            )}
+          </div>
         </div>
-        <div style={{fontSize:9,color:T.txt2,lineHeight:1.8,textAlign:"right"}}>
-          {saldoJetzt!==null&&<div>Ende {MONTHS_G[month]}: <span style={{color:saldoJetzt<puffer?T.neg:T.pos,fontFamily:"monospace"}}>{saldoJetzt>=0?"+":"−"}{fmt(Math.abs(saldoJetzt))}</span></div>}
-          {saldoNaechstMitte!==null&&<div>Mitte {MONTHS_G[nextM]}: <span style={{color:saldoNaechstMitte<puffer?T.neg:T.pos,fontFamily:"monospace"}}>{saldoNaechstMitte>=0?"+":"−"}{fmt(Math.abs(saldoNaechstMitte))}</span></div>}
-          {saldoNaechstEnde!==null&&<div>Ende {MONTHS_G[nextM]}: <span style={{color:saldoNaechstEnde<puffer?T.neg:T.pos,fontFamily:"monospace"}}>{saldoNaechstEnde>=0?"+":"−"}{fmt(Math.abs(saldoNaechstEnde))}</span></div>}
-          <div style={{marginTop:2,borderTop:`1px solid ${T.bd}`,paddingTop:2}}>Puffer: {fmt(puffer)}</div>
-        </div>
-      </div>
+
+        {/* Ergebnis-Tabelle */}
+        {!result&&(
+          <div style={{textAlign:"center",color:T.txt2,fontSize:10,padding:"8px 0"}}>
+            Klicke „Neuberechnen" um den Sparplan zu ermitteln
+          </div>
+        )}
+        {result&&result.length>0&&(<>
+          <div style={{display:"flex",flexDirection:"column",gap:2}}>
+            <div style={{display:"flex",padding:"0 8px",marginBottom:2}}>
+              <div style={{width:44,flexShrink:0}}/>
+              <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8}}>Tiefst-Saldo</div>
+              <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8}}>nach Sparen</div>
+              <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8}}>+ Monat</div>
+              <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8,fontWeight:700}}>∑ gespart</div>
+            </div>
+            {result.map(({y,m,minTag,minNach,zusaetzlich,kumuliert},i)=>{
+              const zusCol=zusaetzlich>0?zusaetzlich<500?T.warn:T.pos:T.txt2;
+              const isCurM=i===0;
+              const kritisch=minNach!==null&&minNach<puffer;
+              return (
+                <div key={i} style={{display:"flex",alignItems:"center",
+                  padding:"3px 8px",borderRadius:7,
+                  background:isCurM?"rgba(74,159,212,0.08)":"rgba(255,255,255,0.02)",
+                  border:kritisch?`1px solid ${T.neg}44`:"1px solid transparent"}}>
+                  <div style={{width:44,flexShrink:0}}>
+                    <span style={{color:isCurM?T.blue:T.txt,fontSize:10,fontWeight:700}}>{MONTHS_G[m]}</span>
+                    <span style={{color:T.txt2,fontSize:8,marginLeft:3}}>{String(y).slice(2)}</span>
+                  </div>
+                  <div style={{flex:1,textAlign:"right",color:minTag===null?T.txt2:minTag<puffer?T.neg:T.txt2,fontSize:9,fontFamily:"monospace"}}>
+                    {minTag!==null?(minTag>=0?"+":"−")+fmt(Math.abs(minTag)):"—"}
+                  </div>
+                  <div style={{flex:1,textAlign:"right",fontSize:9,fontFamily:"monospace",fontWeight:700,
+                    color:minNach===null?T.txt2:minNach<puffer?T.neg:T.pos}}>
+                    {minNach!==null?(minNach>=0?"+":"−")+fmt(Math.abs(minNach)):"—"}
+                    {kritisch&&<span style={{color:T.neg,fontSize:7}}> ⚠</span>}
+                  </div>
+                  <div style={{flex:1,textAlign:"right",color:zusCol,fontSize:10,fontWeight:700,fontFamily:"monospace"}}>
+                    {zusaetzlich>0?"+"+fmt(zusaetzlich):"—"}
+                  </div>
+                  <div style={{flex:1,textAlign:"right",color:kumuliert>0?T.pos:T.txt2,fontSize:11,fontWeight:800,fontFamily:"monospace"}}>
+                    {kumuliert>0?fmt(kumuliert):"—"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{textAlign:"right",color:T.txt2,fontSize:8,marginTop:4}}>
+            Sparen = tiefster Tagessaldo − bereits gespart − {fmt(puffer)} € Puffer
+          </div>
+          {/* Kategorie + Konto + Anlegen */}
+          <div style={{marginTop:8,background:"rgba(0,0,0,0.15)",borderRadius:10,padding:"10px 12px",
+            display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{color:T.txt,fontSize:11,fontWeight:700}}>Vormerkungsserie anlegen</div>
+            {/* Abgangskategorie — Ausgabe vom Hauptkonto */}
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{color:T.txt2,fontSize:10,minWidth:70}}>Abgang</span>
+              <div style={{flex:1}}>
+                <CatPicker
+                  value={sparCatId+"|"+sparSubId}
+                  onChange={(cId,sId)=>{setSparCatId(cId);setSparSubId(sId);localStorage.setItem("mbt_spar_catid",cId);localStorage.setItem("mbt_spar_subid",sId);}}
+                  placeholder="— unkategorisiert —"
+                  filterType="expense"
+                />
+              </div>
+            </div>
+            {/* Zielkonto */}
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{color:T.txt2,fontSize:10,minWidth:70}}>Zielkonto</span>
+              <select value={sparAccId}
+                onChange={e=>{setSparAccId(e.target.value);localStorage.setItem("mbt_spar_accid",e.target.value);}}
+                style={{flex:1,background:T.surf2,color:T.txt,border:`1px solid ${T.bd}`,
+                  borderRadius:8,padding:"5px 8px",fontSize:11,fontFamily:"inherit"}}>
+                <option value="">— kein Zielkonto —</option>
+                {accounts.filter(a=>a.id!=="acc-giro").map(a=>(
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            {/* Zugangskategorie — Einnahme beim Zielkonto, nur wenn Zielkonto gewählt */}
+            {sparAccId&&(
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{color:T.txt2,fontSize:10,minWidth:70}}>Zugang</span>
+                <div style={{flex:1}}>
+                  <CatPicker
+                    value={sparTgtCatId+"|"+sparTgtSubId}
+                    onChange={(cId,sId)=>{setSparTgtCatId(cId);setSparTgtSubId(sId);localStorage.setItem("mbt_spar_tgt_catid",cId);localStorage.setItem("mbt_spar_tgt_subid",sId);}}
+                    placeholder="— unkategorisiert —"
+                    filterType="income"
+                  />
+                </div>
+              </div>
+            )}
+            {/* Button */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{color:T.txt2,fontSize:9}}>
+                {result.filter(r=>r.zusaetzlich>0).length} Vormerkungen · am Monatsletzten
+              </div>
+              <button onClick={()=>{
+                const sparMonate = result.filter(r=>r.zusaetzlich>0);
+                if(!sparMonate.length) return;
+                const seriesId = "series-"+uid();
+                const newTxs = sparMonate.flatMap((row, i) => {
+                  const pad2 = n=>String(n).padStart(2,"0");
+                  const lastDay = new Date(row.y, row.m+1, 0).getDate();
+                  const date = `${row.y}-${pad2(row.m+1)}-${pad2(lastDay)}`;
+                  const amount = -row.zusaetzlich;
+                  // Abgang vom Hauptkonto
+                  const abgang = {
+                    id: "pend-"+uid(), date, desc:"Sparen",
+                    totalAmount: amount, pending:true, _csvType:"expense",
+                    accountId: "acc-giro",
+                    _seriesId: seriesId, _seriesIdx: i+1, _seriesTotal: sparMonate.length,
+                    splits: sparCatId ? [{id:uid(),catId:sparCatId,subId:sparSubId||"",amount}]
+                                      : [{id:uid(),catId:"",subId:"",amount}],
+                  };
+                  if(!sparAccId) return [abgang];
+                  // Zugang beim Zielkonto — als _linkedTo markiert damit er die Prognose
+                  // des Hauptkontos nicht verfälscht (interner Transfer, kein echtes Einkommen)
+                  const zugang = {
+                    id: "pend-"+uid(), date, desc:"Sparen",
+                    totalAmount: row.zusaetzlich, pending:true, _csvType:"income",
+                    accountId: sparAccId,
+                    _linkedTo: abgang.id, // verknüpft → wird aus Prognose-Einnahmen ausgeschlossen
+                    _seriesId: seriesId+"-tgt", _seriesIdx: i+1, _seriesTotal: sparMonate.length,
+                    splits: sparTgtCatId ? [{id:uid(),catId:sparTgtCatId,subId:sparTgtSubId||"",amount:row.zusaetzlich}]
+                                        : [{id:uid(),catId:"",subId:"",amount:row.zusaetzlich}],
+                  };
+                  return [abgang, zugang];
+                });
+                setTxs(p=>[...p, ...newTxs]);
+                alert(`${sparMonate.length} Sparvormerkungen angelegt${sparAccId?" (Abgang + Zugang)":""}.`);
+              }} style={{padding:"7px 14px",borderRadius:10,border:"none",
+                background:T.pos,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",
+                display:"flex",alignItems:"center",gap:6}}>
+                {Li("plus-circle",14,"#000")} Anlegen
+              </button>
+            </div>
+          </div>
+        </>)}
       </>}
     </div>
   );
 }
+
 
 // ══════════════════════════════════════════════════════════════════════
 function DashboardScreen() {
@@ -7083,9 +7651,9 @@ function DashboardScreen() {
           // Für aktuellen und zukünftige Monate: rekursiv Prognose-Ende berechnen
           const getProgEnde = (y, m) => {
             const tb=new Date();
-            // Vergangener Monat: echter Kontostand
+            // Vergangener Monat: echter Giro-Kontostand (Prognose basiert auf Giro-Buchungen)
             if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth()))
-              return getKumulierterSaldo(y,m);
+              return getKumulierterSaldo(y,m,"acc-giro");
             // Aktueller oder zukünftiger Monat: Prognose-Ende(Vormonat) + inc(m) - out(m)
             const pY=m===0?y-1:y, pM=m===0?11:m-1;
             const prevEnde = getProgEnde(pY, pM);
@@ -7154,8 +7722,8 @@ function DashboardScreen() {
             // Mitte-gefilterte Listen (≤14)
             const _realInM  = _realIn.filter(_h2txM);
             const _realOutM = _realOut.filter(_h2txM);
-            const _pTxsInM  = _mitteAbg ? [] : pTxsIn.filter(_h2txM);
-            const _pTxsOutM = _mitteAbg ? [] : pTxsOut.filter(_h2txM);
+            const _pTxsInM  = _mitteAbg ? [] : pTxsIn.filter(t=>_h2txM(t)&&(!t._budgetSubId||t._budgetSubId.endsWith("_mitte")));
+            const _pTxsOutM = _mitteAbg ? [] : pTxsOut.filter(t=>_h2txM(t)&&(!t._budgetSubId||t._budgetSubId.endsWith("_mitte")));
             const _uInM2    = _mitteAbg ? [] : _uIn.filter(_h2txM);
             const _uOutM2   = _mitteAbg ? [] : _uOut.filter(_h2txM);
             return (
@@ -7903,7 +8471,7 @@ function DashboardScreen() {
                             </div>}
                           </div>
                           {/* Budget-Button */}
-                          <button onClick={e=>{e.stopPropagation();openBudgetEdit({id:sub.id,name:sub.name,catId:cat.id,catColor:cat.color});}}
+                          <button onClick={e=>{e.stopPropagation();openBudgetEdit({id:sub.id,name:sub.name,catId:cat.id,catColor:cat.color,accountId:(groups.find(g=>g.type===cat.type)?.accountId||cat.accountId||"acc-giro")});}}
                             title="budget festlegen"
                             style={{background:budget>0?`${T.gold}22`:"none",
                               border:`1px solid ${budget>0?T.gold+"66":"transparent"}`,
@@ -8290,6 +8858,7 @@ function DashboardScreen() {
         key={`${budgetEditKey}-${year}-${month}`}
         sub={{id:budgetEditSub.id,name:budgetEditSub.name}}
         cat={{id:budgetEditSub.catId,color:budgetEditSub.catColor}}
+        accountId={budgetEditSub.accountId||"acc-giro"}
         onClose={()=>setBudgetEditSub(null)}/>}
     </>);
 
@@ -8909,7 +9478,7 @@ function TransactionsScreen() {
 // ══════════════════════════════════════════════════════════════════════
 // BudgetEditorModal — wiederverwendbar in AddTxModal und MonatScreen
 // sub: {id, name}  cat: {id, color}
-function BudgetEditorModal({sub, cat, onClose}) {
+function BudgetEditorModal({sub, cat, accountId="acc-giro", onClose}) {
   const { budgets, setBudgets, txs, setTxs, year, setYear, month, setMonth, accounts } = useContext(AppCtx);
   const pad = n => String(n).padStart(2,"0");
   const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper";
@@ -9008,18 +9577,18 @@ function BudgetEditorModal({sub, cat, onClose}) {
         return t;
       }).filter(Boolean));
       setBudgets(p=>({...p,
-        [sub.id]:{amount:amtE,months:intv,startDate:sd,endDate:ed||""},
+        [sub.id]:{amount:amtE,months:intv,startDate:sd,endDate:ed||"",accountId:accountId},
         ...(amtM>0
-          ? {[sub.id+"_mitte"]:{amount:amtM,months:intv,startDate:sd,endDate:ed||""}}
+          ? {[sub.id+"_mitte"]:{amount:amtM,months:intv,startDate:sd,endDate:ed||"",accountId:accountId}}
           : (p[sub.id+"_mitte"]?{[sub.id+"_mitte"]:undefined}:{}))
       }));
 
     } else {
       // Alle: komplett neu aufbauen
       setBudgets(p=>({...p,
-        [sub.id]:{amount:amtE,months:intv,startDate:sd,endDate:ed||""},
+        [sub.id]:{amount:amtE,months:intv,startDate:sd,endDate:ed||"",accountId:accountId},
         ...(amtM>0
-          ? {[sub.id+"_mitte"]:{amount:amtM,months:intv,startDate:sd,endDate:ed||""}}
+          ? {[sub.id+"_mitte"]:{amount:amtM,months:intv,startDate:sd,endDate:ed||"",accountId:accountId}}
           : (p[sub.id+"_mitte"]?{[sub.id+"_mitte"]:undefined}:{}))
       }));
       const endY = ed?new Date(ed).getFullYear():sY+6;
@@ -9917,7 +10486,7 @@ function SerienReparierenButton() {
   );
 }
 
-function KontostandImportButton({year, onImport}) {
+function KontostandImportButton({year, accId: importAccId, onImport}) {
   const [statuses, setStatuses] = React.useState([]);
   const fileRef = React.useRef();
 
@@ -10021,13 +10590,14 @@ function KontostandImportButton({year, onImport}) {
 
 function StartBalanceEditor() {
   const { accounts, startBalances, setStartBalances, txs } = useContext(AppCtx);
-  const [collapsed, setCollapsed] = React.useState(true); // standardmäßig eingeklappt
+  const [collapsed, setCollapsed] = React.useState(true);
   const [saved, setSaved] = React.useState(false);
   const [newYear,  setNewYear]  = React.useState(()=>new Date().getFullYear());
   const [newMonth, setNewMonth] = React.useState(()=>new Date().getMonth());
   const [newValue, setNewValue] = React.useState("");
+  const [newAccId, setNewAccId] = React.useState("acc-giro");
 
-  // Alle vorhandenen Ankerpunkte aus beiden Formaten sammeln
+  // Alle vorhandenen Ankerpunkte aus beiden Formaten sammeln — inkl. alle Konten
   const allAnchors = React.useMemo(()=>{
     const result = [];
     Object.entries(startBalances||{}).forEach(([yearKey, yearVal])=>{
@@ -10035,29 +10605,34 @@ function StartBalanceEditor() {
       if(!yearVal || typeof yearVal !== "object") return;
       Object.entries(yearVal).forEach(([k, v])=>{
         if(k === "acc-giro" && typeof v === "number") {
-          // Altes Format: Jahres-Ankerpunkt = vor Jan y (Endstand Dez y-1)
-          result.push({year:y, month:-1, value:v, key:`${y}/-1`, label:`31.12.${y-1} (Anfang ${y})`});
-        } else if(!isNaN(Number(k)) && v?.["acc-giro"] !== undefined) {
+          result.push({year:y, month:-1, value:v, accId:"acc-giro", key:`${y}/-1/acc-giro`,
+            label:`31.12.${y-1} (Anfang ${y})`});
+        } else if(!isNaN(Number(k)) && typeof v === "object") {
           const mo = Number(k);
-          result.push({year:y, month:mo, value:v["acc-giro"], key:`${y}/${mo}`,
-            label:`${String(mo+1).padStart(2,"0")}.${y} (Monatsende)`});
+          Object.entries(v).forEach(([accId, val])=>{
+            if(typeof val === "number") {
+              const accName = accounts.find(a=>a.id===accId)?.name || accId;
+              result.push({year:y, month:mo, value:val, accId, key:`${y}/${mo}/${accId}`,
+                label:`${String(mo+1).padStart(2,"0")}.${y} · ${accName}`});
+            }
+          });
         }
       });
     });
-    return result.sort((a,b)=> (a.year*12+a.month) - (b.year*12+b.month));
-  }, [startBalances]);
+    return result.sort((a,b)=> (a.year*12+a.month) - (b.year*12+b.month)
+      || a.accId.localeCompare(b.accId));
+  }, [startBalances, accounts]);
 
   const saveAnchor = () => {
     const num = parseFloat(newValue.replace(",","."));
     if(isNaN(num)) return;
-    // Neues Format: startBalances[Jahr][Monat]["acc-giro"]
     const newSB = {
       ...startBalances,
       [newYear]: {
         ...(startBalances?.[newYear]||{}),
         [newMonth]: {
           ...((startBalances?.[newYear]?.[newMonth])||{}),
-          "acc-giro": num,
+          [newAccId]: num,
         }
       }
     };
@@ -10070,11 +10645,13 @@ function StartBalanceEditor() {
     if(!window.confirm("Anker-Kontostand wirklich löschen?")) return;
     const newSB = JSON.parse(JSON.stringify(startBalances||{}));
     if(anchor.month === -1) {
-      // Altes Format löschen
       if(newSB[anchor.year]) delete newSB[anchor.year]["acc-giro"];
     } else {
-      // Neues Format löschen
-      if(newSB[anchor.year]?.[anchor.month]) delete newSB[anchor.year][anchor.month];
+      if(newSB[anchor.year]?.[anchor.month]) {
+        delete newSB[anchor.year][anchor.month][anchor.accId];
+        if(Object.keys(newSB[anchor.year][anchor.month]).length === 0)
+          delete newSB[anchor.year][anchor.month];
+      }
     }
     setStartBalances(newSB);
   };
@@ -10121,17 +10698,21 @@ function StartBalanceEditor() {
       )}
 
       {/* CSV Import — mehrere CSVs auf einmal möglich */}
-      <KontostandImportButton year={newYear} onImport={(saldo, date)=>{
+      <KontostandImportButton year={newYear} accId={newAccId} onImport={(saldo, date, resolvedAccId)=>{
         if(!date) return;
         const parts = date.split("-").map(Number);
         const iY = parts[0], iM = parts[1]-1; // 0-basiert
+        const targetAccId = resolvedAccId || newAccId || "acc-giro";
         // Direkt als Ankerpunkt speichern
         setStartBalances(prev=>{
           const next = {
             ...prev,
             [iY]: {
               ...(prev?.[iY]||{}),
-              [iM]: {"acc-giro": saldo},
+              [iM]: {
+                ...((prev?.[iY]?.[iM])||{}),
+                [targetAccId]: saldo,
+              },
             }
           };
           return next;
@@ -10142,6 +10723,17 @@ function StartBalanceEditor() {
       <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${T.bd}`}}>
         <div style={{color:T.txt2,fontSize:11,marginBottom:6}}>Ankerpunkt manuell setzen:</div>
         <div style={{display:"flex",gap:6,alignItems:"flex-end",flexWrap:"wrap"}}>
+          <div>
+            <div style={{color:T.txt2,fontSize:10,marginBottom:2}}>Konto</div>
+            <select value={newAccId} onChange={e=>setNewAccId(e.target.value)}
+              style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,
+                borderRadius:8,padding:"6px 8px",color:T.txt,fontSize:12,outline:"none",cursor:"pointer"}}>
+              <option value="acc-giro" style={{background:T.surf2}}>Girokonto</option>
+              {accounts.filter(a=>a.id!=="acc-giro").map(a=>(
+                <option key={a.id} value={a.id} style={{background:T.surf2}}>{a.name}</option>
+              ))}
+            </select>
+          </div>
           <div>
             <div style={{color:T.txt2,fontSize:10,marginBottom:2}}>Jahr</div>
             <input type="number" value={newYear} onChange={e=>setNewYear(Number(e.target.value))}
@@ -11568,6 +12160,8 @@ function ManagementScreen({activeTab="kategorien"}) {
   } = useContext(AppCtx);
   const [mergeTarget, setMergeTarget] = useState(null);
   const [showNewGroup, setShowNewGroup] = useState(false);
+  const [editGrpLabel, setEditGrpLabel] = useState(null);
+  const [editGrpLabelVal, setEditGrpLabelVal] = useState("");
   const [newGroup, setNewGroup] = useState({label:"", icon:"folder-open", accent:T.blue, behavior:"expense", accountId:""});
   const [inlineNewCat, setInlineNewCat] = useState(null);
   const [inlineCatName, setInlineCatName] = useState("");
@@ -11782,94 +12376,132 @@ function ManagementScreen({activeTab="kategorien"}) {
           />
         </div>
 
-        {/* Konten jetzt im eigenen Tab */}
-
-        {/* ── Hauptkategorie (kein Titel, kein Rahmen) ── */}
-        <div style={{padding:"0 14px 10px"}}>
+        {/* ── Neue Hauptkategorie anlegen ── */}
+        <div style={{padding:"0 14px 10px",borderBottom:`1px solid ${T.bd}`,marginBottom:4}}>
           {showGroupIconPicker&&<IconPickerDialog selectedIcon={newGroup.icon} selectedColor={newGroup.accent||T.blue} onSelect={ic=>{setNewGroup(p=>({...p,icon:ic}));setShowGroupIconPicker(false);}} onClose={()=>setShowGroupIconPicker(false)}/>}
-          {/* Eingabe-Zeile: Icon + Hauptkategorie-Name + Haken-Button */}
-          <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:6}}>
-            <div
-              data-dropzone="newgroup-icon"
-              onClick={()=>setShowGroupIconPicker(true)}
-              onPointerUp={e=>{ if(globalDrag.current){const d=globalDrag.current;setNewGroup(p=>({...p,...(d.icon?{icon:d.icon}:{}),...(d.color?{accent:d.color}:{})}));globalDrag.current=null;} }}
-              title="Klicken zum Wählen oder Icon hierher ziehen"
-              style={{width:36,height:36,borderRadius:9,flexShrink:0,cursor:"pointer",
-                background:"rgba(255,255,255,0.06)",border:`1px dashed ${T.bds}`,
-                display:"flex",alignItems:"center",justifyContent:"center"}}>
-              {newGroup.icon&&!newGroup.icon.includes("📂")
-                ? Li(newGroup.icon,18,newGroup.accent||T.blue)
-                : Li("folder-open",18,T.txt2)}
-            </div>
-            <input placeholder="Hauptkategorie" value={newGroup.label}
-              onChange={e=>setNewGroup(p=>({...p,label:e.target.value}))}
-              onKeyDown={e=>e.key==="Enter"&&newGroup.label.trim()&&saveNewGroup()}
-              style={{...INP,marginBottom:0,flex:1,fontSize:13}}/>
-            <button onClick={saveNewGroup} disabled={!newGroup.label.trim()}
-              style={{width:36,height:36,borderRadius:9,border:`1px solid ${T.bd}`,flexShrink:0,
-                background:"rgba(255,255,255,0.04)",
-                cursor:newGroup.label.trim()?"pointer":"default",
-                display:"flex",alignItems:"center",justifyContent:"center",
-                opacity:newGroup.label.trim()?1:0.3}}>
-              {Li("check",18,newGroup.label.trim()?T.blue:T.txt2)}
-            </button>
+
+          <div style={{color:T.txt2,fontSize:10,fontWeight:700,textTransform:"uppercase",
+            letterSpacing:"0.05em",marginBottom:8,marginTop:4,display:"flex",alignItems:"center",gap:5}}>
+            {Li("plus-circle",11,T.blue)} Neue Hauptkategorie
           </div>
-          {/* Typ */}
-          <div style={{display:"flex",gap:6,marginBottom:6}}>
-            {[
-              ["expense","Ausgaben", T.neg,  T.tab_exp],
-              ["income", "Einnahmen",T.pos,  T.tab_inc],
-              ["neutral","Neutral",  T.txt2, T.disabled],
-            ].map(([v,l,col,bgActive])=>{
-              const active = newGroup.behavior===v;
-              return (
-                <button key={v} onClick={()=>setNewGroup(p=>({...p,behavior:v}))}
-                  style={{
-                    flex:1,
-                    padding:"7px 4px",
-                    borderRadius:10,
-                    cursor:"pointer",
-                    fontFamily:"inherit",
-                    border:"none",
-                    background: active ? bgActive : "rgba(255,255,255,0.06)",
-                    color: active ? "#fff" : T.txt2,
-                    fontSize:12,
-                    fontWeight:700,
-                    letterSpacing:0.2,
-                    transition:"all 0.15s",
-                    outline: active ? `1.5px solid ${col}44` : "none",
-                  }}>
-                  {l}
-                </button>
-              );
-            })}
-          </div>
-          {/* Konto (optional) */}
+
+          {/* Schritt 1: Konto */}
           {_accounts.length>0&&(
-            <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:6}}>
-              <button onClick={()=>setNewGroup(p=>({...p,accountId:""}))}
-                style={{padding:"4px 10px",borderRadius:9,fontSize:10,fontWeight:600,cursor:"pointer",
-                  border:`2px solid ${!newGroup.accountId?T.blue:"transparent"}`,
-                  background:!newGroup.accountId?"rgba(74,159,212,0.15)":"rgba(255,255,255,0.04)",
-                  color:!newGroup.accountId?T.blue:T.txt2}}>
-                Kein Konto
-              </button>
-              {_accounts.map(acc=>(
-                <button key={acc.id} onClick={()=>setNewGroup(p=>({...p,accountId:acc.id}))}
-                  style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:9,
-                    fontSize:10,fontWeight:600,cursor:"pointer",
-                    border:`2px solid ${newGroup.accountId===acc.id?acc.color:"transparent"}`,
-                    background:newGroup.accountId===acc.id?acc.color+"22":"rgba(255,255,255,0.04)",
-                    color:newGroup.accountId===acc.id?acc.color:T.txt2}}>
-                  {Li(acc.icon,12,T.txt2)} {acc.name}{acc.delayDays>0&&<span style={{color:T.gold,fontSize:"0.8em",fontWeight:700,marginLeft:2}}>+{acc.delayDays}d</span>}
+            <div style={{marginBottom:8}}>
+              <div style={{color:T.txt2,fontSize:10,marginBottom:4,fontWeight:600}}>1. Konto</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                <button onClick={()=>setNewGroup(p=>({...p,accountId:""}))}
+                  style={{padding:"5px 10px",borderRadius:9,fontSize:11,fontWeight:600,cursor:"pointer",
+                    border:`2px solid ${!newGroup.accountId?T.blue:"transparent"}`,
+                    background:!newGroup.accountId?"rgba(74,159,212,0.15)":"rgba(255,255,255,0.05)",
+                    color:!newGroup.accountId?T.blue:T.txt2,fontFamily:"inherit"}}>
+                  Kein Konto
                 </button>
-              ))}
+                {_accounts.map(a=>(
+                  <button key={a.id} onClick={()=>setNewGroup(p=>({...p,accountId:a.id}))}
+                    style={{padding:"5px 10px",borderRadius:9,fontSize:11,fontWeight:600,cursor:"pointer",
+                      border:`2px solid ${newGroup.accountId===a.id?(a.color||T.blue):"transparent"}`,
+                      background:newGroup.accountId===a.id?(a.color||T.blue)+"22":"rgba(255,255,255,0.05)",
+                      color:newGroup.accountId===a.id?(a.color||T.blue):T.txt2,fontFamily:"inherit",
+                      display:"flex",alignItems:"center",gap:5}}>
+                    {Li(a.icon||"landmark",12,newGroup.accountId===a.id?(a.color||T.blue):T.txt2)}
+                    {a.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Hauptkategorien-Liste */}
-        {(_groups).map((grp,gi)=>(
+          {/* Schritt 2: Typ */}
+          <div style={{marginBottom:8}}>
+            <div style={{color:T.txt2,fontSize:10,marginBottom:4,fontWeight:600}}>{_accounts.length>0?"2.":"1."} Typ</div>
+            <div style={{display:"flex",gap:6}}>
+              {[
+                ["expense","Ausgaben", T.neg,  T.tab_exp],
+                ["income", "Einnahmen",T.pos,  T.tab_inc],
+              ].map(([v,l,col,bgActive])=>{
+                const active = newGroup.behavior===v;
+                return (
+                  <button key={v} onClick={()=>setNewGroup(p=>({...p,behavior:v}))}
+                    style={{flex:1,padding:"7px 4px",borderRadius:10,cursor:"pointer",
+                      fontFamily:"inherit",border:"none",
+                      background:active?bgActive:"rgba(255,255,255,0.06)",
+                      color:active?"#fff":T.txt2,fontSize:11,fontWeight:700,transition:"all 0.15s",
+                      outline:active?`1.5px solid ${col}44`:"none"}}>
+                    {l}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Schritt 3: Name + Icon */}
+          <div>
+            <div style={{color:T.txt2,fontSize:10,marginBottom:4,fontWeight:600}}>{_accounts.length>0?"3.":"2."} Name</div>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <div
+                data-dropzone="newgroup-icon"
+                onClick={()=>setShowGroupIconPicker(true)}
+                onPointerUp={e=>{ if(globalDrag.current){const d=globalDrag.current;setNewGroup(p=>({...p,...(d.icon?{icon:d.icon}:{}),...(d.color?{accent:d.color}:{})}));globalDrag.current=null;} }}
+                title="Klicken zum Wählen oder Icon hierher ziehen"
+                style={{width:36,height:36,borderRadius:9,flexShrink:0,cursor:"pointer",
+                  background:"rgba(255,255,255,0.06)",border:`1px dashed ${T.bds}`,
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {newGroup.icon&&!newGroup.icon.includes("📂")
+                  ? Li(newGroup.icon,18,newGroup.accent||T.blue)
+                  : Li("folder-open",18,T.txt2)}
+              </div>
+              <input placeholder="Name der Hauptkategorie…" value={newGroup.label}
+                onChange={e=>setNewGroup(p=>({...p,label:e.target.value}))}
+                onKeyDown={e=>e.key==="Enter"&&newGroup.label.trim()&&saveNewGroup()}
+                style={{...INP,marginBottom:0,flex:1,fontSize:13}}/>
+              <button onClick={saveNewGroup} disabled={!newGroup.label.trim()}
+                style={{width:36,height:36,borderRadius:9,border:`1px solid ${T.bd}`,flexShrink:0,
+                  background:newGroup.label.trim()?T.blue:"rgba(255,255,255,0.04)",
+                  cursor:newGroup.label.trim()?"pointer":"default",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  opacity:newGroup.label.trim()?1:0.3}}>
+                {Li("check",18,"#fff")}
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Hauptkategorien-Liste — nach Konto gruppiert */}
+        {(()=>{
+          const accsWithGroups = [];
+          _accounts.forEach(acc => {
+            const grpsForAcc = _groups.filter(g=>g.accountId===acc.id);
+            if(grpsForAcc.length>0) accsWithGroups.push({acc, grps: grpsForAcc});
+          });
+          const grpsNoAcc = _groups.filter(g=>!g.accountId);
+          if(grpsNoAcc.length>0) accsWithGroups.push({acc:null, grps: grpsNoAcc});
+
+          return accsWithGroups.map(({acc, grps}, blockIdx) => (
+            <div key={acc?.id||"no-acc"}>
+              {/* Konto-Header */}
+              <div style={{padding:"10px 14px 4px", display:"flex", alignItems:"center", gap:8,
+                borderTop: blockIdx>0 ? `2px solid ${T.bd}` : "none",
+                marginTop: blockIdx>0 ? 6 : 0}}>
+                {acc ? (<>
+                  <div style={{width:22,height:22,borderRadius:6,background:(acc.color||T.blue)+"22",
+                    display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    {Li(acc.icon||"landmark",13,acc.color||T.blue)}
+                  </div>
+                  <span style={{color:acc.color||T.blue,fontSize:13,fontWeight:800}}>
+                    {acc.name}
+                  </span>
+                  {acc.delayDays>0&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
+                    background:T.gold+"22",borderRadius:4,padding:"1px 5px"}}>+{acc.delayDays}d</span>}
+                </>) : (<>
+                  {Li("layers",13,T.txt2)}
+                  <span style={{color:T.txt2,fontSize:12,fontWeight:700}}>Kein Konto zugeordnet</span>
+                </>)}
+              </div>
+
+              {/* Gruppen dieses Kontos */}
+              {grps.map((grp) => {
+                const gi = _groups.indexOf(grp);
+                return (
           <div key={grp.id}>
             {/* Gruppen-Header */}
             <div style={{display:"flex",alignItems:"center",padding:"8px 14px 3px",gap:6}}>
@@ -11900,7 +12532,26 @@ function ManagementScreen({activeTab="kategorien"}) {
                   onSelect={ic=>{setGroups(p=>p.map(g=>g.id===grp.id?{...g,icon:ic}:g));setShowIconPicker(null);}}
                   onClose={()=>setShowIconPicker(null)}/>
               )}
-              <span style={{color:T.pos,fontSize:14,fontWeight:700}}>{grp.label}</span>
+              {/* Gruppen-Label — Klick zum Umbenennen */}
+              {editGrpLabel===grp.id ? (
+                <input autoFocus value={editGrpLabelVal}
+                  onChange={e=>setEditGrpLabelVal(e.target.value)}
+                  onBlur={()=>{ if(editGrpLabelVal.trim()) setGroups(p=>p.map(g=>g.id===grp.id?{...g,label:editGrpLabelVal.trim()}:g)); setEditGrpLabel(null); }}
+                  onKeyDown={e=>{ if(e.key==="Enter"){ if(editGrpLabelVal.trim()) setGroups(p=>p.map(g=>g.id===grp.id?{...g,label:editGrpLabelVal.trim()}:g)); setEditGrpLabel(null); } if(e.key==="Escape") setEditGrpLabel(null); }}
+                  style={{background:"rgba(255,255,255,0.08)",border:`1px solid ${grp.accent||T.blue}`,
+                    borderRadius:7,padding:"2px 8px",color:T.txt,fontSize:14,fontWeight:700,
+                    outline:"none",width:140}}/>
+              ) : (
+                <span onClick={()=>{setEditGrpLabel(grp.id);setEditGrpLabelVal(grp.label);}}
+                  title="Klicken zum Umbenennen"
+                  style={{color:T.pos,fontSize:14,fontWeight:700,cursor:"text",
+                    borderBottom:`1px dashed transparent`,
+                    transition:"border-color 0.15s"}}
+                  onMouseEnter={e=>e.target.style.borderBottomColor=T.txt2}
+                  onMouseLeave={e=>e.target.style.borderBottomColor="transparent"}>
+                  {grp.label}
+                </span>
+              )}
               {grp.accountId&&(()=>{const a=_accounts.find(x=>x.id===grp.accountId);return a?(
                 <span style={{background:a.color+"22",color:a.color,borderRadius:5,
                   padding:"1px 6px",fontSize:9,fontWeight:700}}>{Li(a.icon,10,a.color)} {a.name}</span>
@@ -11916,7 +12567,7 @@ function ManagementScreen({activeTab="kategorien"}) {
                   {_accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
               )}
-              {!["grp-tg","grp-ein","grp-aus"].includes(grp.id)&&(_cats).filter(c=>c.type===grp.type).length===0&&(
+              {(_cats).filter(c=>c.type===grp.type).length===0&&(
                 <button onClick={()=>{if(window.confirm(`Gruppe "${grp.label}" wirklich löschen?`)) setGroups(p=>p.filter(g=>g.id!==grp.id));}}
                   style={{background:"none",border:"none",color:T.neg,opacity:0.5,cursor:"pointer"}}>{Li("trash-2",14)}</button>
               )}
@@ -12006,7 +12657,11 @@ function ManagementScreen({activeTab="kategorien"}) {
               <div style={{color:T.txt2,fontSize:11,padding:"4px 24px 6px"}}>Noch keine Kategorien</div>
             )}
           </div>
-        ))}
+                ); // end grp div
+              })} {/* end grps.map */}
+            </div>
+          )); // end accsWithGroups.map
+        })()} {/* end IIFE */}
 
 </div>
         )} {/* end mgrTab!==einstellungen&&!==konten */}
@@ -12351,14 +13006,6 @@ function AddTxModal() {
       {/* CSV Import Tab */}
       {typ==="csv"&&(
         <div>
-          <div style={{marginBottom:12}}>
-            <div style={{color:T.blue,fontSize:12,fontWeight:700,marginBottom:6,
-              display:"flex",alignItems:"center",gap:6}}>
-              {Li("landmark",13,T.blue)} Kontostand-Ankerpunkte
-            </div>
-            <StartBalanceEditor/>
-          </div>
-          <div style={{borderTop:`1px solid ${T.bd}`,margin:"0 0 12px"}}/>
           <CsvImportScreen onClose={closeReset} embedded/>
         </div>
       )}
@@ -13961,7 +14608,7 @@ function MonatScreen() {
           const _pTxs    = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&t.pending; });
           const pTxsOut2 = _pTxs.filter(t=>txType(t)==="expense"||(t._csvType==="expense"&&!txType(t)==="income"));
           const pTxsIn2  = _pTxs.filter(t=>txType(t)==="income"||(t._csvType==="income"));
-          const _pTxsInM =_mitteAbg?[]:pTxsIn2.filter(_h2),_pTxsOutM=_mitteAbg?[]:pTxsOut2.filter(_h2);
+          const _pTxsInM =_mitteAbg?[]:pTxsIn2.filter(t=>_h2(t)&&(!t._budgetSubId||t._budgetSubId.endsWith("_mitte"))),_pTxsOutM=_mitteAbg?[]:pTxsOut2.filter(t=>_h2(t)&&(!t._budgetSubId||t._budgetSubId.endsWith("_mitte")));
           const _uInM2=_mitteAbg?[]:_uIn.filter(_h2),_uOutM2=_mitteAbg?[]:_uOut.filter(_h2);
           const pendingIn2 = pTxsIn2.reduce((s,t)=>s+t.totalAmount, 0);
           const pendingOut2= pTxsOut2.reduce((s,t)=>s+t.totalAmount, 0);
@@ -13993,7 +14640,7 @@ function MonatScreen() {
           {cats.filter(c=>c.type==="expense"||c.type==="income").flatMap(cat=>
             (cat.subs||[]).filter(sub=>getBudgetForMonth(sub.id,year,month)>0).map(sub=>({sub,cat}))
           ).map(({sub,cat})=>(
-            <button key={sub.id} onClick={()=>openBudgetEdit({id:sub.id,name:sub.name,catId:cat.id,catColor:cat.color})}
+            <button key={sub.id} onClick={()=>openBudgetEdit({id:sub.id,name:sub.name,catId:cat.id,catColor:cat.color,accountId:(groups.find(g=>g.type===cat.type)?.accountId||cat.accountId||"acc-giro")})}
               style={{padding:"3px 8px",borderRadius:7,border:`1px solid ${T.gold}55`,
                 background:"rgba(245,166,35,0.1)",color:T.gold,fontSize:10,fontWeight:700,
                 cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
@@ -14024,7 +14671,7 @@ function MonatScreen() {
                 <div key={cat.id} style={{marginBottom:8}}>
                   <div style={{color:cat.color||T.blue,fontSize:10,fontWeight:700,padding:"2px 6px"}}>{cat.name}</div>
                   {(cat.subs||[]).map(sub=>(
-                    <div key={sub.id} onClick={()=>openBudgetEdit({id:sub.id,name:sub.name,catId:cat.id,catColor:cat.color})}
+                    <div key={sub.id} onClick={()=>openBudgetEdit({id:sub.id,name:sub.name,catId:cat.id,catColor:cat.color,accountId:(groups.find(g=>g.type===cat.type)?.accountId||cat.accountId||"acc-giro")})}
                       style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",
                         marginBottom:3,borderRadius:9,cursor:"pointer",
                         background:"rgba(255,255,255,0.04)",border:`1px solid ${getBudgetForMonth(sub.id,year,month)>0?T.gold+"55":T.bd}`}}>
@@ -14531,6 +15178,7 @@ function MonatScreen() {
         key={`${budgetEditKey}-${year}-${month}`}
         sub={{id:budgetEditSub.id,name:budgetEditSub.name}}
         cat={{id:budgetEditSub.catId,color:budgetEditSub.catColor}}
+        accountId={budgetEditSub.accountId||"acc-giro"}
         onClose={()=>setBudgetEditSub(null)}/>
       }
 
@@ -15856,8 +16504,9 @@ function isoAddMonths(isoDate, months, lastOfMonth=false) {
   return `${newY}-${String(newMonth).padStart(2,"0")}-${String(newDay).padStart(2,"0")}`;
 }
 
-function txFingerprint(date, amount, desc) {
-  return `${date}|${Math.round(Math.abs(parseFloat(amount||0)*100))}|${(desc||"").trim().toLowerCase().slice(0,80)}`;
+function txFingerprint(date, amount, desc, accountId) {
+  const base = `${date}|${Math.round(Math.abs(parseFloat(amount||0)*100))}|${(desc||"").trim().toLowerCase().slice(0,80)}`;
+  return accountId ? `${base}|${accountId}` : base;
 }
 
 // Datum DD.MM.YY oder DD.MM.YYYY → ISO
@@ -16280,6 +16929,178 @@ function parseCSV(text, {noGroup=false}={}) {
   return { rows, format, detectedBalance };
 }
 
+function AnchorSection({selAccId, accounts, startBalances, setStartBalances, mobileMode, MFSl}) {
+  const [anchorOpen,  setAnchorOpen]  = useState(false);
+  const [anchorYear,  setAnchorYear]  = useState(()=>new Date().getFullYear());
+  const [anchorMonth, setAnchorMonth] = useState(()=>new Date().getMonth());
+  const [anchorValue, setAnchorValue] = useState("");
+  const [anchorSaved, setAnchorSaved] = useState(false);
+
+  const allAnchors = useMemo(()=>{
+    const result = [];
+    Object.entries(startBalances||{}).forEach(([yearKey, yearVal])=>{
+      const y = Number(yearKey);
+      if(!yearVal || typeof yearVal !== "object") return;
+      Object.entries(yearVal).forEach(([k, v])=>{
+        if(k === "acc-giro" && typeof v === "number") {
+          result.push({year:y, month:-1, value:v, accId:"acc-giro", key:`${y}/-1/acc-giro`,
+            label:`31.12.${y-1} (Anfang ${y})`});
+        } else if(!isNaN(Number(k)) && typeof v === "object") {
+          const mo = Number(k);
+          Object.entries(v).forEach(([accId, val])=>{
+            if(typeof val === "number") {
+              const accName = accounts.find(a=>a.id===accId)?.name || accId;
+              result.push({year:y, month:mo, value:val, accId, key:`${y}/${mo}/${accId}`,
+                label:`${String(mo+1).padStart(2,"0")}.${y} · ${accName}`});
+            }
+          });
+        }
+      });
+    });
+    return result.sort((a,b)=>(a.year*12+a.month)-(b.year*12+b.month)||a.accId.localeCompare(b.accId));
+  }, [startBalances, accounts]);
+
+  // Nur Ankerpunkte des gewählten Kontos anzeigen
+  const filteredAnchors = useMemo(()=>{
+    if(!selAccId) return allAnchors;
+    return allAnchors.filter(a=>a.accId===selAccId);
+  }, [allAnchors, selAccId]);
+
+  const saveAnchor = () => {
+    const num = parseFloat(anchorValue.replace(",","."));
+    if(isNaN(num)) return;
+    const targetAccId = selAccId || accounts[0]?.id || "acc-giro";
+    setStartBalances(prev=>({
+      ...prev,
+      [anchorYear]: {
+        ...(prev?.[anchorYear]||{}),
+        [anchorMonth]: { ...((prev?.[anchorYear]?.[anchorMonth])||{}), [targetAccId]: num }
+      }
+    }));
+    setAnchorValue("");
+    setAnchorSaved(true); setTimeout(()=>setAnchorSaved(false), 2000);
+  };
+
+  const deleteAnchor = (anchor) => {
+    if(!window.confirm("Ankerpunkt wirklich löschen?")) return;
+    const newSB = JSON.parse(JSON.stringify(startBalances||{}));
+    if(anchor.month === -1) { if(newSB[anchor.year]) delete newSB[anchor.year]["acc-giro"]; }
+    else {
+      if(newSB[anchor.year]?.[anchor.month]) {
+        delete newSB[anchor.year][anchor.month][anchor.accId];
+        if(Object.keys(newSB[anchor.year][anchor.month]).length===0) delete newSB[anchor.year][anchor.month];
+      }
+    }
+    setStartBalances(newSB);
+  };
+
+  const activeAcc = accounts.find(a=>a.id===selAccId);
+
+  return (
+    <div style={{marginBottom:10,borderRadius:11,border:`1px solid ${anchorOpen?T.blue+"55":T.bd}`,
+      background:"rgba(255,255,255,0.03)",overflow:"hidden"}}>
+      <div onClick={()=>setAnchorOpen(v=>!v)}
+        style={{display:"flex",alignItems:"center",gap:8,padding:mobileMode?"12px 16px":"8px 12px",cursor:"pointer"}}>
+        {Li("landmark",mobileMode?18:13,T.blue)}
+        <div style={{flex:1}}>
+          <div style={{color:T.blue,fontSize:mobileMode?16:12,fontWeight:700}}>
+            Kontostand-Ankerpunkte
+            {filteredAnchors.length>0&&<span style={{color:T.txt2,fontWeight:400,marginLeft:6,fontSize:mobileMode?13:10}}>({filteredAnchors.length})</span>}
+          </div>
+          {!anchorOpen&&<div style={{color:T.txt2,fontSize:mobileMode?12:9,marginTop:1}}>
+            {activeAcc ? `Konto: ${activeAcc.name} · ` : ""}Manuell setzen oder aus CSV erkennen
+          </div>}
+        </div>
+        {Li(anchorOpen?"chevron-up":"chevron-down",mobileMode?16:13,T.txt2)}
+      </div>
+
+      {anchorOpen&&(
+        <div style={{padding:mobileMode?"0 16px 16px":"0 12px 12px",borderTop:`1px solid ${T.bd}`}}>
+          <div style={{color:T.txt2,fontSize:mobileMode?13:10,margin:"8px 0 10px",lineHeight:1.5}}>
+            Ankerpunkte für „{activeAcc?.name||"gewähltes Konto"}". {allAnchors.length>filteredAnchors.length?`(${allAnchors.length} gesamt über alle Konten)`:""}
+          </div>
+
+          {filteredAnchors.length>0&&(
+            <div style={{marginBottom:10}}>
+              {filteredAnchors.map(a=>{
+                const aAcc = accounts.find(x=>x.id===a.accId);
+                return (
+                  <div key={a.key} style={{display:"flex",alignItems:"center",gap:8,
+                    background:"rgba(255,255,255,0.04)",borderRadius:8,
+                    padding:mobileMode?"8px 10px":"5px 8px",marginBottom:3,border:`1px solid ${T.bd}`}}>
+                    {aAcc&&<span style={{background:(aAcc.color||T.blue)+"22",color:aAcc.color||T.blue,
+                      borderRadius:4,padding:"1px 5px",fontSize:mobileMode?11:9,fontWeight:700}}>{aAcc.name}</span>}
+                    <span style={{color:T.txt2,fontSize:mobileMode?13:10,flex:1}}>{a.label}</span>
+                    <span style={{color:T.pos,fontSize:mobileMode?14:12,fontWeight:700,fontFamily:"monospace"}}>
+                      {a.value>=0?"+":""}{a.value.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €
+                    </span>
+                    <button onClick={()=>deleteAnchor(a)}
+                      style={{background:"none",border:"none",color:T.neg,opacity:0.6,cursor:"pointer",padding:"2px"}}>
+                      {Li("trash-2",mobileMode?16:12)}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <KontostandImportButton year={anchorYear} accId={selAccId||accounts[0]?.id||"acc-giro"}
+            onImport={(saldo, date)=>{
+              if(!date) return;
+              const parts = date.split("-").map(Number);
+              const iY = parts[0], iM = parts[1]-1;
+              const targetAccId = selAccId || accounts[0]?.id || "acc-giro";
+              setStartBalances(prev=>({
+                ...prev,
+                [iY]: { ...(prev?.[iY]||{}),
+                  [iM]: { ...((prev?.[iY]?.[iM])||{}), [targetAccId]: saldo }
+                }
+              }));
+            }}/>
+
+          <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${T.bd}`}}>
+            <div style={{color:T.txt2,fontSize:mobileMode?13:10,marginBottom:6,fontWeight:600}}>Manuell setzen:</div>
+            <div style={{display:"flex",gap:6,alignItems:"flex-end",flexWrap:"wrap"}}>
+              <div>
+                <div style={{color:T.txt2,fontSize:mobileMode?12:9,marginBottom:2}}>Jahr</div>
+                <input type="number" value={anchorYear} onChange={e=>setAnchorYear(Number(e.target.value))}
+                  style={{width:70,background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,
+                    borderRadius:8,padding:"6px 8px",color:T.txt,fontSize:mobileMode?15:13,outline:"none",textAlign:"center"}}/>
+              </div>
+              <div>
+                <div style={{color:T.txt2,fontSize:mobileMode?12:9,marginBottom:2}}>Monat</div>
+                <select value={anchorMonth} onChange={e=>setAnchorMonth(Number(e.target.value))}
+                  style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,
+                    borderRadius:8,padding:"6px 8px",color:T.txt,fontSize:mobileMode?15:12,outline:"none",cursor:"pointer"}}>
+                  {["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"].map((m,i)=>(
+                    <option key={i} value={i} style={{background:T.surf2}}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{flex:1,minWidth:90}}>
+                <div style={{color:T.txt2,fontSize:mobileMode?12:9,marginBottom:2}}>Kontostand (€)</div>
+                <input value={anchorValue} onChange={e=>setAnchorValue(e.target.value)}
+                  placeholder="0,00" inputMode="decimal"
+                  style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1px solid ${T.bds}`,
+                    borderRadius:8,padding:"6px 8px",color:T.txt,fontSize:mobileMode?16:13,fontWeight:700,
+                    textAlign:"right",outline:"none",fontFamily:"monospace",boxSizing:"border-box"}}/>
+              </div>
+              <button onClick={saveAnchor}
+                style={{padding:mobileMode?"10px 16px":"7px 12px",borderRadius:8,border:"none",
+                  background:anchorValue?T.blue:"rgba(255,255,255,0.1)",
+                  color:anchorValue?"#fff":T.txt2,fontSize:mobileMode?15:12,fontWeight:700,
+                  cursor:anchorValue?"pointer":"default",opacity:anchorValue?1:0.4,fontFamily:"inherit"}}>
+                {Li("plus",mobileMode?16:13,anchorValue?"#fff":T.txt2)} Setzen
+              </button>
+            </div>
+            {anchorSaved&&<div style={{color:T.pos,fontSize:mobileMode?13:11,textAlign:"center",marginTop:8}}>✓ Ankerpunkt gespeichert</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   const { cats, groups, txs, setTxs, accounts, csvRules, setCsvRules, startBalances, setStartBalances } = useContext(AppCtx);
   const MFS = mobileMode ? 22 : 13; // mobile font size base
@@ -16297,20 +17118,26 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   const [doneCount, setDoneCount]   = useState(0);
   const [showCatAssign, setShowCatAssign] = useState(false);
   const [selAccId, setSelAccId]     = useState(""); // Zielkonto für Import
+  // Sobald Konten aus IndexedDB geladen sind, erstes Konto vorauswählen (falls noch nichts gewählt)
+  useEffect(()=>{
+    if(!selAccId && accounts.length>0) setSelAccId(accounts[0].id);
+  }, [accounts]);
   const [anchorWarning, setAnchorWarning] = useState(null); // {firstMonth, firstYear} wenn Vormonat-Ankerpunkt fehlt
 
   // Alle bekannten Fingerprints aus vorhandenen Buchungen
   const knownFps = useMemo(()=>{
     const s = new Set();
     txs.forEach(t => {
-      // Gespeicherten Fingerprint aus Supabase nutzen
+      // Gespeicherter Fingerprint (alt oder neu)
       if(t._fp) s.add(t._fp);
-      // Zusätzlich neu berechnen (für manuell eingegebene Buchungen)
-      const fp = txFingerprint(t.date, t.totalAmount, t.desc);
-      s.add(fp);
-      // Auch mit absolutem Betrag (Ausgaben können negativ gespeichert sein)
-      const fpAbs = txFingerprint(t.date, Math.abs(t.totalAmount), t.desc);
-      s.add(fpAbs);
+      // Immer beide Varianten — schützt vor Reimport alter und neuer CSVs
+      const abs = Math.abs(t.totalAmount);
+      s.add(txFingerprint(t.date, t.totalAmount, t.desc));
+      s.add(txFingerprint(t.date, abs,           t.desc));
+      if(t.accountId) {
+        s.add(txFingerprint(t.date, t.totalAmount, t.desc, t.accountId));
+        s.add(txFingerprint(t.date, abs,           t.desc, t.accountId));
+      }
     });
     return s;
   }, [txs]);
@@ -16319,20 +17146,38 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   const autoAssign = (rows) => {
     const a = {};
     rows.forEach((r,i) => {
+      const rowAccId = r._resolvedAccId || selAccId || accounts[0]?.id;
+      const rowAcc = accounts.find(a=>a.id===rowAccId);
+
+      // Prüft ob eine Kategorie zum Konto der Row passt
+      const catMatchesAcc = (catId) => {
+        if(!catId) return true;
+        const cat = cats.find(c=>c.id===catId);
+        if(!cat) return true;
+        const grp = groups.find(g=>g.type===cat.type);
+        const beh = grp?.behavior || cat.type;
+        const isTgCat = beh==="tagesgeld" || cat.type==="tagesgeld";
+        const isTgAcc = rowAcc?.name?.toLowerCase().includes("tagesgeld") || rowAccId?.includes("tagesgeld");
+        // Tagesgeld-Kategorien nur für Tagesgeld-Konto, und umgekehrt
+        if(isTgCat && !isTgAcc) return false;
+        if(!isTgCat && isTgAcc && (beh==="income"||beh==="expense")) return false;
+        return true;
+      };
+
       // 1. Exakt per Fingerprint
-      if(rules[r.fp]) { a[i] = rules[r.fp]; return; }
+      if(rules[r.fp] && catMatchesAcc(rules[r.fp].catId)) { a[i] = rules[r.fp]; return; }
       const descLower = r.desc.toLowerCase();
       // 2. Exakter Name-Match
       const name = r.desc.split(" – ")[0].toLowerCase().trim();
       const exactKey = Object.keys(rules).find(k=>k.startsWith("name:"+name));
-      if(exactKey) { a[i] = rules[exactKey]; return; }
+      if(exactKey && catMatchesAcc(rules[exactKey].catId)) { a[i] = rules[exactKey]; return; }
       // 3. Teilübereinstimmung — Regelname in Beschreibung enthalten
       const partialKey = Object.keys(rules).find(k=>{
         if(!k.startsWith("name:")) return false;
         const ruleName = k.slice(5);
         return ruleName.length>3 && descLower.includes(ruleName);
       });
-      if(partialKey) { a[i] = rules[partialKey]; return; }
+      if(partialKey && catMatchesAcc(rules[partialKey].catId)) { a[i] = rules[partialKey]; return; }
       a[i] = {catId:"", subId:""};
     });
     return a;
@@ -16372,10 +17217,25 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   const doParse = () => {
     if(!csvText.trim()) return;
     const {rows, format, detectedBalance} = parseCSV(csvText, {noGroup: !autoGroup});
-    const newRows  = rows.filter(r=>!knownFps.has(r.fp));
-    const dupRows  = rows.filter(r=> knownFps.has(r.fp));
+    // _konto-String → accountId auflösen und Fingerprint mit accountId neu bilden
+    const resolvedRows = rows.map(r => {
+      let resolvedAccId = selAccId || accounts[0]?.id;
+      if(r._konto) {
+        const kLow = r._konto.toLowerCase();
+        const matched = accounts.find(a =>
+          a.name.toLowerCase().includes(kLow) ||
+          kLow.includes(a.name.toLowerCase()) ||
+          a.id === r._konto
+        );
+        if(matched) resolvedAccId = matched.id;
+      }
+      return {...r, _resolvedAccId: resolvedAccId,
+        fp: txFingerprint(r.isoDate, r.amount, r.desc, resolvedAccId)};
+    });
+    const newRows  = resolvedRows.filter(r=>!knownFps.has(r.fp));
+    const dupRows  = resolvedRows.filter(r=> knownFps.has(r.fp));
     const autoSuggestions = computeAutoSuggestions(newRows);
-    setParsed({rows, format, newRows, dupRows, autoSuggestions, detectedBalance});
+    setParsed({rows: resolvedRows, format, newRows, dupRows, autoSuggestions, detectedBalance});
     setAssign(autoAssign(newRows));
     setShowCatAssign(newRows.length <= 20);
     setStep("review");
@@ -16390,6 +17250,8 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
       const absAmt = Math.abs(r.amount);
       const splits = catId ? [{id:uid(), catId, subId, amount:absAmt}] : [];
       const newId = "csv-"+uid();
+      // Konto: bereits in doParse aufgelöst
+      const resolvedAccId = r._resolvedAccId || selAccId || accounts[0]?.id || "acc-giro";
       newTxs.push({
         id: newId,
         date: r.isoDate,
@@ -16397,11 +17259,12 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
         desc: r.desc,
         note: r._detailNote || "",
         pending: false,
-        accountId: selAccId || accounts[0]?.id || "acc-giro",
+        accountId: resolvedAccId,
         splits,
         _csvType: r.amount > 0 ? "income" : "expense",
         _fp: r.fp,
         _csvSource: csvSources.length===1 ? csvSources[0] : csvSources.length>1 ? csvSources.join(", ") : "",
+        _kontoRaw: r._konto || "",
       });
       // Regel merken — lokal + global
       if(catId) {
@@ -16441,9 +17304,10 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
 
     setTxs(p => {
       const withNew = [...newTxs, ...p];
-      if(!linkToGiro || Object.keys(giroUpdates).length === 0) return withNew;
+      const sorted = [...withNew].sort((a,b)=>b.date.localeCompare(a.date));
+      if(!linkToGiro || Object.keys(giroUpdates).length === 0) return sorted;
       // Giro-Buchungen mit linkedIds aktualisieren
-      return withNew.map(t => {
+      return sorted.map(t => {
         if(giroUpdates[t.id]) {
           return {...t, linkedIds: [...(t.linkedIds||[]), ...giroUpdates[t.id]]};
         }
@@ -16457,12 +17321,16 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
       const {saldo, date} = parsed.detectedBalance;
       const parts = date.split("-").map(Number);
       const iY = parts[0], iM = parts[1]-1; // 0-basiert
+      const targetAccId = selAccId || accounts[0]?.id || "acc-giro";
       setStartBalances(prev=>{
         const next = {
           ...prev,
           [iY]: {
             ...(prev?.[iY]||{}),
-            [iM]: {"acc-giro": saldo},
+            [iM]: {
+              ...((prev?.[iY]?.[iM])||{}),
+              [targetAccId]: saldo,
+            },
           }
         };
         return next;
@@ -16471,6 +17339,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
 
     // ── Prüfen ob der Vormonat-Ankerpunkt für den ersten importierten Monat fehlt ──
     if(newTxs.length > 0) {
+      const importAccId = selAccId || accounts[0]?.id || "acc-giro";
       // Frühestes Datum aller importierten Buchungen ermitteln
       const sortedDates = newTxs.map(t=>t.date).sort();
       const firstDate = sortedDates[0]; // "YYYY-MM-DD"
@@ -16479,7 +17348,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
       // Vormonat berechnen
       const prevMonth = firstMonth === 0 ? 11 : firstMonth - 1;
       const prevYear  = firstMonth === 0 ? firstYear - 1 : firstYear;
-      // Ankerpunkte prüfen: gibt es irgendeinen Ankerpunkt <= Vormonat?
+      // Ankerpunkte prüfen: gibt es einen Ankerpunkt für dieses Konto <= Vormonat?
       const sb = startBalances || {};
       let hasAnchorForPrev = false;
       Object.entries(sb).forEach(([yStr, yVal]) => {
@@ -16487,24 +17356,23 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
         if(typeof yVal !== "object" || !yVal) return;
         Object.entries(yVal).forEach(([kStr, kVal]) => {
           const mo = Number(kStr);
-          // Ankerpunkt bedeutet Endstand von (y, mo) — also gilt er für Monate ab mo+1
-          // Wir brauchen einen Ankerpunkt der <= (prevYear, prevMonth) liegt
           if((y < prevYear) || (y === prevYear && mo <= prevMonth)) {
-            // Altes Format: {"acc-giro": number}
-            if(kStr === "acc-giro" && typeof kVal === "number") hasAnchorForPrev = true;
-            // Neues Format: {mo: {"acc-giro": number}}
-            if(!isNaN(mo) && typeof kVal === "object" && kVal?.["acc-giro"] !== undefined) hasAnchorForPrev = true;
+            // Neues Format: {mo: {accId: number}}
+            if(!isNaN(mo) && typeof kVal === "object" && kVal?.[importAccId] !== undefined) hasAnchorForPrev = true;
+            // Altes Format (nur acc-giro): nur wenn wir auch acc-giro importieren
+            if(kStr === "acc-giro" && typeof kVal === "number" && importAccId === "acc-giro") hasAnchorForPrev = true;
           }
         });
       });
-      // Ebenfalls: neu gesetzter Ankerpunkt aus CSV zählt auch
+      // Neu gesetzter Ankerpunkt aus CSV zählt auch
       if(parsed.detectedBalance && parsed.detectedBalance.date) {
         const pd = parsed.detectedBalance.date;
         const py = Number(pd.slice(0,4)), pm = Number(pd.slice(5,7)) - 1;
         if((py < prevYear) || (py === prevYear && pm <= prevMonth)) hasAnchorForPrev = true;
       }
       if(!hasAnchorForPrev) {
-        setAnchorWarning({firstMonth, firstYear, prevMonth, prevYear});
+        setAnchorWarning({firstMonth, firstYear, prevMonth, prevYear, accId: importAccId,
+          accName: accounts.find(a=>a.id===importAccId)?.name || importAccId});
       } else {
         setAnchorWarning(null);
       }
@@ -16542,6 +17410,45 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
         {step==="review"&&<div style={{color:T.txt2,fontSize:MFSl}}>{parsed?.format}</div>}
       </div>}
 
+      {/* ── Kontoauswahl — immer sichtbar, auf allen Steps ── */}
+      {accounts.length>0&&(
+        <div style={{background:T.surf2,borderBottom:`1px solid ${T.bd}`,padding:mobileMode?"12px 16px":"8px 14px",flexShrink:0}}>
+          <div style={{color:T.txt2,fontSize:mobileMode?14:10,fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>
+            {Li("landmark",mobileMode?14:10,T.txt2)} Konto (gilt für Buchungen & Ankerpunkt)
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:mobileMode?10:6}}>
+            {accounts.map(acc=>{
+              const active = selAccId===acc.id;
+              return (
+                <button key={acc.id} onClick={()=>setSelAccId(acc.id)}
+                  style={{
+                    display:"flex",alignItems:"center",gap:mobileMode?8:6,
+                    padding:mobileMode?"10px 16px":"6px 12px",
+                    borderRadius:mobileMode?14:10,cursor:"pointer",fontFamily:"inherit",
+                    fontSize:mobileMode?16:12,fontWeight:active?700:500,
+                    border:`2px solid ${active?(acc.color||T.blue):T.bd}`,
+                    background:active?(acc.color||T.blue)+"22":"rgba(255,255,255,0.04)",
+                    color:active?(acc.color||T.blue):T.txt2,
+                    boxShadow:active?`0 0 0 1px ${acc.color||T.blue}44`:"none",
+                    transition:"all 0.15s",
+                  }}>
+                  {Li(acc.icon||"landmark",mobileMode?18:14,active?(acc.color||T.blue):T.txt2)}
+                  <span>{acc.name||acc.id}</span>
+                  {acc.delayDays>0&&<span style={{fontSize:mobileMode?11:9,color:T.gold,fontWeight:700,
+                    background:T.gold+"22",borderRadius:4,padding:"1px 4px"}}>+{acc.delayDays}d</span>}
+                  {active&&<span style={{fontSize:mobileMode?12:9,opacity:0.8}}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+          {selAccId&&(()=>{const a=accounts.find(x=>x.id===selAccId);return a?(
+            <div style={{color:a.color||T.blue,fontSize:mobileMode?12:9,marginTop:5,fontWeight:600}}>
+              Buchungen & Ankerpunkt → {a.name}
+            </div>
+          ):null;})()}
+        </div>
+      )}
+
       {/* STEP: INPUT */}
       {step==="input"&&(
         <div style={{flex:1,overflowY:"auto",padding:mobileMode?20:16,
@@ -16552,48 +17459,6 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
           <div style={{color:T.txt2,fontSize:MFSl,marginBottom:8,lineHeight:1.5}}>
             CSV-Export aus deiner Banking-App hier einfügen oder Datei laden:
           </div>
-          {/* Kontoauswahl */}
-          {accounts.length>0&&(
-            <div style={{marginBottom:12}}>
-              <div style={{color:T.txt2,fontSize:mobileMode?S.fs-4:11,fontWeight:700,marginBottom:6,
-                }}>Zielkonto / Zahlungsmittel</div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:mobileMode?S.gap/2:6}}>
-                {accounts.map(acc=>(
-                  <button key={acc.id} onClick={()=>setSelAccId(acc.id)}
-                    style={mobileMode ? {
-                      flex:"1 1 auto",padding:`${S.pad}px`,borderRadius:S.radius,
-                      background:selAccId===acc.id?acc.color+"22":"rgba(255,255,255,0.06)",
-                      border:`2px solid ${selAccId===acc.id?(acc.color||T.blue):T.bd}`,
-                      color:selAccId===acc.id?(acc.color||T.blue):T.txt2,
-                      cursor:"pointer",fontFamily:"inherit",
-                      display:"flex",flexDirection:"column",alignItems:"center",gap:4
-                    } : {
-                      display:"flex",alignItems:"center",gap:6,padding:"7px 12px",
-                      borderRadius:10,cursor:"pointer",fontSize:MFSl,fontWeight:600,
-                      border:`2px solid ${selAccId===acc.id?acc.color:T.bd}`,
-                      background:selAccId===acc.id?acc.color+"22":"rgba(255,255,255,0.04)",
-                      color:selAccId===acc.id?acc.color:T.txt2}}>
-                    {mobileMode ? <>
-                      {Li(acc.icon||"landmark",S.fs+4,selAccId===acc.id?(acc.color||T.blue):T.txt2)}
-                      <span style={{fontSize:S.fs-6,fontWeight:selAccId===acc.id?700:400}}>
-                        {acc.name||acc.id}
-                      </span>
-                      {acc.delayDays>0&&<span style={{fontSize:S.fs-10,color:T.gold,fontWeight:700,
-                        background:T.gold+"22",borderRadius:4,padding:"1px 4px"}}>
-                        +{acc.delayDays}d
-                      </span>}
-                    </> : <>
-                      <span>{Li(acc.icon,16,T.txt2)}</span>
-                      <span>{acc.name}{acc.delayDays>0&&<span style={{color:T.gold,fontSize:"0.8em",fontWeight:700,marginLeft:2}}>+{acc.delayDays}d</span>}</span>
-                    </>}
-                  </button>
-                ))}
-              </div>
-              {!selAccId&&<div style={{color:T.txt2,fontSize:10,marginTop:4}}>
-                Kein Konto gewählt → wird dem ersten Konto zugeordnet
-              </div>}
-            </div>
-          )}
           {/* Auto-Gruppierung Toggle */}
           <div onClick={()=>setAutoGroup(v=>!v)}
             style={{display:"flex",alignItems:"center",gap:10,padding:MPad,
@@ -16667,6 +17532,10 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
               )}
             </div>
           )}
+          {/* ── Kontostand-Ankerpunkte ── */}
+          <AnchorSection selAccId={selAccId} accounts={accounts} startBalances={startBalances}
+            setStartBalances={setStartBalances} mobileMode={mobileMode} MFSl={MFSl}/>
+
           <label style={{display:"block",padding:"11px 14px",borderRadius:11,border:`1px solid ${T.bds}`,
             background:"rgba(137,196,244,0.08)",color:T.blue,fontSize:MFS,fontWeight:600,
             cursor:"pointer",marginBottom:10,textAlign:"left"}}>
@@ -16749,12 +17618,6 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
             <div style={{flex:1}}/>
             <div style={{color:T.txt2,fontSize:MFSl,alignSelf:"center",marginRight:8}}>
               {parsed.format}
-              {(()=>{const a=accounts.find(x=>x.id===selAccId)||accounts[0]; return a?(
-                <span style={{marginLeft:8,background:a.color+"22",color:a.color,
-                  borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700}}>
-                  {a.icon} {a.name}
-                </span>
-              ):null;})()}
             </div>
             {/* Toggle: Auto-Vorschläge Vergleich */}
             {(parsed.autoSuggestions||[]).length>0&&(
@@ -16946,12 +17809,18 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                           {isPos?"+ ":"− "}{Math.abs(r.amount).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €
                         </div>
                       </div>
-                      {showCatAssign&&<CatPicker
-                        value={a.catId+"|"+a.subId}
-                        onChange={(catId,subId)=>setRowAssign(origIdx,catId,subId)}
-                        placeholder={isPos?"— Einnahmen-Kategorie —":"— Ausgaben-Kategorie —"}
-                        filterType={isPos?"income":"expense"}
-                      />}
+                      {showCatAssign&&(()=>{
+                        const rowAccId = r._resolvedAccId || selAccId || accounts[0]?.id;
+                        const rowAcc = accounts.find(a=>a.id===rowAccId);
+                        const isTgAcc = rowAcc?.name?.toLowerCase().includes("tagesgeld") || rowAccId?.includes("tagesgeld");
+                        const fType = isTgAcc ? "tagesgeld" : (isPos ? "income" : "expense");
+                        return <CatPicker
+                          value={a.catId+"|"+a.subId}
+                          onChange={(catId,subId)=>setRowAssign(origIdx,catId,subId)}
+                          placeholder={isTgAcc?"— Tagesgeld-Kategorie —":isPos?"— Einnahmen-Kategorie —":"— Ausgaben-Kategorie —"}
+                          filterType={fType}
+                        />;
+                      })()}
                     </div>
                   );
                 })}
@@ -17005,13 +17874,16 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
               borderRadius:11,padding:MPad,width:"100%",maxWidth:380,display:"flex",gap:10,alignItems:"flex-start"}}>
               {Li("alert-triangle",16,T.gold)}
               <div style={{flex:1}}>
-                <div style={{color:T.gold,fontSize:MFSl,fontWeight:700,marginBottom:3}}>Kontostand für Vormonat fehlt</div>
+                <div style={{color:T.gold,fontSize:MFSl,fontWeight:700,marginBottom:3}}>
+                  Kontostand für Vormonat fehlt
+                  {anchorWarning.accName&&<span style={{color:T.gold,fontWeight:400,marginLeft:4,fontSize:10}}>({anchorWarning.accName})</span>}
+                </div>
                 <div style={{color:T.txt2,fontSize:MFSl,lineHeight:1.6}}>
                   Die früheste importierte Buchung stammt aus{" "}
                   <span style={{color:T.txt,fontWeight:700}}>
                     {["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][anchorWarning.firstMonth]} {anchorWarning.firstYear}
                   </span>.
-                  Damit der Kontostand ab diesem Monat korrekt berechnet werden kann, wird der
+                  Damit der Kontostand{anchorWarning.accName?` (${anchorWarning.accName})`:""} ab diesem Monat korrekt berechnet werden kann, wird der
                   Endkontostand von{" "}
                   <span style={{color:T.txt,fontWeight:700}}>
                     {["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][anchorWarning.prevMonth]} {anchorWarning.prevYear}
@@ -17025,7 +17897,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                       <span style={{color:T.txt,fontWeight:600}}>
                         {["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][anchorWarning.prevMonth]} {anchorWarning.prevYear}
                       </span>{" "}
-                      manuell in den <span style={{color:T.blue,fontWeight:600}}>Einstellungen → Kontostand-Ankerpunkte</span> eintragen.
+                      oben unter <span style={{color:T.blue,fontWeight:600}}>Kontostand-Ankerpunkte</span> eintragen (Konto: {anchorWarning.accName||"gewähltes Konto"}).
                     </span>
                   </div>
                   <div style={{color:T.txt2,fontSize:10,display:"flex",gap:6,alignItems:"flex-start"}}>
@@ -17034,7 +17906,7 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
                       <span style={{color:T.txt,fontWeight:600}}>
                         {["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][anchorWarning.prevMonth]} {anchorWarning.prevYear}
                       </span>{" "}
-                      in den <span style={{color:T.blue,fontWeight:600}}>Einstellungen → Kontostand-Ankerpunkte</span> importieren (CSV-Import dort).
+                      importieren — der Kontostand wird dann automatisch erkannt.
                     </span>
                   </div>
                 </div>
@@ -19599,7 +20471,9 @@ window.FinanzApp = function FinanzApp() {
     }
     if(allTxs.length > 0) {
       const migrated = migrateBudgetDates(migrateSeries(allTxs.map(t=>({...t, splits:Array.isArray(t.splits)?t.splits:[]}))));
-      setTxs(migrated);
+      // Migration: alle Buchungen ohne accountId → acc-giro
+      const migratedWithAcc = migrated.map(t => t.accountId ? t : {...t, accountId:"acc-giro"});
+      setTxs(migratedWithAcc);
     }
   };
 
@@ -19772,6 +20646,10 @@ window.FinanzApp = function FinanzApp() {
         } else {
           cleanedBudgets[k] = v;
         }
+      });
+      // Migration: alle Budgets ohne accountId bekommen acc-giro
+      Object.entries(cleanedBudgets).forEach(([k,v])=>{
+        if(v && !v.accountId) cleanedBudgets[k] = {...v, accountId:"acc-giro"};
       });
       setBudgets(cleanedBudgets);
     }
@@ -20231,75 +21109,136 @@ Abbrechen = ${remoteName}-Stand laden`
   const getTotalExpense=(y,m,col="E")=>actualSums[`${y}:${m}:expense:${col}`]||0;
 
   // Kumulierter Kontostand bis inkl. Monat m des Jahres y
-  const getKumulierterSaldo = (toYear, toMonth) => {
-    // ── Alle Ankerpunkte aus startBalances sammeln ──────────────────────────
-    // Altes Format:  startBalances[Jahr]["acc-giro"] = Wert am 31.12.(Jahr-1)
-    //   → Ankerpunkt: Jahr, Monat -1 (vor Jan)
-    // Neues Format:  startBalances[Jahr][Monat]["acc-giro"] = Wert am Ende von Monat
-    //   → Ankerpunkt: Jahr, Monat (0-11)
-    const anchors = []; // {year, month, value}  month=-1 bedeutet "vor Januar"
+  const getKumulierterSaldo = (toYear, toMonth, accountId=null) => {
+    const accFilter = accountId;
+
+    // ── Ankerpunkte sammeln ───────────────────────────────────────────────────
+    const anchors = [];
     Object.entries(startBalances||{}).forEach(([yearKey, yearVal])=>{
       const y = Number(yearKey);
       if(!yearVal || typeof yearVal !== "object") return;
       Object.entries(yearVal).forEach(([k, v])=>{
-        if(k === "acc-giro") {
-          // Altes Format: Jahres-Ankerpunkt = Endstand 31.12.(y-1) = vor Jan y
-          if(typeof v === "number") anchors.push({year:y, month:-1, value:v});
-        } else if(!isNaN(Number(k))) {
-          // Neues Format: startBalances[Jahr][Monat] = Objekt mit accId→value
+        if(k === "acc-giro" && typeof v === "number") {
+          // Altes Format
+          if(!accFilter || accFilter === "acc-giro")
+            anchors.push({year:y, month:-1, value:v, accId:"acc-giro"});
+        } else if(!isNaN(Number(k)) && typeof v === "object") {
           const mo = Number(k);
-          const val = v?.["acc-giro"];
-          if(typeof val === "number") anchors.push({year:y, month:mo, value:val});
+          if(accFilter) {
+            // Konto-spezifisch
+            const val = v[accFilter];
+            if(typeof val === "number") anchors.push({year:y, month:mo, value:val, accId:accFilter});
+          } else {
+            // Gesamt: alle Konten summieren
+            Object.entries(v).forEach(([aId, val])=>{
+              if(typeof val === "number") anchors.push({year:y, month:mo, value:val, accId:aId});
+            });
+          }
         }
       });
     });
     if(!anchors.length) return null;
 
-    // ── Nächstliegenden Ankerpunkt vor oder gleich dem Zielmonat finden ────
-    // Ankerpunkte als "Monats-Endstand" behandeln:
-    //   month=-1 → nach Dez (y-1), also vor Jan y  → sortierbar als y*12 + (-1) = y*12-1
-    //   month=11 → nach Dez y                       → sortierbar als y*12+11
     const toIdx = toYear * 12 + toMonth;
-    const eligible = anchors
-      .map(a => ({...a, idx: a.year*12 + a.month}))
-      .filter(a => a.idx <= toIdx)
-      .sort((a,b) => b.idx - a.idx); // neuester zuerst
-    if(!eligible.length) return null;
 
-    const anchor = eligible[0];
+    if(accFilter) {
+      // Konto-spezifisch: letzten Ankerpunkt <= toIdx nehmen — NUR für dieses Konto
+      const eligible = anchors
+        .filter(a => a.accId === accFilter)
+        .map(a => ({...a, idx: a.year*12 + a.month}))
+        .filter(a => a.idx <= toIdx)
+        .sort((a,b) => b.idx - a.idx);
+      if(!eligible.length) return null;
 
-    // ── Vorwärts vom Ankerpunkt bis Zielmonat rechnen ──────────────────────
-    // Ankerpunkt ist Endstand von anchor.month in anchor.year
-    // Wir starten bei anchor.month+1 (nächster Monat nach dem Ankerpunkt)
-    let saldo = anchor.value;
-    let startY = anchor.year;
-    let startM = anchor.month + 1; // erster zu addierender Monat
-    if(startM > 11) { startM = 0; startY++; }
+      const anchor = eligible[0];
+      let saldo = anchor.value;
+      let startY = anchor.year, startM = anchor.month + 1;
+      if(startM > 11) { startM = 0; startY++; }
 
-    for(let y = startY; y <= toYear; y++) {
-      const maxM = (y === toYear) ? toMonth : 11;
-      const minM = (y === startY) ? startM : 0;
-      for(let m = minM; m <= maxM; m++) {
-        saldo += getTotalIncome(y,m,"E") - getTotalExpense(y,m,"E");
+      const signedAmt = t => {
+        const type = t._csvType || (t.totalAmount>=0?"income":"expense");
+        return type==="income" ? Math.abs(t.totalAmount) : -Math.abs(t.totalAmount);
+      };
+      for(let y = startY; y <= toYear; y++) {
+        const maxM = (y===toYear)?toMonth:11, minM=(y===startY)?startM:0;
+        for(let m = minM; m <= maxM; m++) {
+          const accTxs = txs.filter(t=>{
+            if(t.pending||t._linkedTo) return false;
+            const d=new Date(t.date);
+            return d.getFullYear()===y && d.getMonth()===m &&
+              (t.accountId===accFilter || (!t.accountId && accFilter==="acc-giro"));
+          });
+          saldo += accTxs.reduce((s,t)=>s+signedAmt(t), 0);
+        }
       }
+
+      const realTxs = txs.filter(t=>!t.pending);
+      if(!realTxs.length && anchor.month===-1) return null;
+      const firstBuchungDate = realTxs.length ? realTxs.map(t=>t.date).sort()[0] : null;
+      const firstY = firstBuchungDate ? Number(firstBuchungDate.split("-")[0]) : toYear;
+      const firstM = firstBuchungDate ? Number(firstBuchungDate.split("-")[1])-1 : toMonth;
+      const anchorEndIdx = anchor.year*12 + anchor.month;
+      const firstBuchungIdx = firstY*12 + firstM;
+      if(toIdx < Math.min(anchorEndIdx+1, firstBuchungIdx)) return null;
+
+      return saldo;
+
+    } else {
+      // Gesamt-Modus: pro Konto den letzten Ankerpunkt nehmen, dann Buchungen aufsummieren
+      // Alle bekannten Konten aus Ankerpunkten + accounts
+      const allAccIds = [...new Set([
+        ...anchors.map(a=>a.accId),
+        ...accounts.map(a=>a.id)
+      ])];
+
+      // Prüfen ob überhaupt Ankerpunkte existieren
+      const eligibleAnchors = anchors.filter(a => (a.year*12+a.month) <= toIdx);
+      if(!eligibleAnchors.length) return null;
+
+      const signedAmt = t => {
+        const type = t._csvType || (t.totalAmount>=0?"income":"expense");
+        return type==="income" ? Math.abs(t.totalAmount) : -Math.abs(t.totalAmount);
+      };
+
+      let gesamtSaldo = 0;
+      let hasAnyAnchor = false;
+
+      allAccIds.forEach(aId=>{
+        const accAnchors = anchors
+          .filter(a=>a.accId===aId)
+          .map(a=>({...a, idx:a.year*12+a.month}))
+          .filter(a=>a.idx<=toIdx)
+          .sort((a,b)=>b.idx-a.idx);
+        if(!accAnchors.length) return;
+        hasAnyAnchor = true;
+
+        const anchor = accAnchors[0];
+        let saldo = anchor.value;
+        let startY = anchor.year, startM = anchor.month+1;
+        if(startM>11){startM=0;startY++;}
+
+        for(let y=startY; y<=toYear; y++){
+          const maxM=(y===toYear)?toMonth:11, minM=(y===startY)?startM:0;
+          for(let m=minM; m<=maxM; m++){
+            const accTxs = txs.filter(t=>{
+              if(t.pending||t._linkedTo) return false;
+              const d=new Date(t.date);
+              return d.getFullYear()===y && d.getMonth()===m &&
+                (t.accountId===aId || (!t.accountId && aId==="acc-giro"));
+            });
+            saldo += accTxs.reduce((s,t)=>s+signedAmt(t),0);
+          }
+        }
+        gesamtSaldo += saldo;
+      });
+
+      if(!hasAnyAnchor) return null;
+
+      const realTxs = txs.filter(t=>!t.pending);
+      if(!realTxs.length) return null;
+
+      return gesamtSaldo;
     }
-
-    // ── Nur anzeigen wenn der Ankerpunkt nicht zu weit in der Vergangenheit liegt ──
-    // und wenn es echte Buchungen bis zum Zielmonat gibt
-    const realTxs = txs.filter(t=>!t.pending);
-    if(!realTxs.length && anchor.month === -1) return null;
-    // Ersten Monat mit Buchungen oder Ankerpunkt prüfen
-    const firstBuchungDate = realTxs.length
-      ? realTxs.map(t=>t.date).sort()[0]
-      : null;
-    const firstY = firstBuchungDate ? Number(firstBuchungDate.split("-")[0]) : toYear;
-    const firstM = firstBuchungDate ? Number(firstBuchungDate.split("-")[1]) - 1 : toMonth;
-    // Kein Saldo für Monate vor dem ersten Buchungsmonat UND vor allen Ankerpunkten
-    const anchorEndIdx = anchor.year * 12 + anchor.month;
-    const firstBuchungIdx = firstY * 12 + firstM;
-    if(toIdx < Math.min(anchorEndIdx + 1, firstBuchungIdx)) return null;
-
-    return saldo;
   };
 
   // ── Prognostizierter Saldo (inkl. offene Vormerkungen bis Halbmonat oder Monatsende) ──
