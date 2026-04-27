@@ -312,7 +312,7 @@ const _ctxDefault = {
   supaStatus:"idle", supaError:"", testSupaConnection:()=>{}, saveSupaSettings:()=>{},
   getCat:()=>null, getSub:()=>null, txType:()=>"expense",
   getActualSum:()=>0, getPendingSum:()=>0, pendingItemsFor:()=>[],
-  reconstructYearData:()=>{},
+  
   getJV:()=>"", setJV:()=>{}, getMV:()=>"", setMV:()=>{}, getAcc:()=>null,
   openEdit:()=>{}, saveEdit:()=>{}, deleteFromEdit:()=>{}, updEditSplit:()=>{},
   moveCat:()=>{}, moveSub:()=>{}, updateSub:()=>{}, updateCat:()=>{},
@@ -5392,7 +5392,7 @@ function EditPopup() {
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,reconstructYearData,
+    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -6240,7 +6240,7 @@ function SaldoHero2({year, month,
   uInM, uOutM, uInE, uOutE,
   prognoseMitte, prognoseEnde, detailMitte, detailEnde, saldoMitte, saldoEnde,
   onDrillBuchIn, onDrillBuchOut, onDrillPendIn, onDrillPendOut,
-  onDrillUncatIn, onDrillUncatOut}) {
+  onDrillUncatIn, onDrillUncatOut, onDrill}) {
   const { getKumulierterSaldo, accounts, startBalances, txs, cats, getBudgetForMonth, budgets } = useContext(AppCtx);
   const ks = getKumulierterSaldo(year, month);
 
@@ -6274,16 +6274,29 @@ function SaldoHero2({year, month,
       return (t.splits||[]).length===0 || (t.splits||[]).every(sp=>!sp.catId);
     });
     const uncatSum = uncatTxs.reduce((s,t)=>s+signAmt(t), 0);
-    // Einnahmen: income-Kategorien für Giro, tagesgeld-Kategorien für Tagesgeld
-    const inc = (cats||[]).filter(c=>accId==="acc-giro" ? (c.type==="income") : (c.type==="tagesgeld"||c.type==="income")).reduce((s,cat)=>{
+    // Für Nicht-Giro-Konten: alle Buchungen direkt über signAmt zählen (kein Kategorie-Filter)
+    if(accId !== "acc-giro") {
+      const allAccTxs = (txs||[]).filter(t=>{
+        if(t._linkedTo||t._budgetSubId) return false;
+        if(endeAbg&&t.pending) return false;
+        if(!isAcc(t)) return false;
+        const d=new Date(t.date);
+        return d.getFullYear()===y && d.getMonth()===m;
+      });
+      return prevEnde + allAccTxs.reduce((s,t)=>s+signAmt(t), 0);
+    }
+    // Einnahmen für Giro: income-Kategorien
+    const inc = (cats||[]).filter(c=>c.type==="income").reduce((s,cat)=>{
       return s+(txs||[]).filter(t=>{
         if(t._linkedTo||t._budgetSubId) return false;
         if(endeAbg&&t.pending) return false;
         if(!isAcc(t)) return false;
         const d=new Date(t.date);
         return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);
-      }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id)
-        .reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+      }).reduce((ss,t)=>{
+        const spAmt=(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((a,sp)=>a+Math.abs(pn(sp.amount)),0);
+        return ss+(spAmt>0?spAmt:Math.abs(t.totalAmount));
+      },0);
     },0);
     // Ausgaben: Budget-Floor-Logik nur für Giro, andere Konten nur echte Buchungen
     const out = (cats||[]).filter(c=>c.type==="expense").reduce((s,cat)=>{
@@ -6300,8 +6313,8 @@ function SaldoHero2({year, month,
       // Budget-Floor nur für Giro-Konto
       if(accId !== "acc-giro") {
         // Nur echte Buchungen + Vormerkungen, kein Budget-Floor
-        const real=(txs||[]).filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
-        const pend=(txs||[]).filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
+        const real=(txs||[]).filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>{const sa=(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((a,sp)=>a+Math.abs(pn(sp.amount)),0);return ss+(sa>0?sa:Math.abs(t.totalAmount));},0);
+        const pend=(txs||[]).filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;if(!isAcc(t))return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id);}).reduce((ss,t)=>{const sa=(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((a,sp)=>a+Math.abs(pn(sp.amount)),0);return ss+(sa>0?sa:Math.abs(t.totalAmount));},0);
         return s+real+pend;
       }
       const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
@@ -6597,13 +6610,49 @@ function SaldoHero2({year, month,
           </span>
         </div>
       </div>
-      {progDrill&&(
-        <SaldoPrognose year={year} month={month} txs={[]}
-          detailMitte={detailMitte} detailEnde={detailEnde}
-          saldoMitte={saldoMitte}   saldoEnde={saldoEnde}
+      {progDrill&&(()=>{
+        const filterDetail = (detail) => {
+          if(!detail || !selAcc) return detail;
+          const isAcc = t => t.accountId===selAcc || (!t.accountId && selAcc==="acc-giro");
+          const filteredRealTxs = (detail.unbudgetedRealTxs||[]).filter(isAcc);
+          const filteredPend    = (detail.unbudgetedPend||[]).filter(isAcc);
+          const getTxType = t => {
+            if(t._csvType) return t._csvType;
+            const sp=(t.splits||[]).filter(s=>s.catId);
+            if(sp.length>0){const c=cats?.find(c=>c.id===sp[0].catId);if(c)return(c.type==="income"||c.type==="tagesgeld")?"income":"expense";}
+            return t.totalAmount>=0?"income":"expense";
+          };
+          const filteredRealIn  = filteredRealTxs.filter(t=>getTxType(t)==="income").reduce((s,t)=>s+Math.abs(t.totalAmount),0);
+          const filteredRealOut = filteredRealTxs.filter(t=>getTxType(t)!=="income").reduce((s,t)=>s+Math.abs(t.totalAmount),0);
+          const filteredPendIn  = filteredPend.filter(t=>getTxType(t)==="income").reduce((s,t)=>s+Math.abs(t.totalAmount),0);
+          const filteredPendOut = filteredPend.filter(t=>getTxType(t)!=="income").reduce((s,t)=>s+Math.abs(t.totalAmount),0);
+          return {
+            ...detail,
+            realIn:  filteredRealIn,
+            realOut: filteredRealOut,
+            pendIn:  filteredPendIn,
+            pendOut: filteredPendOut,
+            totalIn:  filteredRealIn  + filteredPendIn,
+            totalOut: filteredRealOut + filteredPendOut,
+            unbudgetedRealTxs: filteredRealTxs,
+            unbudgetedPend:    filteredPend,
+            budgetEntries: selAcc==="acc-giro" ? (detail.budgetEntries||[]) : [],
+          };
+        };
+        const prevY2=month===0?year-1:year, prevM2=month===0?11:month-1;
+        const accBase = selAcc ? getProgEndeAcc(prevY2, prevM2, selAcc) : null;
+        const accSaldoMitte = selAcc ? getProgEndeAcc(year, month, selAcc) : saldoMitte; // simplified
+        // For Mitte use calcAcc logic — recompute E and M
+        const accSaldoEnde  = selAcc ? getProgEndeAcc(year, month, selAcc) : saldoEnde;
+        const detM = detailMitte ? {...filterDetail(detailMitte), base: accBase??filterDetail(detailMitte)?.base} : null;
+        const detE = detailEnde  ? {...filterDetail(detailEnde),  base: accBase??filterDetail(detailEnde)?.base}  : null;
+        return <SaldoPrognose year={year} month={month} txs={[]}
+          detailMitte={detM} detailEnde={detE}
+          saldoMitte={selAcc ? accSaldoMitte : saldoMitte}
+          saldoEnde={selAcc ? accSaldoEnde : saldoEnde}
           getCat={()=>null} getSub={()=>null}
-          initialOpen={progDrill}/>
-      )}
+          initialOpen={progDrill}/>;
+      })()}
     </>
   );
   return (
@@ -6701,16 +6750,24 @@ function SaldoHero2({year, month,
           const pIE=s(pendIn), pOE=s(pendOut);
           const uIM=s(uIn.filter(bis14)), uOM=s(uOut.filter(bis14));
           const uIE=s(uIn), uOE=s(uOut);
+          const sum = arr => arr.reduce((s,t)=>s+Math.abs(t.totalAmount||0),0);
+          const drill = (label, list, isIncome, isPending=false) => {
+            if(onDrill) onDrill({label, txList:list, isIncome, uncatCount:isPending?0:list.filter(t=>(t.splits||[]).every(s=>!s.catId)).length, cat:null, total:isPending?sum(list):sum(list), isPending});
+            else if(isIncome) { if(isPending) onDrillPendIn&&onDrillPendIn(false); else onDrillBuchIn&&onDrillBuchIn(false); }
+            else { if(isPending) onDrillPendOut&&onDrillPendOut(false); else onDrillBuchOut&&onDrillBuchOut(false); }
+          };
           return (<>
             <Row label="Buch." mIn={bIM} mOut={bOM} eIn={bIE} eOut={bOE}
-              onTapIn={onDrillBuchIn} onTapOut={onDrillBuchOut}/>
+              onTapIn={(isMitte)=>drill("Einnahmen"+(isMitte?" bis 14.":""), isMitte?realIn.filter(bis14):realIn, true)}
+              onTapOut={(isMitte)=>drill("Ausgaben"+(isMitte?" bis 14.":""), isMitte?realOut.filter(bis14):realOut, false)}/>
             {(pIE>0||pOE>0)&&<Row label="VM" mIn={pIM} mOut={pOM} eIn={pIE} eOut={pOE}
               clrIn={T.pos+"aa"} clrOut={T.neg+"aa"}
-              onTapIn={(isMitte)=>onDrillPendIn&&onDrillPendIn(isMitte)}
-              onTapOut={(isMitte)=>onDrillPendOut&&onDrillPendOut(isMitte)}/>}
+              onTapIn={(isMitte)=>drill("Einnahmen – VM"+(isMitte?" bis 14.":""), isMitte?accPendInM:pendIn, true, true)}
+              onTapOut={(isMitte)=>drill("Ausgaben – VM"+(isMitte?" bis 14.":""), isMitte?accPendOutM:pendOut, false, true)}/>}
             {(uIE>0||uOE>0)&&<Row label="unkat." mIn={uIM} mOut={uOM} eIn={uIE} eOut={uOE}
               clrIn={T.gold} clrOut={T.gold}
-              onTapIn={onDrillUncatIn} onTapOut={onDrillUncatOut}/>}
+              onTapIn={(isMitte)=>drill("Einnahmen – unkat."+(isMitte?" bis 14.":""), isMitte?uIn.filter(bis14):uIn, true)}
+              onTapOut={(isMitte)=>drill("Ausgaben – unkat."+(isMitte?" bis 14.":""), isMitte?uOut.filter(bis14):uOut, false)}/>}
           </>);
         })()}
         <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"6px 0 4px"}}/>
@@ -6766,9 +6823,9 @@ function SaldoHero2({year, month,
           }
           if(!ksAcc[selAcc] && ksAcc[selAcc] !== 0) return null; // Kein Ankerpunkt → keine Prognose
           const r=calcAcc(selAcc);
-          if(!r) return null; // Keine Prognose berechenbar
-          const accName=accounts.find(a=>a.id===selAcc)?.name||selAcc;
+          if(!r) return null;
           return <PrognoseRow pm={r.M} pe={r.E}/>;
+
         })() : (selAcc && displayKs===null) ? null : <div style={{display:"flex",alignItems:"center"}}>
               <div style={{flex:2,textAlign:"center"}}>
                 <span style={{color:ms>=0?T.pos:T.neg,fontSize:17,fontWeight:800}}>{fmt(Math.abs(ms))} €</span>
@@ -7323,7 +7380,7 @@ function DashboardScreen() {
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getPendingSum,pendingItemsFor,reconstructYearData,
+    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -7710,6 +7767,7 @@ function DashboardScreen() {
               onDrillPendOut={(isMitte)=>{const l=isMitte?_pTxsOutM:pTxsOut;setDashDrill({label:"Ausgaben – VM" +(isMitte?" bis 14.":""),txList:l,isIncome:false,uncatCount:0,cat:null,total:_sum(l),isPending:true});setDashSearch("");}}
               onDrillUncatIn ={(isMitte)=>{const l=isMitte?_uInM2 :_uIn; setDashDrill({label:"Einnahmen – unkat."+(isMitte?" bis 14.":""),txList:l,isIncome:true, uncatCount:l.length,cat:null,total:null});setDashSearch("");}}
               onDrillUncatOut={(isMitte)=>{const l=isMitte?_uOutM2:_uOut;setDashDrill({label:"Ausgaben – unkat." +(isMitte?" bis 14.":""),txList:l,isIncome:false,uncatCount:l.length,cat:null,total:null});setDashSearch("");}}
+              onDrill={(d)=>{setDashDrill(d);setDashSearch("");}}
             />
             );
           }
@@ -8838,7 +8896,7 @@ function TransactionsScreen() {
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,reconstructYearData,
+    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -11819,6 +11877,7 @@ function SettingsInline() {
     jsonbinActive, jsonbinSave, jsonbinLoad, jsonbinStatus, setJsonbinStatus, jsonbinKey, jsonbinId, setJsonbinKey, setJsonbinId,
     gistActive, gistSave, gistLoad, gistStatus, setGistStatus, gistToken, gistId, setGistToken, setGistId, applyData,
     cfActive, cfSave, cfLoad, cfStatus, setCfStatus, cfUrl, cfSecret, setCfUrl, setCfSecret,
+    syncStatus, setSyncStatus, syncError,
     themeName, setThemeName, setThemeRev,
     handedness, setHandedness,
     confirmReset, setConfirmReset,
@@ -11948,21 +12007,25 @@ function SettingsInline() {
             }} style={{flex:1,padding:"8px",borderRadius:9,border:`1px solid ${T.cf}44`,
               background:`${T.cf}11`,color:T.cf,fontSize:12,fontWeight:600,cursor:"pointer",
               fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-              {Li("wifi",12,T.cf)} Testen
+              {Li("wifi",12,T.cf)} Verbindung testen
             </button>
+          </div>
+        )}
+        {cfActive&&(
+          <div style={{display:"flex",gap:6,marginBottom:6}}>
             {(()=>{
               const {saveConfig}=useContext(AppCtx);
               return (
                 <button onClick={()=>saveConfig?.()}
                   disabled={cfStatus==="saving"}
-                  style={{flex:2,padding:"8px",borderRadius:9,border:"none",
-                    background:cfStatus==="saving"?T.gold:cfStatus==="ok"?T.pos:T.cf,
-                    color:T.on_accent,fontSize:12,fontWeight:700,
+                  style={{flex:1,padding:"10px 8px",borderRadius:9,border:"none",
+                    background:cfStatus==="saving"?T.gold:T.pos,
+                    color:T.on_accent,fontSize:13,fontWeight:700,
                     cursor:cfStatus==="saving"?"wait":"pointer",
-                    fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-                  {cfStatus==="saving"?<>{Li("loader",12,T.on_accent)} Speichert…</>
-                   :cfStatus==="ok"?<>{Li("check",12,T.on_accent)} Gespeichert ✓</>
-                   :<>{Li("cloud",12,T.on_accent)} Jetzt hochladen</>}
+                    fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  {cfStatus==="saving"
+                    ?<>{Li("loader",14,T.on_accent)} Speichert…</>
+                    :<>{Li("upload-cloud",14,T.on_accent)} ⬆ Lokal → Cloudflare speichern</>}
                 </button>
               );
             })()}
@@ -11974,16 +12037,39 @@ function SettingsInline() {
               setCfStatus("loading");
               const data=await cfLoad();
               if(!data?.cats?.length){alert("Keine Daten gefunden.");setCfStatus("error");return;}
-              if(window.confirm("Cloudflare-Daten laden? Lokale Änderungen werden überschrieben.")){
-                applyData(data);setCfStatus("ok");alert("Daten geladen!");
+              if(window.confirm("Cloudflare → Lokal laden?\n\nAchtung: Lokale Änderungen werden überschrieben!")){
+                applyData(data);setCfStatus("ok");alert("Daten erfolgreich geladen!");
               }else setCfStatus("ok");
             }catch(e){setCfStatus("error");alert("Fehler: "+e.message);}
-          }} style={{width:"100%",padding:"8px",borderRadius:9,
-            border:`1px solid ${T.cf}44`,background:`${T.cf}11`,color:T.cf,
-            fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
-            display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:6}}>
-            {Li("download",12,T.cf)} Von Cloudflare laden
+          }} style={{width:"100%",padding:"10px 8px",borderRadius:9,marginBottom:6,
+            border:`2px solid ${T.blue}`,background:`${T.blue}11`,color:T.blue,
+            fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+            display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+            {Li("download-cloud",14,T.blue)} ⬇ Cloudflare → Lokal laden
           </button>
+        )}
+        {/* Sync-Status + Fehleranzeige */}
+        {cfActive&&(
+          <div style={{marginTop:4,padding:"8px 10px",borderRadius:8,
+            border:`1px solid ${syncStatus==="error"?T.err:T.bd}`,
+            background:syncStatus==="error"?"rgba(255,0,0,0.08)":"rgba(255,255,255,0.03)",
+            display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:7,height:7,borderRadius:"50%",flexShrink:0,
+              background:syncStatus==="error"?T.err:syncStatus==="saving"?T.warn:syncStatus==="saved"?T.pos:cfStatus==="ok"?T.pos:"rgba(128,128,128,0.4)"}}/>
+            <span style={{flex:1,color:T.txt2,fontSize:11}}>
+              {syncStatus==="error"?"Sync-Fehler: "+syncError:
+               syncStatus==="saving"?"Speichert…":
+               syncStatus==="saved"?"Zuletzt gespeichert ✓":
+               cfStatus==="ok"?"Verbunden — keine ungespeicherten Änderungen":
+               "Nicht verbunden"}
+            </span>
+            {syncStatus==="error"&&(
+              <button onClick={()=>setSyncStatus("idle")}
+                style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:2}}>
+                {Li("x",12,T.txt2)}
+              </button>
+            )}
+          </div>
         )}
         {/* Beim Schließen automatisch hochladen — optional */}
         {(()=>{
@@ -11994,7 +12080,7 @@ function SettingsInline() {
               setOnClose(v);
               localStorage.setItem("mbt_cf_save_on_close", v?"1":"0");
             }} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",
-              padding:"6px 2px",userSelect:"none"}}>
+              padding:"6px 2px",userSelect:"none",marginTop:6}}>
               <div style={{width:32,height:18,borderRadius:9,position:"relative",flexShrink:0,
                 background:onClose?T.pos:"rgba(255,255,255,0.15)",transition:"background 0.2s"}}>
                 <div style={{position:"absolute",top:2,left:onClose?14:2,width:14,height:14,
@@ -12115,7 +12201,7 @@ function ManagementScreen({activeTab="kategorien"}) {
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,reconstructYearData,
+    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -13726,7 +13812,7 @@ function MitteEndeFields({tx, pal, fulfilled, needsHatch, effE=""}) {
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,reconstructYearData,
+    getCat,getSub,txType,getActualSum,getTotalIncome,getTotalExpense,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -14244,7 +14330,7 @@ function MonatScreen() {
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getPendingSum,pendingItemsFor,reconstructYearData,
+    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -15197,7 +15283,7 @@ function JahrScreen({forceSingle=false}) {
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getPendingSum,pendingItemsFor,reconstructYearData,
+    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -18069,233 +18155,6 @@ function ThemeDropdown({themeName, setThemeName}) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// ModalTestScreen — Schriftgrössen-Vergleich für iPhone
-function ModalTestScreen({onClose}) {
-  const [size, setSize] = useState("m");
-  const sizes = {
-    s: {label:"Klein",  fs:12, fsL:22, fsXL:28, pad:8,  padL:10, radius:8,  gap:8},
-    m: {label:"Mittel", fs:15, fsL:32, fsXL:36, pad:10, padL:14, radius:12, gap:10},
-    l: {label:"Groß",   fs:18, fsL:42, fsXL:48, pad:14, padL:18, radius:16, gap:14},
-  };
-  const S = sizes[size];
-
-  const inp = {
-    width:"100%", boxSizing:"border-box",
-    padding:`${S.padL}px ${S.padL}px`,
-    borderRadius:S.radius, border:`1.5px solid ${T.bd}`,
-    background:"rgba(255,255,255,0.06)", color:T.txt,
-    fontSize:S.fs, fontFamily:"inherit", outline:"none",
-  };
-  const field = (label, content, accent) => (
-    <div style={{marginBottom:S.gap}}>
-      <div style={{color:T.txt2,fontSize:S.fs-3,marginBottom:4,fontWeight:600}}>{label}</div>
-      <div style={{...inp, border:`1.5px solid ${accent?T.blue:T.bd}`,
-        display:"flex",alignItems:"center",justifyContent:"space-between",
-        cursor:"pointer"}}>
-        <span style={{color:content?T.txt:T.txt2}}>{content||"— tippen zum Wählen"}</span>
-        {content&&<span style={{color:T.txt2,fontSize:S.fs-2}}>›</span>}
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{position:"fixed",inset:0,top:44,background:"rgba(0,0,0,0.85)",
-      backdropFilter:"blur(12px)",zIndex:300,
-      display:"flex",flexDirection:"column"}}>
-
-      {/* Header */}
-      <div style={{background:T.surf,borderBottom:`1px solid ${T.bd}`,
-        padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-        <button onClick={onClose}
-          style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
-            width:36,height:36,borderRadius:10,cursor:"pointer",fontSize:18,
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-          ←
-        </button>
-        <div style={{flex:1,color:T.txt,fontSize:16,fontWeight:700}}>
-          Mobile UI — Schriftgrösse
-        </div>
-      </div>
-
-      {/* Größen-Wähler */}
-      <div style={{background:T.surf,padding:"10px 14px",
-        display:"flex",gap:8,borderBottom:`1px solid ${T.bd}`,flexShrink:0}}>
-        {Object.entries(sizes).map(([k,v])=>(
-          <button key={k} onClick={()=>setSize(k)}
-            style={{flex:1,padding:"8px",borderRadius:10,border:"none",
-              background:size===k?T.blue:"rgba(255,255,255,0.08)",
-              color:size===k?"#fff":T.txt2,fontSize:14,fontWeight:700,
-              cursor:"pointer",fontFamily:"inherit"}}>
-            {v.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Modal-Vorschau */}
-      <div style={{flex:1,overflowY:"auto",padding:14}}>
-
-        {/* Schritt 1: Betrag */}
-        <div style={{background:T.surf2,borderRadius:S.radius+4,
-          border:`1px solid ${T.gold}44`,marginBottom:14,overflow:"hidden"}}>
-          <div style={{background:T.surf,padding:`${S.pad}px ${S.padL}px`,
-            borderBottom:`1px solid ${T.bd}`,
-            display:"flex",alignItems:"center",gap:S.gap}}>
-            <div style={{background:T.gold+"22",borderRadius:S.radius,
-              width:S.fsL,height:S.fsL,display:"flex",alignItems:"center",
-              justifyContent:"center",flexShrink:0,fontSize:S.fs+2}}>
-              💶
-            </div>
-            <div style={{flex:1}}>
-              <div style={{color:T.gold,fontSize:S.fs,fontWeight:700}}>Neue Buchung</div>
-              <div style={{color:T.txt2,fontSize:S.fs-3}}>Schritt 1 von 3 · Betrag</div>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:4}}>
-              {[1,2,3].map(i=>(
-                <div key={i} style={{width:i===1?20:8,height:8,borderRadius:4,
-                  background:i===1?T.gold:"rgba(255,255,255,0.15)"}}/>
-              ))}
-            </div>
-          </div>
-          <div style={{padding:S.padL}}>
-            {/* Betrag-Feld gross */}
-            <div style={{marginBottom:S.gap}}>
-              <div style={{color:T.txt2,fontSize:S.fs-2,marginBottom:6}}>Betrag €</div>
-              <div style={{background:"rgba(255,255,255,0.06)",
-                border:`2px solid ${T.blue}`,borderRadius:S.radius+2,
-                padding:`${S.padL}px`,
-                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{display:"flex",gap:S.gap}}>
-                  <button style={{padding:`6px ${S.pad}px`,borderRadius:S.radius,
-                    border:`1px solid ${T.neg}44`,background:`${T.neg}15`,
-                    color:T.neg,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>
-                    Ausgabe
-                  </button>
-                  <button style={{padding:`6px ${S.pad}px`,borderRadius:S.radius,
-                    border:`1px solid ${T.bd}`,background:"transparent",
-                    color:T.txt2,fontSize:S.fs,cursor:"pointer",fontFamily:"inherit"}}>
-                    Einnahme
-                  </button>
-                </div>
-                <span style={{color:T.txt,fontSize:S.fsXL,fontWeight:700,fontFamily:"monospace"}}>
-                  42,50
-                </span>
-              </div>
-            </div>
-            {/* Datum + Konto */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:S.gap,marginBottom:S.gap}}>
-              {field("Datum","18.04.2026")}
-              {field("Konto","Giro")}
-            </div>
-            {/* Beschreibung */}
-            <div style={{marginBottom:S.gap*1.5}}>
-              <div style={{color:T.txt2,fontSize:S.fs-2,marginBottom:4,fontWeight:600}}>Beschreibung</div>
-              <input placeholder="z.B. Rewe Koblenz" style={{...inp}} readOnly/>
-            </div>
-            {/* Weiter-Button */}
-            <button style={{width:"100%",padding:`${S.padL}px`,borderRadius:S.radius+2,
-              border:"none",background:T.blue,color:"#fff",
-              fontSize:S.fs+2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-              display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              Weiter → Kategorie
-            </button>
-          </div>
-        </div>
-
-        {/* Schritt 2: Kategorie */}
-        <div style={{background:T.surf2,borderRadius:S.radius+4,
-          border:`1px solid ${T.blue}44`,marginBottom:14,overflow:"hidden"}}>
-          <div style={{background:T.surf,padding:`${S.pad}px ${S.padL}px`,
-            borderBottom:`1px solid ${T.bd}`,
-            display:"flex",alignItems:"center",gap:S.gap}}>
-            <button style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
-              width:S.fsL,height:S.fsL,borderRadius:S.radius,cursor:"pointer",
-              fontSize:S.fs+2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              ←
-            </button>
-            <div style={{flex:1}}>
-              <div style={{color:T.blue,fontSize:S.fs,fontWeight:700}}>Kategorie wählen</div>
-              <div style={{color:T.txt2,fontSize:S.fs-3}}>Schritt 2 von 3 · Rewe · 42,50 €</div>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:4}}>
-              {[1,2,3].map(i=>(
-                <div key={i} style={{width:i===2?20:8,height:8,borderRadius:4,
-                  background:i===2?T.blue:"rgba(255,255,255,0.15)"}}/>
-              ))}
-            </div>
-          </div>
-          <div style={{padding:S.padL}}>
-            {["Essen & Trinken","Wohnen & Kind","Sonstiges","Lebenshaltung","Verein"].map((cat,i)=>(
-              <button key={cat} style={{width:"100%",padding:`${S.padL}px`,
-                marginBottom:S.gap/2,borderRadius:S.radius+2,
-                border:`1px solid ${i===0?T.blue:T.bd}`,
-                background:i===0?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.04)",
-                color:i===0?T.blue:T.txt,fontSize:S.fs,fontWeight:i===0?700:400,
-                cursor:"pointer",fontFamily:"inherit",textAlign:"left",
-                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <span>{cat}</span>
-                <span style={{color:T.txt2,fontSize:S.fs-2}}>›</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Schritt 3: Bestätigung */}
-        <div style={{background:T.surf2,borderRadius:S.radius+4,
-          border:`1px solid ${T.pos}44`,overflow:"hidden"}}>
-          <div style={{background:T.surf,padding:`${S.pad}px ${S.padL}px`,
-            borderBottom:`1px solid ${T.bd}`,
-            display:"flex",alignItems:"center",gap:S.gap}}>
-            <button style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
-              width:S.fsL,height:S.fsL,borderRadius:S.radius,cursor:"pointer",
-              fontSize:S.fs+2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              ←
-            </button>
-            <div style={{flex:1}}>
-              <div style={{color:T.pos,fontSize:S.fs,fontWeight:700}}>Bestätigen</div>
-              <div style={{color:T.txt2,fontSize:S.fs-3}}>Schritt 3 von 3</div>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:4}}>
-              {[1,2,3].map(i=>(
-                <div key={i} style={{width:i===3?20:8,height:8,borderRadius:4,
-                  background:i===3?T.pos:"rgba(255,255,255,0.15)"}}/>
-              ))}
-            </div>
-          </div>
-          <div style={{padding:S.padL}}>
-            {[
-              ["Betrag","−42,50 €"],
-              ["Typ","Ausgabe"],
-              ["Datum","18.04.2026"],
-              ["Konto","Giro"],
-              ["Kategorie","Essen & Trinken / Rewe"],
-              ["Beschreibung","Rewe Koblenz"],
-            ].map(([k,v])=>(
-              <div key={k} style={{display:"flex",justifyContent:"space-between",
-                padding:`${S.gap/2}px 0`,borderBottom:`1px solid ${T.bd}`,
-                alignItems:"center"}}>
-                <span style={{color:T.txt2,fontSize:S.fs-1}}>{k}</span>
-                <span style={{color:T.txt,fontSize:S.fs,fontWeight:500}}>{v}</span>
-              </div>
-            ))}
-            <button style={{width:"100%",padding:`${S.padL}px`,
-              borderRadius:S.radius+2,border:"none",background:T.pos,
-              color:"#fff",fontSize:S.fs+2,fontWeight:700,
-              cursor:"pointer",fontFamily:"inherit",marginTop:S.gap*1.5,
-              display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              ✓ Buchung speichern
-            </button>
-          </div>
-        </div>
-
-        <div style={{height:32}}/>
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════════════════
-// MobileCatStep — Kategorie-Auswahl für Mobile-Modals (groß, mit neu anlegen)
 function MobileCatStep({csvType, catId, subId, onSelect, S, btnBase, btnCenter}) {
   const { cats, setCats, groups, setGroups } = useContext(AppCtx);
   const [catStep,  setCatStep]  = React.useState("cat");
@@ -18496,13 +18355,32 @@ function MobileNewAccOverlay({onClose, S}) {
 // MobileActionPicker — Auswahl der + Funktion im mobilen Modus
 function MobileActionPicker({onClose, onSelect}) {
   const fs = 26;
-  const actions = [
-    {id:"csv",          label:"importieren",    icon:"download",     color:T.pos,   sub:"CSV aus Banking-App"},
-    {id:"vormerken",    label:"vormerken",      icon:"calendar",     color:T.gold,  sub:"neue Buchung vormerken"},
-    {id:"wiederkehrend",label:"Wiederkehrende", icon:"repeat",       color:T.blue,  sub:"regelmäßige Buchungen"},
-    {id:"finanzierung", label:"Finanzierungen", icon:"credit-card",  color:T.txt2,  sub:"Kredit, Ratenkauf"},
-    {id:"kategorien",   label:"Kategorien & Budget", icon:"tag", color:T.blue,  sub:"Kategorien & Budgets verwalten"},
+  const [screen, setScreen] = React.useState("main");
+  const isDaten = screen==="daten";
+
+  const mainActions = [
+    {id:"daten",        label:"Daten",               icon:"database",    color:T.pos,  sub:"csv - Daten-Manager - json"},
+    {id:"vormerken",    label:"vormerken",           icon:"calendar",    color:T.gold, sub:"neue Buchung vormerken"},
+    {id:"matching",     label:"zuordnen",            icon:"git-merge",   color:T.blue, sub:"Vormerkungen zuordnen"},
+    {id:"wiederkehrend",label:"Wiederkehrende",      icon:"repeat",      color:T.blue, sub:"regelmäßige Buchungen"},
+    {id:"finanzierung", label:"Finanzierungen",      icon:"credit-card", color:T.txt2, sub:"Kredit, Ratenkauf"},
+    {id:"kategorien",   label:"Kategorien & Budget", icon:"tag",         color:T.blue, sub:"Kategorien, Budgets & Konten"},
+    {id:"einstellungen",label:"Einstellungen",       icon:"settings",    color:T.txt2, sub:"App-Einstellungen"},
+    {id:"desktop",      label:"Desktop-Modal",       icon:"monitor",     color:T.txt2, sub:"Erweitertes Erfassungsformular"},
   ];
+
+
+
+
+
+
+
+  const datenActions = [
+    {id:"csv",       label:"CSV importieren", icon:"download",    color:T.pos,  sub:"Buchungen aus Banking-App"},
+    {id:"datenmgr",  label:"Daten-Manager",   icon:"database",    color:T.pos,  sub:"Export / Import / Löschen"},
+    {id:"jsonladen", label:"JSON laden",       icon:"folder-open", color:T.blue, sub:"Backup-Datei einspielen"},
+  ];
+  const actions = isDaten ? datenActions : mainActions;
 
   // ── TERMINAL ────────────────────────────────────────────────────────────
   if(T.themeName==="terminal") {
@@ -18638,21 +18516,24 @@ function MobileActionPicker({onClose, onSelect}) {
       {/* Header */}
       <div style={{background:T.surf,borderBottom:`1px solid ${T.bd}`,
         padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
-        <button onClick={onClose}
+        <button onClick={isDaten ? ()=>setScreen("main") : onClose}
           style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt2,
             width:44,height:44,borderRadius:14,cursor:"pointer",fontSize:20,
             display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-          ✕
+          {isDaten ? Li("arrow-left",22,T.txt) : "✕"}
         </button>
         <div style={{flex:1}}>
-          <div style={{color:T.txt,fontSize:fs+2,fontWeight:700}}>Was möchtest du tun?</div>
+          <div style={{color:T.txt,fontSize:fs+2,fontWeight:700}}>
+            {isDaten ? "Daten" : "Was möchtest du tun?"}
+          </div>
+          {isDaten&&<div style={{color:T.txt2,fontSize:fs-10,marginTop:2}}>Import, Export & Verwaltung</div>}
         </div>
       </div>
 
       {/* Aktionen */}
       <div style={{flex:1,overflowY:"auto",padding:16,WebkitOverflowScrolling:"touch"}}>
         {actions.map(({id,label,icon,color,sub})=>(
-          <button key={id} onClick={()=>onSelect(id)}
+          <button key={id} onClick={()=>id==="daten" ? setScreen("daten") : onSelect(id)}
             style={{width:"100%",padding:"18px 16px",borderRadius:18,
               border:`1.5px solid ${T.bd}`,
               background:"rgba(255,255,255,0.04)",
@@ -19502,7 +19383,7 @@ function MobileWiederkehrendModal({onClose, typ="wiederkehrend"}) {
 // MobileBudgetModal — Budget setzen für iPhone
 // ══════════════════════════════════════════════════════════════════════
 // MobileKategorienModal — Kategorien & Budget kombiniert
-function MobileKategorienModal({onClose}) {
+function MobileKategorienModal({onClose, onKonten, onKategorienErweitert}) {
   const { cats, setCats, groups, setGroups, budgets, setBudgets, txs, setTxs, accounts,
     getBudgetForMonth, year, setYear, month, setMonth } = useContext(AppCtx);
   const S = {fs:26, pad:10, padL:14, radius:16, gap:14};
@@ -19665,6 +19546,18 @@ function MobileKategorienModal({onClose}) {
             border:`2px dashed ${T.blue}`,color:T.blue,marginBottom:S.gap}}>
           {Li("plus",S.fs,T.blue)} neue Kategorie
         </button>
+
+        {onKonten&&<button onClick={onKonten}
+          style={{...btnCenter,background:"rgba(255,255,255,0.04)",
+            border:`1px solid ${T.bd}`,color:T.txt2,marginBottom:S.gap}}>
+          {Li("credit-card",S.fs-4,T.txt2)} Konten verwalten
+        </button>}
+
+        {onKategorienErweitert&&<button onClick={onKategorienErweitert}
+          style={{...btnCenter,background:"rgba(255,255,255,0.04)",
+            border:`1px solid ${T.bd}`,color:T.txt2,marginBottom:S.gap}}>
+          {Li("tag",S.fs-4,T.txt2)} Erweiterte Kategorien
+        </button>}
 
         {cats.map(cat=>(
           <div key={cat.id} style={{marginBottom:S.gap*1.5}}>
@@ -19967,7 +19860,6 @@ window.FinanzApp = function FinanzApp() {
   const [newCat,        setNewCat]       = useState({name:"",type:"expense",icon:"tag",color:T.blue,subs:[]});
   const [newSubName,    setNewSubName]   = useState("");
   const [showSettings,  setShowSettings] = useState(false);
-  const [showModalTest, setShowModalTest] = useState(false);
   const [mobileMode, setMobileMode] = useState(false); // Großes Mobile-UI
   const [showMobileVormerken, setShowMobileVormerken] = useState(false);
   const [showMobileWiederkehrend, setShowMobileWiederkehrend] = useState(false);
@@ -21494,62 +21386,6 @@ Abbrechen = ${remoteName}-Stand laden`
   const getJV = (m,id,sub) => yearData[year]?.[m]?.[sub?id+"_"+sub:id] ?? "";
 
   // ── Jahresplan aus Buchungen rekonstruieren ──────────────────────────────
-  const reconstructYearData = () => {
-    const years = [...new Set(txs.filter(t=>!t.pending).map(t=>new Date(t.date).getFullYear()))];
-    if(years.length===0) return;
-
-    setYearData(prev => {
-      const next = JSON.parse(JSON.stringify(prev));
-
-      years.forEach(y => {
-        if(!next[y]) { next[y]={}; for(let m=0;m<12;m++) next[y][m]={}; }
-        for(let m=0;m<12;m++) {
-          if(!next[y][m]) next[y][m]={};
-
-          // ── 1. Gesamteinnahmen & -ausgaben aus allen Buchungen (unabhängig von Kategorien) ──
-          const allMonthTxs = txs.filter(tx => {
-            if(tx.pending) return false;
-            if(tx._linkedTo) return false;
-            const d = new Date(tx.date);
-            return d.getFullYear()===y && d.getMonth()===m;
-          });
-
-          const calcTotals = (txList) => {
-            let income=0, expense=0;
-            txList.forEach(tx => {
-              const type = tx._csvType || (tx.totalAmount>=0?"income":"expense");
-              if(type==="income") income += Math.abs(tx.totalAmount||0);
-              else expense += Math.abs(tx.totalAmount||0);
-            });
-            return {income, expense};
-          };
-
-          const midTxs  = allMonthTxs.filter(tx=>new Date(tx.date).getDate()<=14);
-          const {income:incM, expense:expM} = calcTotals(midTxs);
-          const {income:incE, expense:expE} = calcTotals(allMonthTxs);
-
-          if(incM>0 || expM>0) {
-            next[y][m]["ein_head_M"] = String(incM.toFixed(2));
-            next[y][m]["aus_head_M"] = String(expM.toFixed(2));
-            next[y][m]["giro_diff_M"] = String((incM-expM).toFixed(2));
-          }
-          if(incE>0 || expE>0) {
-            next[y][m]["ein_head_E"] = String(incE.toFixed(2));
-            next[y][m]["aus_head_E"] = String(expE.toFixed(2));
-            next[y][m]["ein_head_D"] = String(incE.toFixed(2));
-            next[y][m]["aus_head_D"] = String(expE.toFixed(2));
-            next[y][m]["giro_diff_E"] = String((incE-expE).toFixed(2));
-            next[y][m]["giro_diff_D"] = String((incE-expE).toFixed(2));
-          }
-
-          // ── 2. Kategorisierte Unterkategorien ──
-          // NICHT in yearData schreiben — diese werden live aus actualSums berechnet
-          // (verhindert falsche "manuell überschrieben"-Markierungen)
-        }
-      });
-      return next;
-    });
-  };
   const setJV = (m,id,sub,val) => {
     const k = sub?id+"_"+sub:id;
     setYearData(p=>({...p,[year]:{...p[year],[m]:{...p[year][m],[k]:val}}}));
@@ -21932,7 +21768,7 @@ Abbrechen = ${remoteName}-Stand laden`
     col3Name, setCol3Name, modal, setModal, mgmtCat, setMgmtCat,
     editTx, setEditTx, newTx, setNewTx, newCat, setNewCat,
     newSubName, setNewSubName, exportModal, setExportModal,
-    getCat, getSub, txType, getActualSum, getBudgetForMonth, getTotalIncome, getTotalExpense, getKumulierterSaldo, getPrognoseSaldo, getPrognoseSaldoDetail, getPendingSum, pendingItemsFor, reconstructYearData,
+    getCat, getSub, txType, getActualSum, getBudgetForMonth, getTotalIncome, getTotalExpense, getKumulierterSaldo, getPrognoseSaldo, getPrognoseSaldoDetail, getPendingSum, pendingItemsFor, 
     getJV, setJV, getMV, setMV, getAcc, openEdit, saveEdit, deleteFromEdit,
     updEditSplit, moveCat, moveSub, updateSub, updateCat,
     renameCat, renameSub, deleteCat, deleteSub, saveNewCat, saveNewSub,
@@ -21963,6 +21799,7 @@ Abbrechen = ${remoteName}-Stand laden`
     handedness, setHandedness,
     handedness, setHandedness,
     cfActive, cfSave, cfLoad, cfStatus, setCfStatus, cfUrl, cfSecret, setCfUrl, setCfSecret,
+    syncStatus, setSyncStatus, syncError,
     cfSaveOnClose, setCfSaveOnClose,
     dashDrillOpen, setDashDrillOpen,
     noBorders, setNoBorders,
@@ -21980,14 +21817,11 @@ Abbrechen = ${remoteName}-Stand laden`
     {id:"monat",     label:"Monat",    icon:"calendar"},
     {id:"buchungen", label:"Buchungen",icon:"list"},
     {id:"jahr",      label:"Jahr",     icon:"calendar-range"},
-    {id:"mehr",      label:"Mehr",     icon:"grid"},
   ];
   const activeNavTab =
     mainTab==="buchungen" ? "buchungen" :
     mainTab==="erfassen"&&subTab==="monat" ? "monat" :
     mainTab==="erfassen"&&subTab==="jahr"  ? "jahr"  :
-    mainTab==="struktur"                   ? "mehr"  :
-    mainTab==="mehr"                       ? "mehr"  :
     "home";
   const anyMobileModalOpen = showMobileVormerken||showMobileWiederkehrend||
     showMobilePicker||showMobileKategorien||showMobileBudget||
@@ -22034,46 +21868,6 @@ Abbrechen = ${remoteName}-Stand laden`
         {/* Rechte Seite: Theme-Dropdown | Monatspicker | Cloud */}
         <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
 
-          {/* Mobiler Modus Toggle */}
-          <button onClick={()=>setMobileMode(v=>!v)}
-            title="mobiler Modus"
-            style={{width:30,height:26,borderRadius:8,border:`1px solid ${mobileMode?T.blue:T.bd}`,
-              background:mobileMode?`${T.blue}22`:"rgba(255,255,255,0.06)",
-              cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {Li("smartphone",14,mobileMode?T.blue:T.txt2)}
-          </button>
-
-          {/* ── Design-Schnell-Toggle (Brutalist / Terminal / Swiss / Zurück) ── */}
-          {(()=>{
-            const DESIGN_THEMES=["brutalist","terminal","swiss","clean"];
-            const isDesign=DESIGN_THEMES.includes(themeName);
-            const LABELS={brutalist:"▓ BRUT",terminal:"█ TERM",swiss:"— SWISS",clean:"○ CLEAN"};
-            const COLORS={brutalist:{bg:"#FFEC3E",txt:"#000000",bd:"#000000"},terminal:{bg:"#0D0D0D",txt:"#00FF41",bd:"#00FF41"},swiss:{bg:"#FFFFFF",txt:"#111111",bd:"#111111"},clean:{bg:"#000000",txt:"#FFFFFF",bd:"#000000"}};
-            const c=isDesign?COLORS[themeName]:{bg:"transparent",txt:T.txt2,bd:T.bd};
-            return (
-              <button
-                onClick={()=>{
-                  if(isDesign){
-                    const prev=localStorage.getItem("mbt_prev_theme")||"dark";
-                    setThemeName(prev);
-                    localStorage.setItem("mbt_theme",prev);
-                  } else {
-                    localStorage.setItem("mbt_prev_theme",themeName);
-                    setThemeName("brutalist");
-                    localStorage.setItem("mbt_theme","brutalist");
-                  }
-                }}
-                title={isDesign?"Zurück zum vorherigen Theme":"Design-Themes"}
-                style={{height:26,borderRadius:4,border:`1.5px solid ${c.bd}`,
-                  background:c.bg,cursor:"pointer",display:"flex",alignItems:"center",
-                  justifyContent:"center",padding:"0 8px",flexShrink:0}}>
-                <span style={{fontSize:11,fontWeight:700,letterSpacing:0.5,color:c.txt,fontFamily:"monospace",whiteSpace:"nowrap"}}>
-                  {isDesign?LABELS[themeName]:"○ DESIGN"}
-                </span>
-              </button>
-            );
-          })()}
-
           {/* ── Theme-Dropdown ── */}
           <ThemeDropdown themeName={themeName} setThemeName={setThemeName}/>
 
@@ -22093,62 +21887,9 @@ Abbrechen = ${remoteName}-Stand laden`
             </div>
           )}
 
-          {/* Cloud-Sync Button mit Dropdown */}
-          <div style={{position:"relative"}}>
-            <button onClick={()=>setTopMenu(m=>m==="cloud"?null:"cloud")}
-              title={cfActive?"Cloud-Menü öffnen":"Kein Cloud-Backend aktiv"}
-              style={{width:34,height:34,borderRadius:10,border:"none",cursor:"pointer",
-                background:syncStatus==="error"?"rgba(255,0,0,0.15)":syncStatus==="saving"?"rgba(245,166,35,0.15)":syncStatus==="saved"?"rgba(170,204,0,0.15)":cfActive&&cfStatus==="ok"?"rgba(170,204,0,0.08)":"rgba(255,255,255,0.06)",
-                display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
-              {Li(syncStatus==="saving"?"loader":syncStatus==="saved"?"check-circle":syncStatus==="error"?"alert-circle":cfActive?"cloud":"cloud-off",17,
-                syncStatus==="error"?T.err:syncStatus==="saving"?T.warn:syncStatus==="saved"?T.pos:cfActive&&cfStatus==="ok"?T.pos:T.txt2)}
-              {/* Oranger Punkt = ungespeicherte Änderungen */}
-              {cfActive&&isDirty&&syncStatus==="idle"&&(
-                <div style={{position:"absolute",top:5,right:5,width:7,height:7,
-                  borderRadius:"50%",background:T.gold,
-                  boxShadow:`0 0 4px ${T.gold}`}}/>
-              )}
-              {syncStatus==="saving"&&(
-                <div style={{position:"absolute",top:4,right:4,width:6,height:6,
-                  borderRadius:"50%",background:T.warn,animation:"pulse 1s infinite"}}/>
-              )}
-            </button>
-            {topMenu==="cloud"&&(
-              <div onClick={e=>e.stopPropagation()}
-                style={{position:"absolute",top:38,right:0,zIndex:300,
-                  background:T.surf2,borderRadius:12,border:`1px solid ${T.bd}`,
-                  boxShadow:"0 8px 24px rgba(0,0,0,0.4)",minWidth:180,overflow:"hidden"}}>
-                <button onClick={()=>{setTopMenu(null); cx.saveConfig?.();}}
-                  style={{width:"100%",padding:"11px 14px",background:"none",border:"none",
-                    color:T.txt,fontSize:13,cursor:"pointer",fontFamily:"inherit",
-                    display:"flex",alignItems:"center",gap:10,
-                    borderBottom:`1px solid ${T.bd}`}}>
-                  {Li("upload-cloud",14,T.gold)}
-                  <span>In Cloudflare speichern</span>
-                </button>
-                <button onClick={()=>{setTopMenu(null); cx.loadFromCloud?.();}}
-                  style={{width:"100%",padding:"11px 14px",background:"none",border:"none",
-                    color:T.txt,fontSize:13,cursor:"pointer",fontFamily:"inherit",
-                    display:"flex",alignItems:"center",gap:10}}>
-                  {Li("download-cloud",14,T.blue)}
-                  <span>Von Cloudflare laden</span>
-                </button>
-              </div>
-            )}
-          </div>
           </div>
         </div>
       </div>
-      {/* Sync-Fehler Banner */}
-      {(syncStatus==="error"||syncStatus==="error_shown")&&syncError&&(
-        <div style={{background:T.err,color:"#fff",fontSize:10,padding:"5px 14px",
-          display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-          {Li("alert-circle",12,"#fff")}
-          <span style={{flex:1,fontFamily:"monospace",wordBreak:"break-all",fontSize:9}}>{syncError}</span>
-          <button onClick={()=>setSyncStatus("idle")}
-            style={{background:"none",border:"none",color:"#fff",cursor:"pointer"}}>{Li("x",12)}</button>
-        </div>
-      )}
 
       {/* Global edit popup */}
       <ErrorBoundary name="EditPopup"><EditPopup/></ErrorBoundary>
@@ -22164,173 +21905,6 @@ Abbrechen = ${remoteName}-Stand laden`
         {mainTab==="struktur"                       &&<ManagementScreen activeTab={activeStructurTab}/>}
 
         {/* ── MEHR-SCREEN (inline) ── */}
-        {mainTab==="mehr"&&(
-          <div style={{flex:1,overflowY:"auto",padding:"10px 12px 32px"}}>
-            {/* Aktionen */}
-            <div style={{color:T.txt2,fontSize:10,fontWeight:700,letterSpacing:0.8,
-              textTransform:"uppercase",marginBottom:6,marginTop:2}}>
-              Aktionen
-            </div>
-            {/* Mobile Modus Toggle */}
-            <div style={{display:"flex",alignItems:"center",gap:10,
-              padding:"11px 12px",borderRadius:13,
-              border:`1px solid ${mobileMode?T.blue:T.bd}`,
-              background:mobileMode?"rgba(74,159,212,0.08)":"rgba(255,255,255,0.04)",
-              marginBottom:10}}>
-              {Li("smartphone",18,mobileMode?T.blue:T.txt2)}
-              <div style={{flex:1}}>
-                <div style={{color:mobileMode?T.blue:T.txt,fontSize:14,fontWeight:700}}>
-                  Mobiler Modus
-                </div>
-                <div style={{color:T.txt2,fontSize:11}}>Große Schrift für iPhone</div>
-              </div>
-              <div onClick={()=>setMobileMode(v=>!v)}
-                style={{width:44,height:26,borderRadius:13,cursor:"pointer",
-                  background:mobileMode?T.blue:"rgba(255,255,255,0.12)",
-                  position:"relative",transition:"background 0.2s",flexShrink:0}}>
-                <div style={{position:"absolute",top:3,
-                  left:mobileMode?21:3,width:20,height:20,borderRadius:"50%",
-                  background:"#fff",transition:"left 0.2s",
-                  boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
-              </div>
-            </div>
-            <button onClick={()=>setShowModalTest(true)}
-              style={{width:"100%",padding:"11px 12px",borderRadius:13,
-                border:`2px dashed ${T.gold}`,
-                background:"rgba(245,166,35,0.06)",
-                display:"flex",alignItems:"center",gap:10,marginBottom:10,
-                cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>
-              {Li("smartphone",18,T.gold)}
-              <div>
-                <div style={{color:T.gold,fontSize:14,fontWeight:700}}>Mobile UI testen</div>
-                <div style={{color:T.txt2,fontSize:11}}>Schriftgrössen-Vergleich</div>
-              </div>
-            </button>
-            {[
-              {label:"Neue Vormerkung / Wiederkehrend", icon:"calendar-plus", color:T.gold,
-               badge: txs.filter(t=>t.pending&&!t._linkedTo&&!t._budgetSubId).length||null,
-               action:()=>{setShowVormHub(true);}},
-              {label:"CSV importieren",                 icon:"upload-cloud",  color:T.pos,
-               action:()=>setShowCsv(true)},
-              {label:"wiederkehrende erkennen",         icon:"repeat",        color:T.blue,
-               action:()=>setShowRecurring(true)},
-              {label:"buchungen kategorisieren",         icon:"tag",           color:T.gold,
-               action:()=>setShowKategorisieren(true)},
-              {label:"vormerkungen zuordnen",           icon:"git-merge",     color:T.blue,
-               action:()=>setShowMatching(true)},
-            ].map(({label,icon,color,action,badge})=>(
-              <button key={label} onClick={action}
-                style={{width:"100%",padding:"11px 12px",borderRadius:13,
-                  border:`1px solid ${T.bd}`,
-                  background:"rgba(255,255,255,0.04)",
-                  display:"flex",alignItems:"center",gap:10,marginBottom:5,
-                  cursor:"pointer",fontFamily:"inherit",textAlign:"left",
-                  WebkitTapHighlightColor:"transparent"}}>
-                <div style={{width:32,height:32,borderRadius:9,flexShrink:0,
-                  background:color+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {Li(icon,17,color)}
-                </div>
-                <span style={{color:T.txt,fontSize:14,fontWeight:600,flex:1}}>{label}</span>
-                {badge&&<span style={{background:T.gold,color:T.on_accent,fontSize:10,
-                  fontWeight:800,borderRadius:10,padding:"1px 7px",flexShrink:0}}>
-                  {badge}
-                </span>}
-                {Li("chevron-right",14,T.txt2)}
-              </button>
-            ))}
-
-            {/* Verwalten */}
-            <div style={{color:T.txt2,fontSize:10,fontWeight:700,letterSpacing:0.8,
-              textTransform:"uppercase",marginBottom:8,marginTop:16}}>
-              Verwalten
-            </div>
-            {[
-              {label:"Kategorien & Gruppen", icon:"tag",         color:T.gold,
-               action:()=>{setMainTab("struktur");setActiveStructurTab("kategorien");}},
-              {label:"Konten",               icon:"credit-card", color:T.blue,
-               action:()=>{setMainTab("struktur");setActiveStructurTab("konten");}},
-              {label:"Einstellungen",        icon:"settings",    color:T.txt2,
-               action:()=>{setMainTab("struktur");setActiveStructurTab("einstellungen");}},
-            ].map(({label,icon,color,action,badge})=>(
-              <button key={label} onClick={action}
-                style={{width:"100%",padding:"11px 12px",borderRadius:13,
-                  border:`1px solid ${T.bd}`,
-                  background:"rgba(255,255,255,0.04)",
-                  display:"flex",alignItems:"center",gap:10,marginBottom:5,
-                  cursor:"pointer",fontFamily:"inherit",textAlign:"left",
-                  WebkitTapHighlightColor:"transparent"}}>
-                <div style={{width:32,height:32,borderRadius:9,flexShrink:0,
-                  background:color+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {Li(icon,17,color)}
-                </div>
-                <span style={{color:T.txt,fontSize:14,fontWeight:600,flex:1}}>{label}</span>
-                {badge&&<span style={{background:T.gold,color:T.on_accent,fontSize:10,
-                  fontWeight:800,borderRadius:10,padding:"1px 7px",flexShrink:0}}>
-                  {badge}
-                </span>}
-                {Li("chevron-right",14,T.txt2)}
-              </button>
-            ))}
-
-            {/* Daten */}
-            <div style={{color:T.txt2,fontSize:10,fontWeight:700,letterSpacing:0.8,
-              textTransform:"uppercase",marginBottom:8,marginTop:16}}>
-              Daten
-            </div>
-            {[
-              {label:"Daten-Manager",  icon:"database",     color:T.pos,
-               action:()=>setShowDataMgr(true)},
-              {label:"JSON laden",     icon:"folder-open",  color:T.blue,
-               action:()=>setShowJsonImport(true)},
-            ].map(({label,icon,color,action,badge})=>(
-              <button key={label} onClick={action}
-                style={{width:"100%",padding:"11px 12px",borderRadius:13,
-                  border:`1px solid ${T.bd}`,
-                  background:"rgba(255,255,255,0.04)",
-                  display:"flex",alignItems:"center",gap:10,marginBottom:5,
-                  cursor:"pointer",fontFamily:"inherit",textAlign:"left",
-                  WebkitTapHighlightColor:"transparent"}}>
-                <div style={{width:32,height:32,borderRadius:9,flexShrink:0,
-                  background:color+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {Li(icon,17,color)}
-                </div>
-                <span style={{color:T.txt,fontSize:14,fontWeight:600,flex:1}}>{label}</span>
-                {badge&&<span style={{background:T.gold,color:T.on_accent,fontSize:10,
-                  fontWeight:800,borderRadius:10,padding:"1px 7px",flexShrink:0}}>
-                  {badge}
-                </span>}
-                {Li("chevron-right",14,T.txt2)}
-              </button>
-            ))}
-
-            {/* Sync-Status */}
-            <div style={{marginTop:16,padding:"10px 14px",borderRadius:12,
-              border:`1px solid ${T.bd}`,background:"rgba(255,255,255,0.03)",
-              display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:8,height:8,borderRadius:"50%",flexShrink:0,
-                background:
-                  syncStatus==="error"?T.err:
-                  syncStatus==="saving"?T.warn:
-                  syncStatus==="saved"?T.pos:
-                  cfActive&&cfStatus==="ok"?T.pos:"rgba(128,128,128,0.4)"}}/>
-              <span style={{flex:1,color:T.txt2,fontSize:11}}>
-                {syncStatus==="error"?"Sync-Fehler: "+syncError:
-                 syncStatus==="saving"?"Synchronisiert…":
-                 syncStatus==="saved"?"Zuletzt gespeichert ✓":
-                 cfActive&&cfStatus==="ok"?"Cloudflare aktiv":
-                 "nur lokal gespeichert"}
-              </span>
-              {cfActive&&(
-                <button onClick={()=>cx.saveConfig?.()}
-                  style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${T.pos}44`,
-                    background:`${T.pos}10`,color:T.pos,fontSize:11,fontWeight:700,
-                    cursor:"pointer",fontFamily:"inherit"}}>
-                  {Li("cloud-upload",11,T.pos)} Jetzt
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── BOTTOM NAV BAR — 5 Tabs + + Button ── */}
@@ -22343,23 +21917,21 @@ Abbrechen = ${remoteName}-Stand laden`
             pending: false, repeatMonths: 1, accountId: "acc-giro",
             splits:[{id:uid(),catId:"",subId:"",amount:""}],
           });
-          setModal("addTx");
-          if(mobileMode) { setModal(null); setShowMobilePicker(true); }
+          setShowMobilePicker(true);
         };
         const onTap = (t) => {
           if(t.id==="home")      { setMainTab("erfassen"); setSubTab("dashboard"); }
           else if(t.id==="monat")     { setMainTab("erfassen"); setSubTab("monat"); }
           else if(t.id==="buchungen") { setMainTab("buchungen"); }
           else if(t.id==="jahr")      { setMainTab("erfassen"); setSubTab("jahr"); }
-          else if(t.id==="mehr")      { setMainTab("mehr"); }
         };
 
         // ── TERMINAL NAV ──────────────────────────────────────────────────
         if(T.themeName==="terminal") {
           const G = T.pos; const D = T.txt2;
           const items = (handedness==="left")
-            ? [NAV_TABS[0], "plus", NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], NAV_TABS[4]]
-            : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], "plus", NAV_TABS[4]];
+            ? [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], "plus", NAV_TABS[3]]
+            : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], "plus", NAV_TABS[3]];
           return (
             <div className="nav-bottom" style={{
               background:"#0D0D0D",
@@ -22414,8 +21986,8 @@ Abbrechen = ${remoteName}-Stand laden`
         if(T.themeName==="brutalist") {
           const BK="#000", BY="#FFEC3E";
           const items = (handedness==="left")
-            ? [NAV_TABS[0], "plus", NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], NAV_TABS[4]]
-            : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], "plus", NAV_TABS[4]];
+            ? [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], "plus", NAV_TABS[3]]
+            : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], "plus", NAV_TABS[3]];
           return (
             <div className="nav-bottom" style={{
               background:BY,
@@ -22502,8 +22074,8 @@ Abbrechen = ${remoteName}-Stand laden`
         // Linkshänder:  Home [+] Monat Buchungen Jahr Mehr
         const isLeft = handedness==="left";
         const items = isLeft
-          ? [NAV_TABS[0], "plus", NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], NAV_TABS[4]]
-          : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], NAV_TABS[3], "plus", NAV_TABS[4]];
+          ? [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], "plus", NAV_TABS[3]]
+          : [NAV_TABS[0], NAV_TABS[1], NAV_TABS[2], "plus", NAV_TABS[3]];
 
         return (
           <div className="nav-bottom" style={{
@@ -22516,21 +22088,29 @@ Abbrechen = ${remoteName}-Stand laden`
       })()}
 
       {/* ── MOBILE UI TEST ── */}
-      {showModalTest&&<ModalTestScreen onClose={()=>setShowModalTest(false)}/>}
       {showMobileVormerken&&<MobileVormerkenModal onClose={()=>setShowMobileVormerken(false)}/>}
       {showMobileWiederkehrend&&<MobileWiederkehrendModal typ={showMobileWiederkehrendTyp} onClose={()=>setShowMobileWiederkehrend(false)}/>}
       {showMobileBudget&&<MobileBudgetModal onClose={()=>setShowMobileBudget(false)}/>}
-      {showMobileKategorien&&<MobileKategorienModal onClose={()=>setShowMobileKategorien(false)}/>}
+      {showMobileKategorien&&<MobileKategorienModal
+        onClose={()=>setShowMobileKategorien(false)}
+        onKonten={()=>{setShowMobileKategorien(false);setMainTab("struktur");setActiveStructurTab("konten");}}
+        onKategorienErweitert={()=>{setShowMobileKategorien(false);setMainTab("struktur");setActiveStructurTab("kategorien");}}/>}
       {showMobilePicker&&<MobileActionPicker
         onClose={()=>setShowMobilePicker(false)}
         onSelect={(action)=>{
           setShowMobilePicker(false);
-          if(action==="vormerken") setShowMobileVormerken(true);
+
+          if(action==="addTx") setShowMobileVormerken(true);
+          else if(action==="desktop") setModal("addTx");
+          else if(action==="vormerken") setShowMobileVormerken(true);
+          else if(action==="matching") setShowMatching(true);
           else if(action==="csv") setShowCsv(true);
+          else if(action==="datenmgr") setShowDataMgr(true);
+          else if(action==="jsonladen") setShowJsonImport(true);
           else if(action==="wiederkehrend") { setShowMobileWiederkehrendTyp("wiederkehrend"); setShowMobileWiederkehrend(true); }
           else if(action==="finanzierung")  { setShowMobileWiederkehrendTyp("finanzierung");  setShowMobileWiederkehrend(true); }
           else if(action==="kategorien"||action==="budget") setShowMobileKategorien(true);
-          else setModal("addTx");
+          else if(action==="einstellungen") { setMainTab("struktur"); setActiveStructurTab("einstellungen"); }
         }}
       />}
 
