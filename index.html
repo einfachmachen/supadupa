@@ -13983,34 +13983,32 @@ function ChartBlock({catSums, maxSum, budgets, getBudgetForMonth, year, month}) 
 
 function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month}) {
   const [chartOpen, setChartOpen] = React.useState(false);
-  const [view, setView] = React.useState("bar"); // "bar" | "pie"
-
-  // Tortendiagramm berechnen
+  const [view, setView] = React.useState("bar");
+  const [hovered, setHovered] = React.useState(null);
   const total = catSums.reduce((s,c)=>s+c.sum, 0);
-  const COLORS = ["#4a9fd4","#e8a838","#e05c5c","#5cb85c","#9b59b6","#1abc9c","#e67e22","#3498db","#e91e63","#00bcd4"];
+  const COLORS = ["#4a9fd4","#e8a838","#e05c5c","#5cb85c","#9b59b6","#1abc9c","#e67e22","#3498db","#e91e63","#00bcd4","#f39c12","#2ecc71"];
   const pie = React.useMemo(()=>{
-    let angle = -Math.PI/2; // Start oben
+    let angle = -Math.PI/2;
     return catSums.map((c,i)=>{
       const frac = c.sum / total;
       const start = angle;
       angle += frac * 2 * Math.PI;
       const end = angle;
       const large = (end-start) > Math.PI ? 1 : 0;
-      const r = 80;
-      const cx = 100, cy = 100;
-      const x1 = cx + r*Math.cos(start), y1 = cy + r*Math.sin(start);
-      const x2 = cx + r*Math.cos(end),   y2 = cy + r*Math.sin(end);
-      // Mittelpunkt des Segments für Label
+      const R = 150, cx = 160, cy = 160;
+      const x1 = cx + R*Math.cos(start), y1 = cy + R*Math.sin(start);
+      const x2 = cx + R*Math.cos(end),   y2 = cy + R*Math.sin(end);
       const mid = start + (end-start)/2;
-      const lr = 58;
-      const lx = cx + lr*Math.cos(mid), ly = cy + lr*Math.sin(mid);
-      return {cat:c, frac, path:`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`,
-        color: c.color || COLORS[i%COLORS.length], lx, ly, pct:Math.round(frac*100)};
+      const pct = Math.round(frac*100);
+      const labelR = pct >= 8 ? 100 : 128;
+      const lx = cx + labelR*Math.cos(mid);
+      const ly = cy + labelR*Math.sin(mid);
+      return {cat:c, frac, pct, color: c.color || COLORS[i%COLORS.length],
+        path:`M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} Z`, lx, ly};
     });
   }, [catSums, total]);
-
   return (
-    <div style={{margin:"0 10px 4px",borderRadius:12,overflow:"hidden",border:`1px solid ${T.bd}`}}>
+    <div style={{margin:"0 0 4px",borderRadius:12,overflow:"hidden",border:`1px solid ${T.bd}`}}>
       <div onClick={()=>setChartOpen(v=>!v)}
         style={{display:"flex",alignItems:"center",gap:6,padding:"7px 10px",
           cursor:"pointer",background:"rgba(255,255,255,0.03)"}}>
@@ -14019,7 +14017,6 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
         {Li(chartOpen?"chevron-up":"chevron-down",12,T.txt2)}
       </div>
       {chartOpen&&<>
-        {/* Toggle Bar/Pie */}
         <div style={{display:"flex",gap:6,padding:"6px 10px 2px",borderTop:`1px solid ${T.bd}`}}>
           {[["bar","bar-chart-2","Balken"],["pie","pie-chart","Torte"]].map(([v,icon,label])=>(
             <button key={v} onClick={()=>setView(v)}
@@ -14031,48 +14028,67 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
             </button>
           ))}
         </div>
-
-        {/* Balken-Ansicht */}
         {view==="bar"&&<ChartBlock catSums={catSums} maxSum={maxSum} budgets={budgets} getBudgetForMonth={getBudgetForMonth} year={year} month={month}/>}
-
-        {/* Torten-Ansicht */}
         {view==="pie"&&(
-          <div style={{padding:"10px 10px 14px"}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-              {/* SVG Torte */}
-              <svg viewBox="0 0 200 200" style={{width:160,height:160,flexShrink:0}}>
-                {pie.map((seg,i)=>(
-                  <path key={i} d={seg.path} fill={seg.color} opacity={0.85}
-                    stroke={T.bg} strokeWidth={1.5}/>
-                ))}
-                {pie.map((seg,i)=>seg.pct>=5&&(
-                  <text key={"t"+i} x={seg.lx} y={seg.ly}
-                    textAnchor="middle" dominantBaseline="middle"
-                    fill="#fff" fontSize={9} fontWeight="700">
-                    {seg.pct}%
-                  </text>
-                ))}
-                {/* Mittelloch für Donut-Effekt */}
-                <circle cx={100} cy={100} r={38} fill={T.surf2}/>
-                <text x={100} y={97} textAnchor="middle" fill={T.txt2} fontSize={9}>Gesamt</text>
-                <text x={100} y={109} textAnchor="middle" fill={T.txt} fontSize={10} fontWeight="700">
-                  {fmt(total)}
-                </text>
-              </svg>
-
-              {/* Legende */}
-              <div style={{flex:1,minWidth:100}}>
-                {pie.map((seg,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:6,
-                    marginBottom:4,fontSize:11}}>
-                    <div style={{width:10,height:10,borderRadius:3,
-                      background:seg.color,flexShrink:0}}/>
-                    <span style={{color:T.txt,flex:1,overflow:"hidden",
-                      textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{seg.cat.name}</span>
-                    <span style={{color:T.txt2,flexShrink:0}}>{fmt(seg.cat.sum)}</span>
-                  </div>
-                ))}
-              </div>
+          <div style={{padding:"0 0 8px"}}>
+            <svg viewBox="0 0 320 320" style={{width:"100%",display:"block"}}
+              onMouseLeave={()=>setHovered(null)}>
+              {pie.map((seg,i)=>(
+                <path key={i} d={seg.path} fill={seg.color}
+                  opacity={hovered===null||hovered===i ? 0.88 : 0.35}
+                  stroke={T.bg} strokeWidth={2}
+                  style={{cursor:"pointer",transition:"opacity 0.15s"}}
+                  onMouseEnter={()=>setHovered(i)}
+                  onTouchStart={()=>setHovered(hovered===i?null:i)}/>
+              ))}
+              <circle cx={160} cy={160} r={62} fill={T.surf2||T.surf}/>
+              {hovered===null ? (<>
+                <text x={160} y={153} textAnchor="middle" fill={T.txt2} fontSize={10}>Gesamt</text>
+                <text x={160} y={169} textAnchor="middle" fill={T.txt} fontSize={13} fontWeight="800">{fmt(total)}</text>
+              </>) : (<>
+                <text x={160} y={149} textAnchor="middle" fill={pie[hovered]?.color} fontSize={9} fontWeight="700">{pie[hovered]?.cat.name}</text>
+                <text x={160} y={164} textAnchor="middle" fill={T.txt} fontSize={13} fontWeight="800">{fmt(pie[hovered]?.cat.sum)}</text>
+                <text x={160} y={177} textAnchor="middle" fill={T.txt2} fontSize={10}>{pie[hovered]?.pct}%</text>
+              </>)}
+              {pie.map((seg,i)=>{
+                if(seg.pct < 4) return null;
+                const isHov = hovered===i;
+                if(seg.pct >= 8) return (
+                  <g key={"l"+i} style={{pointerEvents:"none"}}>
+                    <text x={seg.lx} y={seg.ly-6} textAnchor="middle"
+                      fill="#fff" fontSize={seg.pct>=15?10:8.5} fontWeight="700"
+                      opacity={hovered===null||isHov?1:0.5}>
+                      {seg.cat.name.length>10 ? seg.cat.name.slice(0,9)+"\u2026" : seg.cat.name}
+                    </text>
+                    <text x={seg.lx} y={seg.ly+7} textAnchor="middle"
+                      fill="#fff" fontSize={8} opacity={hovered===null||isHov?0.85:0.35}>
+                      {seg.pct}%
+                    </text>
+                  </g>
+                );
+                return (
+                  <g key={"l"+i} style={{pointerEvents:"none"}}>
+                    <text x={seg.lx} y={seg.ly} textAnchor="middle"
+                      fill={seg.color} fontSize={8} fontWeight="700"
+                      opacity={hovered===null||isHov?1:0.5}>{seg.pct}%</text>
+                  </g>
+                );
+              })}
+            </svg>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",
+              padding:"0 12px 4px",justifyContent:"center"}}>
+              {pie.map((seg,i)=>(
+                <div key={i}
+                  onMouseEnter={()=>setHovered(i)}
+                  onMouseLeave={()=>setHovered(null)}
+                  onTouchStart={()=>setHovered(hovered===i?null:i)}
+                  style={{display:"flex",alignItems:"center",gap:5,cursor:"pointer",
+                    opacity:hovered===null||hovered===i?1:0.45,transition:"opacity 0.15s"}}>
+                  <div style={{width:8,height:8,borderRadius:2,background:seg.color,flexShrink:0}}/>
+                  <span style={{color:T.txt,fontSize:10,fontWeight:600}}>{seg.cat.name}</span>
+                  <span style={{color:T.txt2,fontSize:10}}>{fmt(seg.cat.sum)}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -14080,8 +14096,6 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
     </div>
   );
 }
-
-// ── WerkzeugeSection ─────────────────────────────────────────────────
 function WerkzeugeSection() {
   const [open, setOpen] = React.useState(false);
   return (
