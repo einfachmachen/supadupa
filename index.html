@@ -14004,7 +14004,7 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
       const lx = cx + labelR*Math.cos(mid);
       const ly = cy + labelR*Math.sin(mid);
       return {cat:c, frac, pct, color: c.color || COLORS[i%COLORS.length],
-        path:`M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} Z`, lx, ly};
+        path:`M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} Z`, lx, ly, mid};
     });
   }, [catSums, total]);
   return (
@@ -14053,43 +14053,38 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
               {pie.map((seg,i)=>{
                 if(seg.pct < 4) return null;
                 const isHov = hovered===i;
+                const op = hovered===null||isHov ? 1 : 0.4;
                 if(seg.pct >= 8) return (
                   <g key={"l"+i} style={{pointerEvents:"none"}}>
-                    <text x={seg.lx} y={seg.ly-6} textAnchor="middle"
-                      fill="#fff" fontSize={seg.pct>=15?10:8.5} fontWeight="700"
-                      opacity={hovered===null||isHov?1:0.5}>
+                    <text x={seg.lx} y={seg.ly-10} textAnchor="middle"
+                      fill="#fff" fontSize={seg.pct>=15?10:8.5} fontWeight="700" opacity={op}>
                       {seg.cat.name.length>10 ? seg.cat.name.slice(0,9)+"\u2026" : seg.cat.name}
                     </text>
-                    <text x={seg.lx} y={seg.ly+7} textAnchor="middle"
-                      fill="#fff" fontSize={8} opacity={hovered===null||isHov?0.85:0.35}>
+                    <text x={seg.lx} y={seg.ly+3} textAnchor="middle"
+                      fill="#fff" fontSize={seg.pct>=15?9.5:8} fontWeight="600" opacity={op*0.95}>
+                      {fmt(seg.cat.sum)}
+                    </text>
+                    <text x={seg.lx} y={seg.ly+15} textAnchor="middle"
+                      fill="#fff" fontSize={7.5} opacity={op*0.75}>
                       {seg.pct}%
                     </text>
                   </g>
                 );
+                const deg = seg.mid * 180/Math.PI;
+                const flip = deg > 90 && deg < 270;
                 return (
-                  <g key={"l"+i} style={{pointerEvents:"none"}}>
-                    <text x={seg.lx} y={seg.ly} textAnchor="middle"
-                      fill={seg.color} fontSize={8} fontWeight="700"
-                      opacity={hovered===null||isHov?1:0.5}>{seg.pct}%</text>
+                  <g key={"l"+i} style={{pointerEvents:"none"}}
+                    transform={`rotate(${deg},160,160)`}>
+                    <text x={160} y={160-120}
+                      textAnchor="middle"
+                      fill="#fff" fontSize={7.5} fontWeight="600" opacity={op}
+                      transform={flip ? `rotate(180,160,${160-120})` : ""}>
+                      {fmt(seg.cat.sum)}
+                    </text>
                   </g>
                 );
               })}
             </svg>
-            <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",
-              padding:"0 12px 4px",justifyContent:"center"}}>
-              {pie.map((seg,i)=>(
-                <div key={i}
-                  onMouseEnter={()=>setHovered(i)}
-                  onMouseLeave={()=>setHovered(null)}
-                  onTouchStart={()=>setHovered(hovered===i?null:i)}
-                  style={{display:"flex",alignItems:"center",gap:5,cursor:"pointer",
-                    opacity:hovered===null||hovered===i?1:0.45,transition:"opacity 0.15s"}}>
-                  <div style={{width:8,height:8,borderRadius:2,background:seg.color,flexShrink:0}}/>
-                  <span style={{color:T.txt,fontSize:10,fontWeight:600}}>{seg.cat.name}</span>
-                  <span style={{color:T.txt2,fontSize:10}}>{fmt(seg.cat.sum)}</span>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </>}
