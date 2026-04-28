@@ -14004,7 +14004,7 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
       const lx = cx + labelR*Math.cos(mid);
       const ly = cy + labelR*Math.sin(mid);
       return {cat:c, frac, pct, color: c.color || COLORS[i%COLORS.length],
-        path:`M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} Z`, lx, ly, mid};
+        path:`M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} Z`, lx, ly};
     });
   }, [catSums, total]);
   return (
@@ -14070,16 +14070,11 @@ function CategoryChart({catSums, maxSum, budgets, getBudgetForMonth, year, month
                     </text>
                   </g>
                 );
-                const deg = seg.mid * 180/Math.PI;
-                const flip = deg > 90 && deg < 270;
                 return (
-                  <g key={"l"+i} style={{pointerEvents:"none"}}
-                    transform={`rotate(${deg},160,160)`}>
-                    <text x={160} y={160-120}
-                      textAnchor="middle"
-                      fill="#fff" fontSize={7.5} fontWeight="600" opacity={op}
-                      transform={flip ? `rotate(180,160,${160-120})` : ""}>
-                      {fmt(seg.cat.sum)}
+                  <g key={"l"+i} style={{pointerEvents:"none"}}>
+                    <text x={seg.lx} y={seg.ly} textAnchor="middle"
+                      fill={seg.color} fontSize={8} fontWeight="700" opacity={op}>
+                      {seg.pct}%
                     </text>
                   </g>
                 );
