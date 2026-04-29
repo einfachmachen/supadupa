@@ -5423,7 +5423,7 @@ function EditPopup() {
           {!editTx.pending&&(editTx.linkedIds||[]).length>0&&(()=>{
             const linkedPends = (editTx.linkedIds||[])
               .map(id=>txs.find(t=>t.id===id))
-              .filter(t=>t&&!t.pending);
+              .filter(t=>t); // alle verknüpften, egal ob noch pending oder bereits abgebucht
             if(linkedPends.length===0) return null;
             return linkedPends.map(pend=>{
               const seriesTxs = pend._seriesId
@@ -5448,16 +5448,18 @@ function EditPopup() {
                       {Li("repeat",9,T.gold)} Zahlung {thisIdx+1} von {total}
                     </span>}
                     <button onClick={()=>{
-                      // Alle Verknüpfungen der gesamten Serie lösen
-                      const seriesPendIds = new Set(seriesTxs.map(t=>t.id));
+                      // Alle Verknüpfungen lösen — auch einzelne Vormerkungen ohne Serie
+                      const seriesPendIds = seriesTxs.length > 0
+                        ? new Set(seriesTxs.map(t=>t.id))
+                        : new Set([pend.id]);
                       setTxs(p=>p.map(t=>{
-                        // Echte Buchungen: linkedIds um alle Serien-IDs bereinigen, Split leeren
+                        // Echte Buchungen: linkedIds bereinigen, Split leeren
                         if(!t.pending && (t.linkedIds||[]).some(id=>seriesPendIds.has(id))) return {
                           ...t,
                           linkedIds: (t.linkedIds||[]).filter(x=>!seriesPendIds.has(x)),
                           splits: [{id:uid(), catId:"", subId:"", amount:t.totalAmount}],
                         };
-                        // Vormerkungen der Serie: wieder auf pending setzen
+                        // Vormerkungen: wieder auf pending setzen
                         if(seriesPendIds.has(t.id)) return {...t, pending:true, _linkedTo:null};
                         return t;
                       }));
@@ -6241,7 +6243,7 @@ function SaldoHero2({year, month,
   prognoseMitte, prognoseEnde, detailMitte, detailEnde, saldoMitte, saldoEnde,
   onDrillBuchIn, onDrillBuchOut, onDrillPendIn, onDrillPendOut,
   onDrillUncatIn, onDrillUncatOut, onDrill}) {
-  const { getKumulierterSaldo, accounts, startBalances, txs, cats, getBudgetForMonth, budgets } = useContext(AppCtx);
+  const { getKumulierterSaldo, accounts, startBalances, txs, cats, getBudgetForMonth, budgets, selAcc, setSelAcc } = useContext(AppCtx);
   const ks = getKumulierterSaldo(year, month);
 
   // Konto-spezifische Prognose-Ende Berechnung mit Budget-Floor-Logik
@@ -6348,8 +6350,7 @@ function SaldoHero2({year, month,
     // In Konto-Reihenfolge zurückgeben
     return accounts.filter(a=>result.has(a.id)).map(a=>a.id);
   }, [startBalances, accounts]);
-  // Konto-Toggle: null = Gesamt, sonst accountId — nur Konten mit eigenem Ankerpunkt
-  const [selAcc, setSelAcc] = React.useState(null);
+  // Konto-Toggle: null = Gesamt, sonst accountId — nur Konten mit eigenem Ankerpunkt (globaler State)
   const accIds = accountsWithAnchor; // nur Konten mit Ankerpunkt
   const allAccIds = [null, ...accIds];
   const ksAcc = React.useMemo(()=>{
@@ -6369,6 +6370,17 @@ function SaldoHero2({year, month,
   const saldoColor = v => v===null?T.txt2:v<0?T.cond_neg:v<=500?T.cond_warn:v<=1000?T.cond_gold:T.cond_pos;
   const ms = buchInE - buchOutE;
   const [progDrill, setProgDrill] = React.useState(null);
+  // Konto-spezifische Prognose-Werte für Warnfarben (wenn selAcc gesetzt)
+  const displayPrognoseMitte = React.useMemo(()=>{
+    if(!selAcc || !showPrognose) return prognoseMitte;
+    if(ksAcc[selAcc]===null||ksAcc[selAcc]===undefined) return prognoseMitte;
+    return getProgEndeAcc(year, month, selAcc); // Vereinfachung: gleicher Wert wie Ende (kein Halbmonats-Split pro Konto)
+  }, [selAcc, prognoseMitte, year, month, ksAcc, showPrognose]);
+  const displayPrognoseEnde = React.useMemo(()=>{
+    if(!selAcc || !showPrognose) return prognoseEnde;
+    if(ksAcc[selAcc]===null||ksAcc[selAcc]===undefined) return prognoseEnde;
+    return getProgEndeAcc(year, month, selAcc);
+  }, [selAcc, prognoseEnde, year, month, ksAcc, showPrognose]);
 
   // ── TERMINAL LAYOUT ──────────────────────────────────────────────────────
   if(T.themeName==="terminal") {
@@ -6442,19 +6454,19 @@ function SaldoHero2({year, month,
             <div style={{display:"flex",gap:0}}>
               <div style={{flex:1}}>
                 <div style={{color:D,fontSize:9,letterSpacing:1,marginBottom:2}}>MITTE</div>
-                <div onClick={prognoseMitte!==null?()=>setProgDrill(v=>v==="Mitte"?null:"Mitte"):undefined}
-                  style={{color:saldoColor(prognoseMitte),fontSize:16,fontWeight:700,
-                    fontFamily:"monospace",cursor:prognoseMitte!==null?"pointer":"default"}}>
-                  {prognoseMitte!==null?(prognoseMitte>=0?"+":"-")+fmt(Math.abs(prognoseMitte))+"€":"─"}
+                <div onClick={displayPrognoseMitte!==null?()=>setProgDrill(v=>v==="Mitte"?null:"Mitte"):undefined}
+                  style={{color:saldoColor(displayPrognoseMitte),fontSize:16,fontWeight:700,
+                    fontFamily:"monospace",cursor:displayPrognoseMitte!==null?"pointer":"default"}}>
+                  {displayPrognoseMitte!==null?(displayPrognoseMitte>=0?"+":"-")+fmt(Math.abs(displayPrognoseMitte))+"€":"─"}
                 </div>
               </div>
               <div style={{width:1,background:`${G}22`,margin:"0 16px"}}/>
               <div style={{flex:1}}>
                 <div style={{color:D,fontSize:9,letterSpacing:1,marginBottom:2}}>ENDE</div>
-                <div onClick={prognoseEnde!==null?()=>setProgDrill(v=>v==="Ende"?null:"Ende"):undefined}
-                  style={{color:saldoColor(prognoseEnde),fontSize:16,fontWeight:700,
-                    fontFamily:"monospace",cursor:prognoseEnde!==null?"pointer":"default"}}>
-                  {prognoseEnde!==null?(prognoseEnde>=0?"+":"-")+fmt(Math.abs(prognoseEnde))+"€":"─"}
+                <div onClick={displayPrognoseEnde!==null?()=>setProgDrill(v=>v==="Ende"?null:"Ende"):undefined}
+                  style={{color:saldoColor(displayPrognoseEnde),fontSize:16,fontWeight:700,
+                    fontFamily:"monospace",cursor:displayPrognoseEnde!==null?"pointer":"default"}}>
+                  {displayPrognoseEnde!==null?(displayPrognoseEnde>=0?"+":"-")+fmt(Math.abs(displayPrognoseEnde))+"€":"─"}
                 </div>
               </div>
             </div>
@@ -6537,13 +6549,13 @@ function SaldoHero2({year, month,
               onClick={onDrillPendOut?()=>onDrillPendOut(false):null}/>}
             {showPrognose&&<>
               <Tile label="Prog. Mitte"
-                val={prognoseMitte!==null?(prognoseMitte>=0?"+":"-")+fmt(Math.abs(prognoseMitte)):"—"}
-                col={saldoColor(prognoseMitte)} bg="#FAFAFA"
-                onClick={prognoseMitte!==null?()=>setProgDrill(v=>v==="Mitte"?null:"Mitte"):null}/>
+                val={displayPrognoseMitte!==null?(displayPrognoseMitte>=0?"+":"-")+fmt(Math.abs(displayPrognoseMitte)):"—"}
+                col={saldoColor(displayPrognoseMitte)} bg="#FAFAFA"
+                onClick={displayPrognoseMitte!==null?()=>setProgDrill(v=>v==="Mitte"?null:"Mitte"):null}/>
               <Tile label="Prog. Ende"
-                val={prognoseEnde!==null?(prognoseEnde>=0?"+":"-")+fmt(Math.abs(prognoseEnde)):"—"}
-                col={saldoColor(prognoseEnde)} bg="#F5F5F5"
-                onClick={prognoseEnde!==null?()=>setProgDrill(v=>v==="Ende"?null:"Ende"):null}/>
+                val={displayPrognoseEnde!==null?(displayPrognoseEnde>=0?"+":"-")+fmt(Math.abs(displayPrognoseEnde)):"—"}
+                col={saldoColor(displayPrognoseEnde)} bg="#F5F5F5"
+                onClick={displayPrognoseEnde!==null?()=>setProgDrill(v=>v==="Ende"?null:"Ende"):null}/>
             </>}
           </div>
         )}
@@ -6641,15 +6653,14 @@ function SaldoHero2({year, month,
         };
         const prevY2=month===0?year-1:year, prevM2=month===0?11:month-1;
         const accBase = selAcc ? getProgEndeAcc(prevY2, prevM2, selAcc) : null;
-        const accSaldoMitte = selAcc ? getProgEndeAcc(year, month, selAcc) : saldoMitte; // simplified
-        // For Mitte use calcAcc logic — recompute E and M
-        const accSaldoEnde  = selAcc ? getProgEndeAcc(year, month, selAcc) : saldoEnde;
+        const accSaldoMitte = selAcc ? getProgEndeAcc(year, month, selAcc) : pm;
+        const accSaldoEnde  = selAcc ? getProgEndeAcc(year, month, selAcc) : pe;
         const detM = detailMitte ? {...filterDetail(detailMitte), base: accBase??filterDetail(detailMitte)?.base} : null;
         const detE = detailEnde  ? {...filterDetail(detailEnde),  base: accBase??filterDetail(detailEnde)?.base}  : null;
         return <SaldoPrognose year={year} month={month} txs={[]}
           detailMitte={detM} detailEnde={detE}
-          saldoMitte={selAcc ? accSaldoMitte : saldoMitte}
-          saldoEnde={selAcc ? accSaldoEnde : saldoEnde}
+          saldoMitte={accSaldoMitte}
+          saldoEnde={accSaldoEnde}
           getCat={()=>null} getSub={()=>null}
           initialOpen={progDrill}/>;
       })()}
@@ -6880,14 +6891,16 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
         const unbPend = drill.unbudgetedPend||[];
         const unbReal = drill.unbudgetedRealTxs||realTxsD.filter(r=>!budgets2.some(b=>b.realTxs.find(br=>br.id===r.id)));
         const hasAny = budgets2.length>0||unbPend.length>0||unbReal.length>0;
-        const TxRow = ({t,isInc,indent,dimmed,icon,iconCol}) => {
+        const TxRow = ({t,isInc,indent,dimmed,icon,iconCol,subId}) => {
           const cat=getCat((t.splits||[])[0]?.catId);
+          const splitAmt = subId ? (t.splits||[]).find(sp=>sp.subId===subId)?.amount : null;
+          const displayAmt = splitAmt!=null && splitAmt!==0 ? Math.abs(splitAmt) : Math.abs(t.totalAmount);
           return (
             <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2,paddingLeft:indent?12:0,opacity:dimmed?0.65:1}}>
               <span style={{color:T.txt2,fontSize:9,flexShrink:0,fontFamily:"monospace",width:28}}>{fmtD(t.date)}</span>
               {icon&&Li(icon,7,iconCol||T.txt2)}
               <span style={{color:dimmed?T.txt2:T.txt,flex:1,fontSize:9,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.desc||cat?.name||"—"}</span>
-              <span style={{color:isInc?T.pos:T.neg,fontFamily:"monospace",fontSize:9,fontWeight:700,flexShrink:0}}>{isInc?"+":"−"}{fmt(Math.abs(t.totalAmount))}</span>
+              <span style={{color:isInc?T.pos:T.neg,fontFamily:"monospace",fontSize:9,fontWeight:700,flexShrink:0}}>{isInc?"+":"−"}{fmt(displayAmt)}</span>
             </div>
           );
         };
@@ -6896,10 +6909,27 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
             <div style={{color:col,fontWeight:700,fontSize:10,marginBottom:6,display:"flex",alignItems:"center",gap:4}}>
               {Li("bar-chart-2",11,col)} Prognose {label} ({label==="Mitte"?"bis 14.":"bis Monatsende"})
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",borderBottom:`1px solid rgba(255,255,255,0.07)`,paddingBottom:4,marginBottom:4}}>
-              <span style={{color:T.txt2}}>Vormonatssaldo</span>
-              <span style={{color:T.txt,fontFamily:"monospace"}}>{drill.base>=0?"+":"−"}{fmt(Math.abs(drill.base))}</span>
+            {/* ── Saldo Ende + Warnungen + Summen — jetzt OBEN ── */}
+            {(drill.overBudgetWarnings||[]).length>0&&(
+              <div style={{background:"rgba(255,159,67,0.12)",border:"1px solid rgba(255,159,67,0.4)",borderRadius:7,padding:"5px 8px",marginBottom:4}}>
+                <div style={{color:T.warn,fontSize:9,fontWeight:700,marginBottom:3,display:"flex",alignItems:"center",gap:4}}>{Li("alert-triangle",9,T.warn)} Budget überschritten:</div>
+                {drill.overBudgetWarnings.map((w,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:9,marginBottom:1}}><span style={{color:T.warn}}>{w.name}</span><span style={{fontFamily:"monospace",color:T.warn}}>{fmt(w.actual)} {">"} {fmt(w.budget)}</span></div>))}
+              </div>
+            )}
+            <div style={{display:"flex",justifyContent:"space-between",borderBottom:`1px solid ${col}44`,paddingBottom:5,marginBottom:6}}>
+              <span style={{color:col,fontWeight:700}}>Saldo {label}</span>
+              {(()=>{const sv=label==="Mitte"?saldoMitte:saldoEnde; return sv!==null&&sv!==undefined
+                ? <span style={{color:sv>=0?T.pos:T.neg,fontFamily:"monospace",fontWeight:700,fontSize:12}}>{sv>=0?"+":"−"}{fmt(Math.abs(sv))}</span>
+                : <span style={{color:drill.saldo>=0?T.pos:T.neg,fontFamily:"monospace",fontWeight:700,fontSize:12}}>{drill.saldo>=0?"+":"−"}{fmt(Math.abs(drill.saldo))}</span>;
+              })()}
             </div>
+            {hasAny&&(drill.realIn+drill.pendIn+drill.realOut+drill.pendOut)>0&&(
+              <div style={{display:"flex",gap:12,justifyContent:"flex-end",marginBottom:6,paddingBottom:4,borderBottom:`1px solid rgba(255,255,255,0.07)`}}>
+                <span style={{color:T.pos,fontSize:9,fontFamily:"monospace"}}>+{fmt(drill.realIn+drill.pendIn)}</span>
+                <span style={{color:T.neg,fontSize:9,fontFamily:"monospace"}}>−{fmt(drill.realOut+drill.pendOut)}</span>
+              </div>
+            )}
+            {/* ── Buchungen/Budgets — scrollbar ── */}
             {hasAny&&(
               <div style={{maxHeight:340,overflowY:"auto"}}>
                 {(()=>{
@@ -6947,16 +6977,40 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
                       const subName=sub?.name||b.budgetTx.desc||"Budget";
                       const overBudget=(b.realAmt+b.concAmt)>b.budget;
                       const effCol=b.isInc?T.pos:T.neg;
+                      const actual = b.realAmt+b.concAmt;
+                      const openAmt = b.budget - actual;
                       return (
                         <div key={idx} style={{marginBottom:6,background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"5px 7px",border:`1px solid rgba(255,255,255,0.07)`}}>
-                          <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:3}}>
+                          {/* Header: Datum + Name + Budget */}
+                          <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
                             <span style={{color:T.txt2,fontSize:9,flexShrink:0,fontFamily:"monospace",width:28}}>{fmtD(b.date)}</span>
-                            {Li("target",8,T.gold)}
-                            <span style={{color:T.gold,flex:1,fontSize:9,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{subName}</span>
-                            <span style={{color:T.txt2,fontFamily:"monospace",fontSize:8,textDecoration:"line-through",flexShrink:0,marginRight:4}}>{b.isInc?"+":"−"}{fmt(b.budget)}</span>
-                            <span style={{color:overBudget?T.warn:effCol,fontFamily:"monospace",fontSize:9,fontWeight:700,flexShrink:0}}>{b.isInc?"+":"−"}{fmt(b.effektiv)}</span>
+                            {Li(overBudget?"alert-triangle":"target",8,overBudget?T.neg:T.gold)}
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{color:overBudget?T.neg:T.gold,fontSize:9,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{subName}</div>
+                              <div style={{color:T.txt2,fontSize:8}}>Budget: −{fmt(b.budget)}</div>
+                            </div>
                           </div>
-                          {[...b.realTxs.map(t=>({t,isConc:false})),...b.concTxs.map(t=>({t,isConc:true}))].sort((a,c)=>c.t.date.localeCompare(a.t.date)).map(({t,isConc})=>isConc?(<TxRow key={t.id} t={t} isInc={b.isInc} indent dimmed icon={t._seriesId?"repeat":"calendar"} iconCol={T.gold}/>):(<TxRow key={t.id} t={t} isInc={b.isInc} indent icon="check-circle" iconCol={T.pos}/>))}
+                          {/* Zahlen-Block */}
+                          <div style={{display:"flex",flexDirection:"column",gap:2,marginBottom:4}}>
+                            {overBudget ? (<>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+                                <span style={{color:T.neg,fontSize:8,fontWeight:700}}>−{fmt(b.budget)} um {fmt(actual-b.budget)} überschritten</span>
+                              </div>
+                            </>) : (<>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8}}>
+                                <span style={{color:T.txt2,fontSize:8}}>offenes Budget:</span>
+                                <span style={{color:T.gold,fontSize:9,fontWeight:700,fontFamily:"monospace"}}>−{fmt(openAmt)}</span>
+                              </div>
+                            </>)}
+                            <div style={{borderTop:`1px solid rgba(255,255,255,0.1)`,margin:"1px 0"}}/>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8}}>
+                              <span style={{color:T.txt2,fontSize:8}}>genutzt:</span>
+                              <span style={{color:actual===0?T.txt2:overBudget?T.neg:effCol,fontSize:9,fontWeight:700,fontFamily:"monospace"}}>{actual===0?"—":`−${fmt(actual)}`}</span>
+                            </div>
+                          </div>
+                          {/* Trennstrich vor Einzelbuchungen */}
+                          {(b.realTxs.length>0||b.concTxs.length>0)&&<div style={{borderTop:`1px solid rgba(255,255,255,0.08)`,margin:"2px 0 4px"}}/>}
+                          {[...b.realTxs.map(t=>({t,isConc:false})),...b.concTxs.map(t=>({t,isConc:true}))].sort((a,c)=>c.t.date.localeCompare(a.t.date)).map(({t,isConc})=>isConc?(<TxRow key={t.id} t={t} isInc={b.isInc} indent dimmed icon={t._seriesId?"repeat":"calendar"} iconCol={T.gold} subId={b.baseSubId}/>):(<TxRow key={t.id} t={t} isInc={b.isInc} indent icon="check-circle" iconCol={T.pos} subId={b.baseSubId}/>))}
                         </div>
                       );
                     }
@@ -6965,24 +7019,12 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
                   })};
                   </>);
                 })()}
-                {(drill.overBudgetWarnings||[]).length>0&&(
-                  <div style={{background:"rgba(255,159,67,0.12)",border:"1px solid rgba(255,159,67,0.4)",borderRadius:7,padding:"5px 8px",marginTop:4}}>
-                    <div style={{color:T.warn,fontSize:9,fontWeight:700,marginBottom:3,display:"flex",alignItems:"center",gap:4}}>{Li("alert-triangle",9,T.warn)} Budget überschritten:</div>
-                    {drill.overBudgetWarnings.map((w,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:9,marginBottom:1}}><span style={{color:T.warn}}>{w.name}</span><span style={{fontFamily:"monospace",color:T.warn}}>{fmt(w.actual)} {">"} {fmt(w.budget)}</span></div>))}
-                  </div>
-                )}
-                <div style={{borderTop:`1px solid rgba(255,255,255,0.1)`,marginTop:4,paddingTop:4,display:"flex",gap:12,justifyContent:"flex-end"}}>
-                  <span style={{color:T.pos,fontSize:9,fontFamily:"monospace"}}>+{fmt(drill.realIn+drill.pendIn)}</span>
-                  <span style={{color:T.neg,fontSize:9,fontFamily:"monospace"}}>−{fmt(drill.realOut+drill.pendOut)}</span>
-                </div>
               </div>
             )}
-            <div style={{display:"flex",justifyContent:"space-between",borderTop:`1px solid ${col}44`,paddingTop:5,marginTop:2}}>
-              <span style={{color:col,fontWeight:700}}>Saldo {label}</span>
-              {(()=>{const sv=label==="Mitte"?saldoMitte:saldoEnde; return sv!==null&&sv!==undefined
-                ? <span style={{color:sv>=0?T.pos:T.neg,fontFamily:"monospace",fontWeight:700,fontSize:12}}>{sv>=0?"+":"−"}{fmt(Math.abs(sv))}</span>
-                : <span style={{color:drill.saldo>=0?T.pos:T.neg,fontFamily:"monospace",fontWeight:700,fontSize:12}}>{drill.saldo>=0?"+":"−"}{fmt(Math.abs(drill.saldo))}</span>;
-              })()}
+            {/* ── Vormonatssaldo — jetzt UNTEN ── */}
+            <div style={{display:"flex",justifyContent:"space-between",borderTop:`1px solid rgba(255,255,255,0.07)`,paddingTop:4,marginTop:4}}>
+              <span style={{color:T.txt2}}>Vormonatssaldo</span>
+              <span style={{color:T.txt,fontFamily:"monospace"}}>{drill.base>=0?"+":"−"}{fmt(Math.abs(drill.base))}</span>
             </div>
           </div>
         );
@@ -6992,20 +7034,27 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
 }
 
 function TagesgeldWidget({year, month}) {
-  const { getPrognoseSaldo, getKumulierterSaldo, txs, setTxs, cats, accounts, getAcc, budgets, getCat, getBudgetForMonth } = useContext(AppCtx);
+  const { getPrognoseSaldo, getKumulierterSaldo, txs, setTxs, cats, accounts, getAcc, budgets, getCat, getBudgetForMonth, selAcc, getProgEndeAccGlobal, resetProgEndeCache, sparOpenRequest } = useContext(AppCtx);
   const MONTHS_G=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
 
   const [puffer,    setPuffer]   = useState(()=>parseInt(localStorage.getItem("mbt_tagesgeld_puffer")||"200"));
   const [collapsed, setCollapsed] = useState(true);
-  const [result,    setResult]   = useState(null);
+  React.useEffect(()=>{ if(sparOpenRequest>0) setCollapsed(false); }, [sparOpenRequest]);
+  const [result,    setResultState]   = useState(()=>{ try { const s=localStorage.getItem("mbt_spar_result"); return s?JSON.parse(s):null; } catch{return null;} });
+  const resultRef = React.useRef(result);
+  const setResult = (v) => { resultRef.current = v; setResultState(v); try{ if(v) localStorage.setItem("mbt_spar_result",JSON.stringify(v)); else localStorage.removeItem("mbt_spar_result"); }catch{} };
+  const [resultOutdated, setResultOutdated] = useState(false);
   const [computing, setComputing]= useState(false);
   const [monate,    setMonate]   = useState(()=>parseInt(localStorage.getItem("mbt_sparen_monate")||"3"));
   const [sparCatId, setSparCatId]   = useState(()=>localStorage.getItem("mbt_spar_catid")||"");
   const [sparSubId, setSparSubId]   = useState(()=>localStorage.getItem("mbt_spar_subid")||"");
   const [sparAccId, setSparAccId]   = useState(()=>localStorage.getItem("mbt_spar_accid")||"");
+  const [sparPlanName, setSparPlanName] = useState(()=>localStorage.getItem("mbt_spar_planname")||"Sparplan 1");
   const [sparTgtCatId, setSparTgtCatId] = useState(()=>localStorage.getItem("mbt_spar_tgt_catid")||"");
   const [sparTgtSubId, setSparTgtSubId] = useState(()=>localStorage.getItem("mbt_spar_tgt_subid")||"");
 
+  const [toast, setToast] = useState("");
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(""),3000); };
   const nowY=new Date().getFullYear(), nowM=new Date().getMonth();
   const isCurr = year===nowY && month===nowM;
 
@@ -7013,7 +7062,7 @@ function TagesgeldWidget({year, month}) {
   const progEndeCache = React.useRef({});
   React.useEffect(()=>{ progEndeCache.current = {}; }, [txs]);
   const minTagCache = React.useRef({});
-  React.useEffect(()=>{ minTagCache.current = {}; }, [txs]);
+  React.useEffect(()=>{ minTagCache.current = {}; }, [txs, selAcc]);
   const [progress, setProgress] = useState(0);
 
   if(!isCurr) return null;
@@ -7053,26 +7102,31 @@ function TagesgeldWidget({year, month}) {
   };
 
   // Tagesgenauen Minimalsaldo eines Monats berechnen
-  const getMinTagessaldo = (y, m) => {
-    const key = `${y}-${m}`;
-    if(key in minTagCache.current) return minTagCache.current[key];
+  const getMinTagessaldo = (y, m, virtualSpar={}) => {
+    // Cache nur ohne virtualSpar sinnvoll
+    const key = Object.keys(virtualSpar).length===0 ? `${y}-${m}-${selAcc||"all"}` : null;
+    if(key && key in minTagCache.current) return minTagCache.current[key];
     const prevY=m===0?y-1:y, prevM=m===0?11:m-1;
-    const baseSaldo = getProgEndeW(prevY, prevM);
+    const baseSaldo = selAcc
+      ? (getProgEndeAccGlobal(prevY, prevM, selAcc) ?? getKumulierterSaldo(prevY, prevM, selAcc))
+      : getProgEndeW(prevY, prevM);
     if(baseSaldo===null||baseSaldo===undefined) return {min:null, saldoEnde:null};
     const lastDay = new Date(y,m+1,0).getDate();
     const pad2 = n=>String(n).padStart(2,"0");
     const pfx = `${y}-${pad2(m+1)}-`;
+    const isAccTx = t => !selAcc || t.accountId===selAcc || (!t.accountId && selAcc==="acc-giro");
     const mTxs = txs.filter(t=>{
       if(t._linkedTo) return false;
       const d=new Date(t.date);
-      return d.getFullYear()===y && d.getMonth()===m;
+      return d.getFullYear()===y && d.getMonth()===m && isAccTx(t);
     });
     const signed = t => {
       const ct=t._csvType||(()=>{const s=(t.splits||[]).filter(sp=>sp.catId);if(s.length>0){const c=getCat(s[0].catId);if(c)return(c.type==="income"||c.type==="tagesgeld")?"income":"expense";}return t.totalAmount>=0?"income":"expense";})();
       return ct==="income"?+Math.abs(t.totalAmount):-Math.abs(t.totalAmount);
     };
-    // openBudget einmalig für Mitte + Ende
+    // openBudget einmalig für Mitte + Ende — nur für Gesamt/Giro
     const calcOpenBudget = (maxDay) => {
+      if(selAcc && selAcc !== "acc-giro") return 0;
       let total=0;
       const dayStr=`${pfx}${pad2(maxDay)}`;
       cats.filter(c=>c.type==="expense"||c.type==="income").forEach(cat=>{
@@ -7097,8 +7151,10 @@ function TagesgeldWidget({year, month}) {
       const dayNum=parseInt(dayStr.split("-")[2]);
       const real=mTxs.filter(t=>!t.pending&&!t._budgetSubId&&t.date<=dayStr).reduce((s,t)=>s+signed(t),0);
       const pend=mTxs.filter(t=>t.pending&&!t._budgetSubId&&t.date<=dayStr).reduce((s,t)=>s+signed(t),0);
+      // Virtuelle Sparraten aus aktuellem Berechnungslauf einbeziehen
+      const virt=Object.entries(virtualSpar).filter(([d])=>d<=dayStr).reduce((s,[,v])=>s+v,0);
       const bd=dayNum>=lastDay?-obEnde:dayNum>=14?-obMitte:0;
-      return baseSaldo+real+pend+bd;
+      return baseSaldo+real+pend+virt+bd;
     };
     // Alle Tage mit Buchungen prüfen + synthetische Budget-Checkpoints am 14. und Monatsletzt
     const daysWithTxs=new Set(mTxs.map(t=>t.date));
@@ -7111,55 +7167,128 @@ function TagesgeldWidget({year, month}) {
     });
     const saldoEnde=saldoAt(`${pfx}${pad2(lastDay)}`);
     const result2 = {min:minVal, saldoEnde};
-    minTagCache.current[key] = result2;
+    if(key) minTagCache.current[key] = result2;
     return result2;
   };
 
-  const berechnen = () => {
+  // Extrahierte Aktualisierungs-Logik — nutzbar von Button UND autoAnpassen
+  const doAktualisieren = (rows, seriesId, tgtSeriesId, sparDesc) => {
+    const sparMonate = rows.filter(r=>r.zusaetzlich>0);
+    setTxs(p=>{
+      const ohne = p.filter(t=>t._seriesId!==seriesId&&t._seriesId!==tgtSeriesId);
+      if(!sparMonate.length) return ohne;
+      const newTxs = sparMonate.flatMap((row,i)=>{
+        const pad2 = n=>String(n).padStart(2,"0");
+        const lastDay = new Date(row.y, row.m+1, 0).getDate();
+        const date = `${row.y}-${pad2(row.m+1)}-${pad2(lastDay)}`;
+        const amount = -row.zusaetzlich;
+        const abgang = {
+          id:"pend-"+uid(), date, desc:sparDesc,
+          totalAmount:amount, pending:true, _csvType:"expense",
+          accountId:"acc-giro",
+          _seriesId:seriesId, _seriesIdx:i+1, _seriesTotal:sparMonate.length,
+          splits:sparCatId?[{id:uid(),catId:sparCatId,subId:sparSubId||"",amount}]
+                          :[{id:uid(),catId:"",subId:"",amount}],
+        };
+        if(!sparAccId) return [abgang];
+        const zugang = {
+          id:"pend-"+uid(), date, desc:sparDesc,
+          totalAmount:row.zusaetzlich, pending:true, _csvType:"income",
+          accountId:sparAccId,
+          _linkedTo:abgang.id,
+          _seriesId:tgtSeriesId, _seriesIdx:i+1, _seriesTotal:sparMonate.length,
+          splits:sparTgtCatId?[{id:uid(),catId:sparTgtCatId,subId:sparTgtSubId||"",amount:row.zusaetzlich}]
+                             :[{id:uid(),catId:"",subId:"",amount:row.zusaetzlich}],
+        };
+        return [abgang, zugang];
+      });
+      return [...ohne, ...newTxs];
+    });
+    return sparMonate.length;
+  };
+
+  const berechnen = (onDone) => {
     setComputing(true);
     setResult(null);
     setProgress(0);
-    const CHUNK = 6;
+    minTagCache.current = {}; // Cache leeren — stellt sicher dass Plan-1-Vormerkungen einbezogen werden
+    progEndeCache.current = {}; // Auch lokalen Prognose-Cache leeren
+    resetProgEndeCache(); // Globalen AppCtx Prognose-Cache leeren
     let i = 0;
     let kumuliert = 0;
+    const virtualSpar = {};
     const rows = [];
     const total = monate + 1;
+    const CHUNK = 3; // Verarbeite mehrere Monate pro Frame
+
+    const addVS = (y, m, betrag, vs) => {
+      if(!betrag || betrag <= 0) return;
+      const pad2 = n=>String(n).padStart(2,"0");
+      const lastDay = new Date(y, m+1, 0).getDate();
+      const date = `${y}-${pad2(m+1)}-${pad2(lastDay)}`;
+      vs[date] = (vs[date]||0) - betrag;
+    };
+
     const step = () => {
       const end = Math.min(i + CHUNK, total);
-      for(; i < end; i++){
+      for(; i < end; i++) {
         const m=(nowM+i)%12, y=nowY+Math.floor((nowM+i)/12);
-        const {min:minTag, saldoEnde} = getMinTagessaldo(y,m);
-        const minNach = minTag!==null ? minTag - kumuliert : null;
-        // Wenn minNach < puffer: kumuliert zu hoch — nach unten korrigieren
-        // sodass minNach genau = puffer (kein Minus möglich)
-        if(minNach!==null && minNach < puffer) {
-          const korrektur = puffer - minNach; // wieviel muss kumuliert sinken?
-          kumuliert = Math.max(0, kumuliert - korrektur);
+        const {min:minTag, saldoEnde} = getMinTagessaldo(y, m, virtualSpar);
+        const maxMoeglich = minTag!==null ? Math.floor(Math.max(0, minTag - puffer)) : 0;
+
+        let zusaetzlich = 0;
+        if(maxMoeglich > 0) {
+          // Binäre Suche mit nur 3 Folgemonate-Check (Rest wird in eigener Iteration korrigiert)
+          let lo = 0, hi = maxMoeglich;
+          const LOOKAHEAD = Math.min(3, total - i - 1);
+          while(lo < hi) {
+            const mid = Math.floor((lo + hi + 1) / 2);
+            const vsTest = {...virtualSpar};
+            addVS(y, m, mid, vsTest);
+            let ok = true;
+            for(let ahead = 1; ahead <= LOOKAHEAD; ahead++) {
+              const ni = i + ahead;
+              const nm=(nowM+ni)%12, ny=nowY+Math.floor((nowM+ni)/12);
+              const nextMin = getMinTagessaldo(ny, nm, vsTest).min;
+              if(nextMin !== null && nextMin < puffer) { ok = false; break; }
+            }
+            if(ok) lo = mid; else hi = mid - 1;
+          }
+          zusaetzlich = lo;
         }
-        const minNachKorr = minTag!==null ? minTag - kumuliert : null;
-        // Zusätzlich sparbarer Betrag diesen Monat
-        const zusaetzlich = minNachKorr!==null
-          ? Math.floor(Math.max(0, minNachKorr - puffer))
-          : null;
-        kumuliert += zusaetzlich ?? 0;
-        rows.push({y, m, minTag, minNach: minNachKorr, saldoEnde, zusaetzlich, kumuliert});
+
+        kumuliert += zusaetzlich;
+        const minNachSparen = minTag!==null ? minTag - zusaetzlich : null;
+        addVS(y, m, zusaetzlich, virtualSpar);
+        rows.push({y, m, minTag, minNach: minNachSparen, saldoEnde, zusaetzlich, kumuliert});
       }
       setProgress(Math.round(i/total*100));
-      if(i < total) {
-        requestAnimationFrame(step);
-      } else {
-        setResult([...rows]);
-        setComputing(false);
-      }
+      if(i < total) requestAnimationFrame(step);
+      else { setResult([...rows]); setComputing(false); if(onDone) onDone([...rows]); }
     };
     requestAnimationFrame(step);
   };
 
+  const autoAnpassen = () => {
+    const sparDesc = "Sparen·"+(sparPlanName||sparAccId||"Plan");
+    const existingSeries = txs.filter(t=>t.pending&&!t._linkedTo&&t.desc===sparDesc&&t._seriesId&&t.accountId==="acc-giro");
+    const seriesIds = [...new Set(existingSeries.map(t=>t._seriesId))];
+    if(!seriesIds.length) { showToast("Kein Sparplan zum Anpassen gefunden."); return; }
+    const seriesId = seriesIds[seriesIds.length-1];
+    const altKumuliert = existingSeries.reduce((s,t)=>s+Math.abs(t.totalAmount),0);
+    berechnen((rows)=>{
+      const anzahl = doAktualisieren(rows, seriesId, seriesId+"-tgt", sparDesc);
+      const neuKumuliert = rows.filter(r=>r.zusaetzlich>0).reduce((s,r)=>s+r.zusaetzlich,0);
+      const diff = neuKumuliert - altKumuliert;
+      const diffStr = diff>0 ? `+${fmt(diff)} €` : diff<0 ? `−${fmt(Math.abs(diff))} €` : "keine Änderung";
+      showToast(`✓ Automatisch angepasst: ${anzahl} Raten · ${diffStr}`);
+    });
+  };
   const maxTransfer = result?.[0]?.zusaetzlich ?? null;
   const col = maxTransfer===null?T.txt2:maxTransfer<=0?T.txt2:maxTransfer<500?T.warn:T.pos;
 
   return (
-    <div style={{margin:"4px 10px",background:T.surf2,borderRadius:16,
+    <div id="sparplan-widget" style={{margin:"4px 10px",background:T.surf2,borderRadius:16,
       padding:"9px 12px",border:`1px solid ${T.bd}`}}>
 
       {/* Header */}
@@ -7176,19 +7305,59 @@ function TagesgeldWidget({year, month}) {
         {Li(collapsed?"chevron-down":"chevron-up",12,T.txt2)}
       </div>
 
+      {toast&&(
+        <div style={{margin:"4px 0",padding:"8px 12px",background:"rgba(34,197,94,0.15)",
+          border:`1px solid ${T.pos}44`,borderRadius:8,color:T.pos,fontSize:12,fontWeight:700,
+          textAlign:"center"}}>
+          {toast}
+        </div>
+      )}
+
       {!collapsed&&<>
-        {/* Einstellungen — immer sichtbar */}
         <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:8}}>
+          {/* Planname + bestehende Pläne */}
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{color:T.txt2,fontSize:10,flexShrink:0}}>Planname</span>
+            <input value={sparPlanName}
+              onChange={e=>{setSparPlanName(e.target.value);localStorage.setItem("mbt_spar_planname",e.target.value);}}
+              placeholder="z.B. Sparplan 1"
+              style={{...INP,marginBottom:0,flex:1,fontSize:11,padding:"4px 8px"}}/>
+            {(()=>{
+              // Dropdown mit bestehenden Plänen
+              const existingDescs = [...new Set(
+                txs.filter(t=>t.pending&&!t._linkedTo&&t._seriesId&&t.accountId==="acc-giro"&&(t.desc||"").startsWith("Sparen·"))
+                .map(t=>t.desc)
+              )];
+              if(!existingDescs.length) return null;
+              return (
+                <select value=""
+                  onChange={e=>{
+                    if(!e.target.value) return;
+                    const name = e.target.value.replace(/^Sparen·/,"");
+                    setSparPlanName(name);
+                    localStorage.setItem("mbt_spar_planname", name);
+                    e.target.value = "";
+                  }}
+                  style={{background:T.surf2,color:T.txt2,border:`1px solid ${T.bd}`,
+                    borderRadius:8,padding:"4px 6px",fontSize:10,fontFamily:"inherit",cursor:"pointer"}}>
+                  <option value="">⋯ laden</option>
+                  {existingDescs.map(d=>(
+                    <option key={d} value={d}>{d.replace(/^Sparen·/,"")}</option>
+                  ))}
+                </select>
+              );
+            })()}
+          </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{color:T.txt2,fontSize:10,flex:1}}>Mindest-Puffer (€)</span>
             <input type="number" value={puffer}
-              onChange={e=>{const v=parseInt(e.target.value)||0;setPuffer(v);localStorage.setItem("mbt_tagesgeld_puffer",String(v));setResult(null);}}
+              onChange={e=>{const v=parseInt(e.target.value)||0;setPuffer(v);localStorage.setItem("mbt_tagesgeld_puffer",String(v));if(result) setResultOutdated(true);}}
               style={{...INP,marginBottom:0,width:80,textAlign:"right",fontSize:12,padding:"4px 8px"}}/>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{color:T.txt2,fontSize:10,flex:1}}>Vorschau (Monate, max. 120)</span>
             <input type="number" min="1" max="120" value={monate}
-              onChange={e=>{const v=Math.max(1,Math.min(120,parseInt(e.target.value)||3));setMonate(v);localStorage.setItem("mbt_sparen_monate",String(v));setResult(null);}}
+              onChange={e=>{const v=Math.max(1,Math.min(120,parseInt(e.target.value)||3));setMonate(v);localStorage.setItem("mbt_sparen_monate",String(v));if(result) setResultOutdated(true);}}
               style={{...INP,marginBottom:0,width:80,textAlign:"right",fontSize:12,padding:"4px 8px"}}/>
           </div>
         </div>
@@ -7197,27 +7366,49 @@ function TagesgeldWidget({year, month}) {
         <div style={{background:"rgba(0,0,0,0.15)",borderRadius:10,padding:"10px 12px",
           marginBottom:6,display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1}}>
-            <div style={{color:T.txt2,fontSize:9,marginBottom:4}}>
-              Heute sicher sparen (Monat 1):
-            </div>
-            <div style={{color:col,fontSize:26,fontWeight:800,fontFamily:"monospace",letterSpacing:-0.5}}>
-              {computing?"…":maxTransfer===null?"—":maxTransfer<=0?"0":fmt(maxTransfer)} €
-            </div>
-            {result&&<div style={{color:T.pos,fontSize:9,marginTop:2}}>
-              ∑ {monate+1} Monate: <span style={{fontWeight:700,fontFamily:"monospace"}}>
-                {fmt(result[result.length-1]?.kumuliert??0)} €
-              </span>
-            </div>}
-          </div>
+            {(()=>{
+              const totalKumuliert = result?.[result.length-1]?.kumuliert??0;
+              const sparMonate = result ? result.filter(r=>r.zusaetzlich>0).length : 0;
+              const durchschnitt = sparMonate > 0 ? totalKumuliert / (monate+1) : 0;
+              // Kein Spielraum wenn: total=0 oder Durchschnitt pro Monat < puffer (zu wenig um sinnvoll zu sein)
+              const keinSpielraum = result && (totalKumuliert === 0 || durchschnitt < puffer);
+              const keinSpielraumGrund = totalKumuliert === 0
+                ? "Ein bestehender Sparplan schöpft bereits alles bis auf den Puffer ab."
+                : `Ø ${fmt(Math.round(durchschnitt))} €/Monat — zu wenig für einen sinnvollen Sparplan (Schwelle: ${fmt(puffer)} €/Monat).`;
+              return (<>
+                <div style={{color:T.txt2,fontSize:9,marginBottom:4}}>
+                  Heute sicher sparen (Monat 1):
+                </div>
+                <div style={{color:col,fontSize:26,fontWeight:800,fontFamily:"monospace",letterSpacing:-0.5}}>
+                  {computing?"…":maxTransfer===null?"—":maxTransfer<=0?"0":fmt(maxTransfer)} €
+                </div>
+                {result&&!keinSpielraum&&<div style={{color:T.pos,fontSize:9,marginTop:2}}>
+                  ∑ {monate+1} Monate: <span style={{fontWeight:700,fontFamily:"monospace"}}>
+                    {fmt(totalKumuliert)} €
+                  </span>
+                  {" · "}Ø <span style={{fontWeight:700,fontFamily:"monospace"}}>{fmt(Math.round(durchschnitt))} €</span>/Monat
+                </div>}
+                {keinSpielraum&&(
+                  <div style={{marginTop:4,background:"rgba(234,64,37,0.12)",border:`1px solid ${T.neg}44`,
+                    borderRadius:8,padding:"6px 10px",display:"flex",alignItems:"center",gap:6}}>
+                    {Li("x-circle",14,T.neg)}
+                    <div>
+                      <div style={{color:T.neg,fontSize:11,fontWeight:700}}>Kein sinnvoller Spielraum</div>
+                      <div style={{color:T.txt2,fontSize:9}}>{keinSpielraumGrund}</div>
+                    </div>
+                  </div>
+                )}
+              </>);
+            })()}</div>
           <div style={{flexShrink:0,display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
-            <button onClick={berechnen} disabled={computing}
+            <button onClick={()=>{ setResultOutdated(false); berechnen(); }} disabled={computing}
               style={{padding:"8px 14px",borderRadius:10,border:"none",
-                background:computing?"rgba(255,255,255,0.1)":T.blue,
+                background:computing?"rgba(255,255,255,0.1)":resultOutdated?T.gold:T.blue,
                 color:computing?T.txt2:"#fff",fontSize:12,fontWeight:700,
                 cursor:computing?"default":"pointer",
                 display:"flex",alignItems:"center",gap:6}}>
               {Li(computing?"loader":"refresh-cw",13,computing?T.txt2:"#fff")}
-              {computing?`${progress}%`:"Neuberechnen"}
+              {computing?`${progress}%`:resultOutdated?"⚠ Neu berechnen":"Neuberechnen"}
             </button>
             {computing&&(
               <div style={{width:120,height:3,borderRadius:2,background:"rgba(255,255,255,0.1)"}}>
@@ -7238,7 +7429,7 @@ function TagesgeldWidget({year, month}) {
           <div style={{display:"flex",flexDirection:"column",gap:2}}>
             <div style={{display:"flex",padding:"0 8px",marginBottom:2}}>
               <div style={{width:44,flexShrink:0}}/>
-              <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8}}>Tiefst-Saldo</div>
+              <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8}}>Tiefst-Saldo*</div>
               <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8}}>nach Sparen</div>
               <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8}}>+ Monat</div>
               <div style={{flex:1,textAlign:"right",color:T.txt2,fontSize:8,fontWeight:700}}>∑ gespart</div>
@@ -7275,7 +7466,7 @@ function TagesgeldWidget({year, month}) {
             })}
           </div>
           <div style={{textAlign:"right",color:T.txt2,fontSize:8,marginTop:4}}>
-            Sparen = tiefster Tagessaldo − bereits gespart − {fmt(puffer)} € Puffer
+            * Tiefst-Saldo nach Abzug bereits eingeplanterSparraten · Sparen = Tiefst-Saldo − {fmt(puffer)} € Puffer
           </div>
           {/* Kategorie + Konto + Anlegen */}
           <div style={{marginTop:8,background:"rgba(0,0,0,0.15)",borderRadius:10,padding:"10px 12px",
@@ -7321,49 +7512,85 @@ function TagesgeldWidget({year, month}) {
               </div>
             )}
             {/* Button */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:6}}>
               <div style={{color:T.txt2,fontSize:9}}>
                 {result.filter(r=>r.zusaetzlich>0).length} Vormerkungen · am Monatsletzten
               </div>
-              <button onClick={()=>{
-                const sparMonate = result.filter(r=>r.zusaetzlich>0);
-                if(!sparMonate.length) return;
-                const seriesId = "series-"+uid();
-                const newTxs = sparMonate.flatMap((row, i) => {
-                  const pad2 = n=>String(n).padStart(2,"0");
-                  const lastDay = new Date(row.y, row.m+1, 0).getDate();
-                  const date = `${row.y}-${pad2(row.m+1)}-${pad2(lastDay)}`;
-                  const amount = -row.zusaetzlich;
-                  // Abgang vom Hauptkonto
-                  const abgang = {
-                    id: "pend-"+uid(), date, desc:"Sparen",
-                    totalAmount: amount, pending:true, _csvType:"expense",
-                    accountId: "acc-giro",
-                    _seriesId: seriesId, _seriesIdx: i+1, _seriesTotal: sparMonate.length,
-                    splits: sparCatId ? [{id:uid(),catId:sparCatId,subId:sparSubId||"",amount}]
-                                      : [{id:uid(),catId:"",subId:"",amount}],
-                  };
-                  if(!sparAccId) return [abgang];
-                  // Zugang beim Zielkonto — als _linkedTo markiert damit er die Prognose
-                  // des Hauptkontos nicht verfälscht (interner Transfer, kein echtes Einkommen)
-                  const zugang = {
-                    id: "pend-"+uid(), date, desc:"Sparen",
-                    totalAmount: row.zusaetzlich, pending:true, _csvType:"income",
-                    accountId: sparAccId,
-                    _linkedTo: abgang.id, // verknüpft → wird aus Prognose-Einnahmen ausgeschlossen
-                    _seriesId: seriesId+"-tgt", _seriesIdx: i+1, _seriesTotal: sparMonate.length,
-                    splits: sparTgtCatId ? [{id:uid(),catId:sparTgtCatId,subId:sparTgtSubId||"",amount:row.zusaetzlich}]
-                                        : [{id:uid(),catId:"",subId:"",amount:row.zusaetzlich}],
-                  };
-                  return [abgang, zugang];
-                });
-                setTxs(p=>[...p, ...newTxs]);
-                alert(`${sparMonate.length} Sparvormerkungen angelegt${sparAccId?" (Abgang + Zugang)":""}.`);
-              }} style={{padding:"7px 14px",borderRadius:10,border:"none",
-                background:T.pos,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",
-                display:"flex",alignItems:"center",gap:6}}>
-                {Li("plus-circle",14,"#000")} Anlegen
-              </button>
+              <div style={{display:"flex",gap:6}}>
+                {/* Sparplan aktualisieren — nur wenn bereits eine Spar-Serie existiert */}
+                {(()=>{
+                  const sparDesc = "Sparen·"+(sparPlanName||sparAccId||"Plan");
+                  const existingSeries = txs.filter(t=>t.pending&&!t._linkedTo&&t.desc===sparDesc&&t._seriesId&&t.accountId==="acc-giro");
+                  const seriesIds = [...new Set(existingSeries.map(t=>t._seriesId))];
+                  if(!seriesIds.length) return null;
+                  const canUpdate = result && result.filter(r=>r.zusaetzlich>0).length>0;
+                  return (<div style={{display:"flex",gap:6}}>
+                    <button onClick={()=>{
+                      if(!result) { showToast("Bitte zuerst Neuberechnen klicken."); return; }
+                      const n = doAktualisieren(result, seriesIds[seriesIds.length-1], seriesIds[seriesIds.length-1]+"-tgt", sparDesc);
+                      showToast(`✓ Sparplan aktualisiert: ${n} Vormerkungen`);
+                    }} style={{padding:"7px 14px",borderRadius:10,
+                      border:`1px solid ${canUpdate?T.blue:T.bd}`,
+                      background:canUpdate?"rgba(74,159,212,0.12)":"rgba(255,255,255,0.05)",
+                      color:canUpdate?T.blue:T.txt2,fontSize:12,fontWeight:700,
+                      cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"inherit"}}>
+                      {Li("refresh-cw",14,canUpdate?T.blue:T.txt2)} {canUpdate?"Aktualisieren":"↑ Neu berechnen, dann Aktualisieren"}
+                    </button>
+                    <button onClick={autoAnpassen} disabled={computing}
+                      title="Neu berechnen und Sparplan automatisch anpassen"
+                      style={{padding:"7px 14px",borderRadius:10,
+                        border:`1px solid ${T.pos}`,
+                        background:"rgba(34,197,94,0.12)",
+                        color:T.pos,fontSize:12,fontWeight:700,
+                        cursor:computing?"default":"pointer",
+                        display:"flex",alignItems:"center",gap:6,fontFamily:"inherit",
+                        opacity:computing?0.5:1}}>
+                      {Li("zap",14,T.pos)} Auto
+                    </button>
+                  </div>);
+                })()}
+                <button onClick={()=>{
+                  const sparMonate = result ? result.filter(r=>r.zusaetzlich>0) : [];
+                  if(!sparMonate.length) return;
+                  const sparDesc = "Sparen·"+(sparPlanName||sparAccId||"Plan");
+                  const seriesId = "series-"+uid();
+                  const newTxs = sparMonate.flatMap((row, i) => {
+                    const pad2 = n=>String(n).padStart(2,"0");
+                    const lastDay = new Date(row.y, row.m+1, 0).getDate();
+                    const date = `${row.y}-${pad2(row.m+1)}-${pad2(lastDay)}`;
+                    const amount = -row.zusaetzlich;
+                    const abgang = {
+                      id: "pend-"+uid(), date, desc:sparDesc,
+                      totalAmount: amount, pending:true, _csvType:"expense",
+                      accountId: "acc-giro",
+                      _seriesId: seriesId, _seriesIdx: i+1, _seriesTotal: sparMonate.length,
+                      splits: sparCatId ? [{id:uid(),catId:sparCatId,subId:sparSubId||"",amount}]
+                                        : [{id:uid(),catId:"",subId:"",amount}],
+                    };
+                    if(!sparAccId) return [abgang];
+                    const zugang = {
+                      id: "pend-"+uid(), date, desc:sparDesc,
+                      totalAmount: row.zusaetzlich, pending:true, _csvType:"income",
+                      accountId: sparAccId,
+                      _linkedTo: abgang.id,
+                      _seriesId: seriesId+"-tgt", _seriesIdx: i+1, _seriesTotal: sparMonate.length,
+                      splits: sparTgtCatId ? [{id:uid(),catId:sparTgtCatId,subId:sparTgtSubId||"",amount:row.zusaetzlich}]
+                                          : [{id:uid(),catId:"",subId:"",amount:row.zusaetzlich}],
+                    };
+                    return [abgang, zugang];
+                  });
+                  setTxs(p=>[...p, ...newTxs]);
+                  showToast(`✓ ${sparMonate.length} Sparvormerkungen angelegt${sparAccId?" (Abgang + Zugang)":""}`);
+                }} disabled={!result||result.every(r=>!r.zusaetzlich||r.zusaetzlich<=0)}
+                  style={{padding:"7px 14px",borderRadius:10,border:"none",
+                  background:(!result||result.every(r=>!r.zusaetzlich||r.zusaetzlich<=0))?"rgba(255,255,255,0.1)":T.pos,
+                  color:(!result||result.every(r=>!r.zusaetzlich||r.zusaetzlich<=0))?T.txt2:"#000",
+                  fontSize:12,fontWeight:700,
+                  cursor:(!result||result.every(r=>!r.zusaetzlich||r.zusaetzlich<=0))?"default":"pointer",
+                  display:"flex",alignItems:"center",gap:6}}>
+                  {Li("plus-circle",14,(!result||result.every(r=>!r.zusaetzlich||r.zusaetzlich<=0))?T.txt2:"#000")} Anlegen
+                </button>
+              </div>
             </div>
           </div>
         </>)}
@@ -7376,7 +7603,7 @@ function TagesgeldWidget({year, month}) {
 // ══════════════════════════════════════════════════════════════════════
 function DashboardScreen() {
   const { cats,setCats,groups,setGroups,txs,setTxs,accounts,setAccounts,
-    yearData,setYearData,year,setYear,month,setMonth,isLand,
+    yearData,setYearData,year,setYear,month,setMonth,selAcc,isLand,
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
@@ -7392,6 +7619,7 @@ function DashboardScreen() {
     setDashDrillOpen,
   } = useContext(AppCtx);
 
+    const _isSelAcc = t => !selAcc || t.accountId===selAcc || (!t.accountId && selAcc==="acc-giro");
     const [dashDrill, _setDashDrill] = useState(null);
     // Wrapper: synct dashDrillOpen in FinanzApp für TopBar-zIndex
     const setDashDrill = (v) => { _setDashDrill(v); setDashDrillOpen(!!v); };
@@ -7413,8 +7641,8 @@ function DashboardScreen() {
       txs.forEach(t=>(t.linkedIds||[]).forEach(id=>s.add(id)));
       return s;
     },[txs]);
-    const mTxs    = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&!t.pending&&!t._linkedTo&&!dashLinkedChildIds.has(t.id); });
-    const pTxs    = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&t.pending; });
+    const mTxs    = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&!t.pending&&!t._linkedTo&&!dashLinkedChildIds.has(t.id)&&_isSelAcc(t); });
+    const pTxs    = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&t.pending&&_isSelAcc(t); });
     // Offener Betrag einer Vormerkung = totalAmount (kein Teilbetrag mehr)
     const pendOpenAmt = t => t.totalAmount;
     const totalIn = getTotalIncome(year, month);
@@ -7775,6 +8003,54 @@ function DashboardScreen() {
 
         {/* ── Kontostand-Warnung ── */}
         <KontoWarnungWidget showFolgemonateToggle={true}/>
+
+        {/* ── Sparplan-Warnung: globale Prüfung ob Sparraten Konto unter Puffer drücken ── */}
+        {(()=>{
+          const sparPuffer = parseInt(localStorage.getItem("mbt_tagesgeld_puffer")||"200");
+          const today = new Date();
+          // Prüfe alle zukünftigen Monate mit Sparplan-Vormerkungen
+          const sparTxs = txs.filter(t=>t.pending&&!t._linkedTo&&(t.desc||"").startsWith("Sparen·")&&t.accountId==="acc-giro");
+          if(!sparTxs.length) return null;
+          // Finde Monate mit Sparplan-Abgängen
+          const sparMonths = [...new Set(sparTxs.map(t=>{ const d=new Date(t.date); return `${d.getFullYear()}-${d.getMonth()}`; }))];
+          // Für jeden dieser Monate: prüfe ob Tiefst-Saldo unter Puffer
+          let problematischM = null;
+          for(const key of sparMonths) {
+            const [sy,sm] = key.split("-").map(Number);
+            if(sy < today.getFullYear() || (sy===today.getFullYear() && sm < today.getMonth())) continue;
+            // Schnelle Prüfung: Monatsletzt-Saldo aus Prognose
+            const prognose = getPrognoseSaldo(sy, sm, false);
+            if(prognose !== null && prognose < sparPuffer) {
+              problematischM = {y:sy, m:sm};
+              break;
+            }
+          }
+          if(!problematischM) return null;
+          const MONTHS_W=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+          return (
+            <div style={{margin:"4px 10px 0",padding:"10px 12px",
+              background:"rgba(245,166,35,0.12)",border:`1.5px solid ${T.gold}`,borderRadius:12,
+              display:"flex",alignItems:"center",gap:10}}>
+              {Li("alert-triangle",18,T.gold)}
+              <div style={{flex:1}}>
+                <div style={{color:T.gold,fontSize:12,fontWeight:700}}>Sparrate zu hoch</div>
+                <div style={{color:T.txt2,fontSize:10}}>
+                  Ab {MONTHS_W[problematischM.m]} {problematischM.y} fällt das Konto unter {fmt(sparPuffer)} € Puffer. Sparplan neu berechnen.
+                </div>
+              </div>
+              <button onClick={()=>{
+                  // TagesgeldWidget öffnen via sparOpenRequest + scroll
+                  setSparOpenRequest(v=>v+1);
+                  setTimeout(()=>document.getElementById("sparplan-widget")?.scrollIntoView({behavior:"smooth"}), 100);
+                }}
+                style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.gold}`,
+                  background:"rgba(245,166,35,0.15)",color:T.gold,fontSize:11,fontWeight:700,
+                  cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit",flexShrink:0}}>
+                {Li("chevron-down",11,T.gold)} Zum Sparplan
+              </button>
+            </div>
+          );
+        })()}
 
         {/* ── Tagesgeld-Transfer Widget ── */}
         <TagesgeldWidget year={year} month={month}/>
@@ -9062,8 +9338,64 @@ function TransactionsScreen() {
 
         {/* ── STICKY HEADER ── */}
         <div style={{position:"sticky",top:0,zIndex:20,background:T.bg,flexShrink:0}}>
-          {/* Suche */}
-          <div style={{padding:"6px 14px 4px",display:"flex",gap:6,alignItems:"center"}}>
+
+          {/* Konto-Filter — jetzt ganz oben */}
+          {accounts.length>0&&(
+            <div style={{display:"flex",gap:4,padding:"6px 14px 2px",flexWrap:"wrap"}}>
+              {accounts.map(acc=>(
+                <button key={acc.id} onClick={()=>setFiltAcc(f=>f===acc.id?"":acc.id)}
+                  style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:7,
+                    border:`1.5px solid ${filtAcc===acc.id?acc.color:T.bd}`,
+                    background:filtAcc===acc.id?acc.color+"22":"transparent",
+                    color:filtAcc===acc.id?acc.color:T.txt2,fontSize:10,fontWeight:600,cursor:"pointer"}}>
+                  {Li(acc.icon,11,filtAcc===acc.id?acc.color:T.txt2)} {acc.name}{acc.delayDays>0&&<span style={{color:T.gold,fontSize:"0.8em",fontWeight:700,marginLeft:2}}>+{acc.delayDays}d</span>}
+                </button>
+              ))}
+              {filtAcc&&<button onClick={()=>setFiltAcc("")}
+                style={{padding:"3px 8px",borderRadius:7,border:`1px solid ${T.bd}`,
+                  background:"transparent",color:T.txt2,fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{Li("x",12,T.txt2)}</button>}
+            </div>
+          )}
+
+          {/* Filter-Tabs */}
+          <div style={{display:"flex",gap:6,padding:"4px 14px 6px"}}>
+            {(()=>{
+              const tabs = [
+                ["expense","Ausgaben",  T.neg,  T.tab_exp],
+                ["income", "Einnahmen", T.pos,  T.tab_inc],
+                ["pending","vorgemerkt",T.gold, T.tab_pend],
+                ["uncat",  "？",        T.txt2, T.disabled],
+                ["mismatch","⚠ Falsch", T.gold, T.tab_pend],
+              ];
+              return tabs.map(([v,lbl,col,bgActive])=>{
+                const active = filt===v;
+                return (
+                  <button key={v} onClick={()=>setFilt(f=>f===v?"all":v)}
+                    style={{
+                      flex:1,
+                      padding:"7px 4px",
+                      borderRadius:10,
+                      cursor:"pointer",
+                      fontFamily:"inherit",
+                      border:"none",
+                      background: active ? bgActive : "rgba(255,255,255,0.06)",
+                      color: active ? "#fff" : T.txt2,
+                      fontSize:12,
+                      fontWeight:700,
+                      letterSpacing:0.2,
+                      whiteSpace:"nowrap",
+                      transition:"all 0.15s",
+                      outline: active ? `1.5px solid ${col}44` : "none",
+                    }}>
+                    {lbl}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Suche — jetzt unten */}
+          <div style={{padding:"0 14px 4px",display:"flex",gap:6,alignItems:"center"}}>
             <div style={{flex:1,display:"flex",alignItems:"center",background:"rgba(255,255,255,0.06)",
               border:`1px solid ${search?T.blue:T.bds}`,borderRadius:11,padding:"9px 11px",gap:6}}>
               {Li("search",14,T.txt2,1.5)}
@@ -9106,61 +9438,6 @@ function TransactionsScreen() {
           {/^[\d=<>]/.test(search.trim())&&search.trim()&&(
             <div style={{color:T.gold,fontSize:9,padding:"0 16px 2px"}}>
               {Li("search",10,T.gold)} Betragssuche · z.B. 41,85 · &gt;50 · &lt;=100
-            </div>
-          )}
-
-          {/* Filter-Tabs */}
-          <div style={{display:"flex",gap:6,padding:"0 14px 6px"}}>
-            {(()=>{
-              const tabs = [
-                ["expense","Ausgaben",  T.neg,  T.tab_exp],
-                ["income", "Einnahmen", T.pos,  T.tab_inc],
-                ["pending","vorgemerkt",T.gold, T.tab_pend],
-                ["uncat",  "？",        T.txt2, T.disabled],
-                ["mismatch","⚠ Falsch", T.gold, T.tab_pend],
-              ];
-              return tabs.map(([v,lbl,col,bgActive])=>{
-                const active = filt===v;
-                return (
-                  <button key={v} onClick={()=>setFilt(f=>f===v?"all":v)}
-                    style={{
-                      flex:1,
-                      padding:"7px 4px",
-                      borderRadius:10,
-                      cursor:"pointer",
-                      fontFamily:"inherit",
-                      border:"none",
-                      background: active ? bgActive : "rgba(255,255,255,0.06)",
-                      color: active ? "#fff" : T.txt2,
-                      fontSize:12,
-                      fontWeight:700,
-                      letterSpacing:0.2,
-                      whiteSpace:"nowrap",
-                      transition:"all 0.15s",
-                      outline: active ? `1.5px solid ${col}44` : "none",
-                    }}>
-                    {lbl}
-                  </button>
-                );
-              });
-            })()}
-          </div>
-
-          {/* Konto-Filter */}
-          {accounts.length>0&&(
-            <div style={{display:"flex",gap:4,padding:"2px 14px 4px",flexWrap:"wrap"}}>
-              {accounts.map(acc=>(
-                <button key={acc.id} onClick={()=>setFiltAcc(f=>f===acc.id?"":acc.id)}
-                  style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:7,
-                    border:`1.5px solid ${filtAcc===acc.id?acc.color:T.bd}`,
-                    background:filtAcc===acc.id?acc.color+"22":"transparent",
-                    color:filtAcc===acc.id?acc.color:T.txt2,fontSize:10,fontWeight:600,cursor:"pointer"}}>
-                  {Li(acc.icon,11,filtAcc===acc.id?acc.color:T.txt2)} {acc.name}{acc.delayDays>0&&<span style={{color:T.gold,fontSize:"0.8em",fontWeight:700,marginLeft:2}}>+{acc.delayDays}d</span>}
-                </button>
-              ))}
-              {filtAcc&&<button onClick={()=>setFiltAcc("")}
-                style={{padding:"3px 8px",borderRadius:7,border:`1px solid ${T.bd}`,
-                  background:"transparent",color:T.txt2,fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{Li("x",12,T.txt2)}</button>}
             </div>
           )}
 
@@ -9539,6 +9816,24 @@ function BudgetEditorModal({sub, cat, accountId="acc-giro", onClose}) {
   const amtG = pn(inGesamt.replace(",","."));
   const amtE = Math.max(0, amtG - amtM); // Ende = Gesamt - Mitte
 
+  const doDelete = (scope) => {
+    const [sY,sM] = sd.split("-").map(Number);
+    const pfx = `${sY}-${pad(sM)}-`;
+    if(scope==="single") {
+      setTxs(p=>p.filter(t=>!(t.pending&&
+        (t._budgetSubId===sub.id||t._budgetSubId===sub.id+"_mitte")&&
+        t.date.startsWith(pfx))));
+    } else if(scope==="from") {
+      setTxs(p=>p.filter(t=>!(t.pending&&
+        (t._budgetSubId===sub.id||t._budgetSubId===sub.id+"_mitte")&&
+        t.date>=sd)));
+    } else {
+      setBudgets(p=>{const n={...p};delete n[sub.id];delete n[sub.id+"_mitte"];return n;});
+      setTxs(p=>p.filter(t=>t._budgetSubId!==sub.id&&t._budgetSubId!==sub.id+"_mitte"));
+    }
+    setSaved(true); setTimeout(()=>{setSaved(false);onClose();},1200);
+  };
+
   const doSave = (scope) => {
     const [sY,sM,sD] = sd.split("-").map(Number);
     const acc = accounts?.[0];
@@ -9753,6 +10048,20 @@ function BudgetEditorModal({sub, cat, accountId="acc-giro", onClose}) {
                   color:sc==="all"?(amtE>0?T.on_accent:T.txt2):
                     sc==="from"?T.blue:T.gold}}>
                 {Li("check",10,sc==="all"?(amtE>0?T.on_accent:T.txt2):sc==="from"?T.blue:T.gold)} {lbl}
+              </button>
+            ))}
+          </div>
+          <div style={{borderTop:`1px solid ${T.bd}`,margin:"4px 0 6px"}}/>
+          <div style={{color:T.txt2,fontSize:10,fontWeight:700,textAlign:"center",marginBottom:5}}>Budget löschen</div>
+          <div style={{display:"flex",gap:5}}>
+            {[["single","nur dieser"],["from","ab diesem"],["all","alle"]].map(([sc,lbl])=>(
+              <button key={"del-"+sc} onClick={()=>doDelete(sc)}
+                style={{flex:1,padding:"7px 4px",borderRadius:10,fontFamily:"inherit",
+                fontSize:11,fontWeight:700,cursor:"pointer",
+                border:`1px solid ${T.neg}44`,
+                background:"rgba(234,64,37,0.10)",
+                color:T.neg}}>
+                {Li("trash-2",10,T.neg)} {lbl}
               </button>
             ))}
           </div>
@@ -14109,15 +14418,20 @@ function WerkzeugeSection() {
 
 // ── KontoWarnungWidget — zeigt Minus-Tage des aktuellen Monats ───────────────
 function KontoWarnungWidget({showFolgemonateToggle=false}) {
-  const { txs, cats, year, month, getKumulierterSaldo, getPrognoseSaldo, getCat, budgets } = useContext(AppCtx);
+  const { txs, cats, year, month, getKumulierterSaldo, getPrognoseSaldo, getCat, budgets, navigateToSparen, selAcc, getProgEndeAccGlobal, accounts } = useContext(AppCtx);
   const [folgemonate, setFolgemonate] = React.useState(false);
+  const [expandedMonths, setExpandedMonths] = React.useState(new Set());
 
   const warnings = React.useMemo(()=>{
-    // Gleiche PrognoseE-Logik wie Dashboard (getProgEnde)
+    // Gleiche PrognoseE-Logik wie Dashboard (getProgEnde) — mit Cache
+    const _cache = {};
     const getProgEndeW = (y, m) => {
+      const ck=`${y}-${m}`;
+      if(ck in _cache) return _cache[ck];
       const tb = new Date();
-      if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth()))
-        return getKumulierterSaldo(y, m);
+      if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth())) {
+        const v=getKumulierterSaldo(y,m); _cache[ck]=v; return v;
+      }
       const pY=m===0?y-1:y, pM=m===0?11:m-1;
       const prev = getProgEndeW(pY, pM);
       if(prev===null||prev===undefined) return null;
@@ -14153,32 +14467,45 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
         const realNoSub=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!new Set((cat.subs||[]).map(s=>s.id)).has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
         return s+subTotal+pendNoSub+realNoSub;
       },0);
-      return prev + inc - out;
+      const v = prev + inc - out;
+      _cache[ck] = v;
+      return v;
     };
 
     const result = [];
     // Immer vom echten aktuellen Monat ausgehen (unabhängig vom angezeigten Monat)
     const todayReal = new Date();
     const curY = todayReal.getFullYear(), curM = todayReal.getMonth();
-    const months = [[curY, curM]];
-    if(folgemonate) {
-      for(let i=1;i<=3;i++) {
-        const m=(curM+i)%12, y=curY+Math.floor((curM+i)/12);
-        months.push([y,m]);
-      }
-    }
-    months.forEach(([y,m])=>{
+    // Immer alle Monate mit Vormerkungen prüfen — Toggle steuert nur wie viele angezeigt werden
+    const monthSet = new Map();
+    monthSet.set(`${curY}-${curM}`, [curY, curM]);
+    txs.forEach(t=>{
+      if(!t.pending||t._linkedTo) return;
+      const d=new Date(t.date);
+      const y=d.getFullYear(), m=d.getMonth();
+      if(y<curY||(y===curY&&m<=curM)) return;
+      monthSet.set(`${y}-${m}`,[y,m]);
+    });
+    const allMonths = [...monthSet.values()]
+      .sort((a,b)=>a[0]*12+a[1]-(b[0]*12+b[1]))
+      .slice(0, 24); // max 24 Monate prüfen
+    allMonths.forEach(([y,m])=>{
       const prevY = m===0 ? y-1 : y, prevM = m===0 ? 11 : m-1;
-      const baseSaldo = getProgEndeW(prevY, prevM)
-        ?? (m===0 ? getKumulierterSaldo(y-1,11) : getKumulierterSaldo(y,m-1));
+      // Immer Giro-Saldo prüfen — Gesamtsaldo ist wegen Tagesgeld nie negativ
+      const baseSaldo = (getProgEndeAccGlobal(prevY, prevM, "acc-giro")
+        ?? getKumulierterSaldo(prevY, prevM, "acc-giro")
+        ?? getProgEndeW(prevY, prevM)
+        ?? (m===0 ? getKumulierterSaldo(y-1,11) : getKumulierterSaldo(y,m-1)));
       if(baseSaldo===null||baseSaldo===undefined) return;
       const lastDay = new Date(y,m+1,0).getDate();
       const pad2 = n=>String(n).padStart(2,"0");
       const pfx = `${y}-${pad2(m+1)}-`;
+      // Nur Giro-Buchungen
+      const isGiro = t => t.accountId==="acc-giro" || (!t.accountId);
       const mTxs = txs.filter(t=>{
         if(t._linkedTo) return false;
         const d=new Date(t.date);
-        return d.getFullYear()===y && d.getMonth()===m;
+        return d.getFullYear()===y && d.getMonth()===m && isGiro(t);
       });
       const signed = t => {
         const ct=t._csvType||(()=>{const s=(t.splits||[]).filter(sp=>sp.catId);if(s.length>0){const c=getCat(s[0].catId);if(c)return(c.type==="income"||c.type==="tagesgeld")?"income":"expense";}return t.totalAmount>=0?"income":"expense";})();
@@ -14229,10 +14556,10 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
         return baseSaldo+real+pend+budgetDeduct;
       };
       const dayStrs = Array.from({length:lastDay},(_,i)=>`${pfx}${pad2(i+1)}`);
-      // Nur Tage mit Buchungen/Vormerkungen warnen — identisch zum Monat-Tab (byDate)
       const daysWithTxs = new Set(mTxs.map(t=>t.date));
+      const negDays = [];
       dayStrs.forEach((ds, idx) => {
-        if(!daysWithTxs.has(ds)) return; // kein Eintrag in diesem Monat → überspringen
+        if(!daysWithTxs.has(ds)) return;
         const saldo = saldoAt(ds);
         if(saldo < 0) {
           let nextPos = null;
@@ -14244,19 +14571,54 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
               break;
             }
           }
-          result.push({year:y, month:m, date:ds, deficit:Math.abs(saldo), nextPos});
+          negDays.push({date:ds, deficit:Math.abs(saldo), nextPos});
         }
       });
+      if(negDays.length > 0) {
+        const maxDeficit = Math.max(...negDays.map(d=>d.deficit));
+        const worstDay = negDays.find(d=>d.deficit===maxDeficit);
+        result.push({year:y, month:m, date:negDays[0].date, deficit:maxDeficit,
+          nextPos:worstDay.nextPos, allDays:negDays});
+      }
     });
-    return result;
+      // Immer alle Warnungen zurückgeben — Toggle steuert Anzeige
+      return result;
   }, [txs, cats, folgemonate, getKumulierterSaldo, getCat, budgets]);
 
-  if(!warnings.length && !showFolgemonateToggle) return null;
-  if(!warnings.length) return (
+  const sparWarnung = React.useMemo(()=>{
+    const sparPuffer = parseInt(localStorage.getItem("mbt_tagesgeld_puffer")||"200");
+    const today = new Date();
+    const todayY=today.getFullYear(), todayM=today.getMonth();
+    // Monate mit Sparplan-Abgängen auf Giro
+    const sparMonths = new Map();
+    txs.forEach(t=>{
+      if(!t.pending||t._linkedTo||(t.desc||"").indexOf("Sparen·")!==0||t.accountId!=="acc-giro") return;
+      const d=new Date(t.date);
+      const y=d.getFullYear(), m=d.getMonth();
+      if(y<todayY||(y===todayY&&m<todayM)) return;
+      const key=`${y}-${m}`;
+      if(!sparMonths.has(key)) sparMonths.set(key,{y,m,total:0});
+      sparMonths.get(key).total += Math.abs(t.totalAmount);
+    });
+    if(!sparMonths.size) return null;
+    const probleme=[];
+    const MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+    sparMonths.forEach(({y,m,total})=>{
+      // Giro-Prognose Ende des Monats
+      const prognose = getProgEndeAccGlobal(y, m, "acc-giro");
+      if(prognose!==null && prognose < sparPuffer) {
+        probleme.push({label:`${MN[m]} ${String(y).slice(2)}`, y, m, total});
+      }
+    });
+    return probleme.length ? probleme : null;
+  }, [txs]);
+
+  if(!warnings.length && !showFolgemonateToggle && !sparWarnung) return null;
+  if(!warnings.length && !sparWarnung) return (
     showFolgemonateToggle ? (
       <div style={{margin:"4px 10px 0",display:"flex",alignItems:"center",
         justifyContent:"flex-end",gap:6}}>
-        <span style={{color:T.txt2,fontSize:10}}>Folgemonate prüfen</span>
+        <span style={{color:T.txt2,fontSize:10}}>Alle Folgemonate prüfen</span>
         <div onClick={()=>setFolgemonate(v=>!v)}
           style={{width:32,height:18,borderRadius:9,cursor:"pointer",position:"relative",
             background:folgemonate?T.neg:"rgba(255,255,255,0.12)",transition:"background 0.2s"}}>
@@ -14271,10 +14633,32 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
 
   return (
     <div style={{margin:"4px 10px 0"}}>
+      {sparWarnung&&(
+        <div style={{marginBottom:6,padding:"10px 12px",
+          background:"rgba(245,166,35,0.1)",border:`1px solid ${T.gold}55`,borderRadius:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            {Li("alert-triangle",16,T.gold)}
+            <div style={{flex:1}}>
+              <div style={{color:T.gold,fontSize:12,fontWeight:700}}>
+                Sparrate zu hoch — {sparWarnung.length} Monat{sparWarnung.length>1?"e":""} betroffen
+              </div>
+              <div style={{color:T.txt2,fontSize:10,marginTop:2}}>
+                {sparWarnung.map(p=>p.label).join(", ")} — Giro fällt unter Puffer
+              </div>
+            </div>
+            <button onClick={()=>{ navigateToSparen(); setTimeout(()=>document.getElementById("sparplan-widget")?.scrollIntoView({behavior:"smooth"}),300); }}
+              style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.gold}`,
+                background:"rgba(245,166,35,0.15)",color:T.gold,fontSize:11,fontWeight:700,
+                cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit",flexShrink:0}}>
+              {Li("refresh-cw",11,T.gold)} Zum Sparplan
+            </button>
+          </div>
+        </div>
+      )}
       {showFolgemonateToggle&&(
         <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",
           gap:6,marginBottom:4}}>
-          <span style={{color:T.txt2,fontSize:10}}>Folgemonate</span>
+          <span style={{color:T.txt2,fontSize:10}}>Alle Folgemonate prüfen</span>
           <div onClick={()=>setFolgemonate(v=>!v)}
             style={{width:32,height:18,borderRadius:9,cursor:"pointer",position:"relative",
               background:folgemonate?T.neg:"rgba(255,255,255,0.12)",transition:"background 0.2s"}}>
@@ -14283,58 +14667,84 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
           </div>
         </div>
       )}
-      {warnings.map((w,i)=>{
-        const [,wm,wd]=(w.nextPos?.date||"").split("-");
-        const nextLabel=w.nextPos?`${parseInt(wd)}.${parseInt(wm)}.`:null;
-        const [,dm,dd]=w.date.split("-");
-        const fromLabel=`${parseInt(dd)}.${parseInt(dm)}.`;
-        const isFuture=w.year!==year||w.month!==month;
+      {(folgemonate ? warnings : warnings.slice(0,1)).map((w,i)=>{
+        const mKey = `${w.year}-${w.month}`;
+        const isExpanded = expandedMonths.has(mKey);
+        const hasMultiple = (w.allDays||[]).length > 1;
+        const isFuture = w.year!==year||w.month!==month;
+        const toggleExpand = () => setExpandedMonths(prev=>{
+          const s=new Set(prev); s.has(mKey)?s.delete(mKey):s.add(mKey); return s;
+        });
         return (
-          <div key={i} style={{
-            margin:"2px 0 3px",
-            background:`${T.neg}18`,
-            border:`1px solid ${T.neg}44`,
-            borderRadius:8,
-            padding:"7px 10px",
-            display:"flex",alignItems:"center",gap:10,
-          }}>
-            <div style={{flexShrink:0,width:28,height:28,borderRadius:8,
-              background:`${T.neg}22`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              {Li("alert-triangle",14,T.neg)}
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{color:T.neg,fontSize:12,fontWeight:700,lineHeight:1.3}}>
-                {isFuture&&<span style={{color:T.gold,fontSize:10,marginRight:6}}>{MONTHS_S[w.month]} {w.year}</span>}
-                Ab <span style={{fontFamily:"monospace"}}>{fromLabel}</span> Kontostand im Minus: −{fmt(w.deficit)} €
+          <div key={i} style={{margin:"2px 0 3px",borderRadius:8,overflow:"hidden",
+            border:`1px solid ${T.neg}44`}}>
+            {/* Monats-Header — immer sichtbar */}
+            <div onClick={hasMultiple?toggleExpand:undefined}
+              style={{background:`${T.neg}18`,padding:"7px 10px",
+                display:"flex",alignItems:"center",gap:10,
+                cursor:hasMultiple?"pointer":"default"}}>
+              <div style={{flexShrink:0,width:28,height:28,borderRadius:8,
+                background:`${T.neg}22`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {Li("alert-triangle",14,T.neg)}
               </div>
-              <div style={{color:T.txt2,fontSize:10,marginTop:2,lineHeight:1.4}}>
-                {w.nextPos
-                  ? <>Ausgleichen bis <span style={{color:T.gold,fontWeight:700}}>{nextLabel}</span>
-                    {w.nextPos.name&&<span> ({w.nextPos.name})</span>}
-                    {" — mindestens "}<span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>
-                      {fmt(w.deficit)} €
-                    </span>{" einplanen"}</>
-                  : <>Kein Ausgleich im Monat — mindestens{" "}
-                    <span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>
-                      {fmt(w.deficit)} €
-                    </span>{" fehlen"}</>
-                }
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{color:T.neg,fontSize:12,fontWeight:700,lineHeight:1.3}}>
+                  {isFuture&&<span style={{color:T.gold,fontSize:10,marginRight:6}}>{MONTHS_S[w.month]} {w.year}</span>}
+                  {hasMultiple
+                    ? <>{(w.allDays||[]).length}× Kontostand im Minus — schlimmste: −{fmt(w.deficit)} €</>
+                    : <>Ab {(()=>{const[,dm,dd]=w.date.split("-");return`${parseInt(dd)}.${parseInt(dm)}.`;})()}  Kontostand im Minus: −{fmt(w.deficit)} €</>
+                  }
+                </div>
+                {!hasMultiple&&<div style={{color:T.txt2,fontSize:10,marginTop:2}}>
+                  {w.nextPos?(()=>{const[,wm,wd]=(w.nextPos.date||"").split("-");return<>Ausgleichen bis <span style={{color:T.gold,fontWeight:700}}>{parseInt(wd)}.{parseInt(wm)}.</span>{w.nextPos.name&&` (${w.nextPos.name})`} — mindestens <span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>{fmt(w.deficit)} €</span> einplanen</>})():<>Kein Ausgleich — mindestens <span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>{fmt(w.deficit)} €</span> fehlen</>}
+                </div>}
               </div>
+              {hasMultiple&&<div style={{color:T.txt2,fontSize:10,flexShrink:0}}>
+                {Li(isExpanded?"chevron-up":"chevron-down",12,T.txt2)}
+              </div>}
             </div>
+            {/* Aufgeklappte Einzel-Warnungen */}
+            {isExpanded&&(w.allDays||[]).map((d,j)=>{
+              const[,dm,dd]=d.date.split("-");
+              const fromLabel=`${parseInt(dd)}.${parseInt(dm)}.`;
+              const[,wm,wd]=(d.nextPos?.date||"").split("-");
+              const nextLabel=d.nextPos?`${parseInt(wd)}.${parseInt(wm)}.`:null;
+              return(
+                <div key={j} style={{padding:"5px 10px 5px 48px",
+                  borderTop:`1px solid ${T.neg}22`,background:`${T.neg}0C`}}>
+                  <div style={{color:T.neg,fontSize:11,fontWeight:700}}>
+                    Ab {fromLabel} −{fmt(d.deficit)} €
+                  </div>
+                  <div style={{color:T.txt2,fontSize:10}}>
+                    {nextLabel
+                      ? <>Ausgleichen bis <span style={{color:T.gold,fontWeight:700}}>{nextLabel}</span>{d.nextPos?.name&&` (${d.nextPos.name})`} — mindestens <span style={{color:T.neg,fontWeight:700,fontFamily:"monospace"}}>{fmt(d.deficit)} €</span></>
+                      : <>Kein Ausgleich im Monat</>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         );
       })}
+      {!folgemonate && warnings.length > 1 && (
+        <div onClick={()=>setFolgemonate(true)} style={{
+          margin:"2px 0",padding:"5px 10px",textAlign:"center",
+          color:T.neg,fontSize:10,fontWeight:700,cursor:"pointer",
+          background:`${T.neg}10`,borderRadius:8,border:`1px solid ${T.neg}33`}}>
+          {Li("alert-triangle",10,T.neg)} +{warnings.length-1} weitere Warnung{warnings.length>2?"en":""} — alle anzeigen
+        </div>
+      )}
     </div>
   );
 }
 
 function MonatScreen() {
   const { cats,setCats,groups,setGroups,txs,setTxs,accounts,setAccounts,
-    yearData,setYearData,year,setYear,month,setMonth,isLand,
+    yearData,setYearData,year,setYear,month,setMonth,selAcc,isLand,
     col3Name,setCol3Name,modal,setModal,mgmtCat,setMgmtCat,
     editTx,setEditTx,newTx,setNewTx,newCat,setNewCat,
     newSubName,setNewSubName,exportModal,setExportModal,
-    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getPendingSum,pendingItemsFor,
+    getCat,getSub,txType,getActualSum,getBudgetForMonth,getTotalIncome,getTotalExpense,getKumulierterSaldo,getPrognoseSaldo,getPrognoseSaldoDetail,getProgEndeAccGlobal,getPendingSum,pendingItemsFor,
     getJV,setJV,getMV,setMV,getAcc,openEdit,saveEdit,deleteFromEdit,
     updEditSplit,moveCat,moveSub,updateSub,updateCat,
     renameCat,renameSub,deleteCat,deleteSub,saveNewCat,saveNewSub,
@@ -14342,8 +14752,10 @@ function MonatScreen() {
     addSplit,removeSplit,updSplit,splitTotal,splitDiff,txValid,saveTx,
     onTS,onTE,
     budgets={},
+    navigateToSparen,
   } = useContext(AppCtx);
 
+    const _isSelAcc = t => !selAcc || t.accountId===selAcc || (!t.accountId && selAcc==="acc-giro");
     const [filt,     setFilt]     = useState("all");
     const [showAllCats, setShowAllCats] = useState(false);
     const [activeCatTxId, setActiveCatTxId] = useState(null);
@@ -14362,7 +14774,7 @@ function MonatScreen() {
       return opts;
     },[cats,groups]);
 
-    const allMTxs = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&!t._linkedTo&&!t._budgetSubId; }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const allMTxs = txs.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===year&&d.getMonth()===month&&!t._linkedTo&&!t._budgetSubId&&_isSelAcc(t); }).sort((a,b)=>new Date(b.date)-new Date(a.date));
     const filtByType = filt==="all" ? allMTxs : filt==="pending" ? allMTxs.filter(t=>t.pending) : filt==="uncat" ? allMTxs.filter(t=>(t.splits||[]).length===0||(t.splits||[]).every(s=>!s.catId)) : filt==="mismatch" ? allMTxs.filter(t=>{ const ct=t._csvType; if(!ct) return false; const tt=txType(t); return (ct==="expense"&&tt==="income")||(ct==="income"&&tt==="expense"); }) : allMTxs.filter(t=>!t.pending&&txType(t)===filt);
     const mTxs = search.trim() ? filtByType.filter(t=>{
       const isAmt = /^[=<>]?[\d.,]+$/.test(search.trim());
@@ -14385,6 +14797,13 @@ function MonatScreen() {
     const totalOut = getTotalExpense(year, month);
     const pendOut  = allMTxs.filter(t=>t.pending).reduce((s,t)=>s+t.totalAmount,0);
 
+    // Detail-Prognose früh berechnen — wird für getDaySaldo UND SaldoHero2 genutzt
+    const _today3 = new Date();
+    const _isCurM = year===_today3.getFullYear()&&month===_today3.getMonth();
+    const _isFutM = year>_today3.getFullYear()||(year===_today3.getFullYear()&&month>_today3.getMonth());
+    const monatDetailMitte = useMemo(()=> (_isCurM||_isFutM) ? getPrognoseSaldoDetail(year,month,true)  : null, [year,month,txs]);
+    const monatDetailEnde  = useMemo(()=> (_isCurM||_isFutM) ? getPrognoseSaldoDetail(year,month,false) : null, [year,month,txs]);
+
     const catSums = cats.filter(c=>c.type==="expense").map(c=>({...c,sum:(c.subs||[]).reduce((s,sub)=>s+getActualSum(year,month,sub.id),0)})).filter(c=>c.sum>0).sort((a,b)=>b.sum-a.sum);
     const maxSum  = catSums[0]?.sum||1;
 
@@ -14397,6 +14816,8 @@ function MonatScreen() {
     // Offenes Budget für Tag 14 (Mitte) und Monatsletzter (Ende) berechnen
     // = Budget - (echte Buchungen + Vormerkungen bis maxDay) für alle Expense-Subs mit Budget
     const calcOpenBudgetDetails = (maxDay) => {
+      // Budgets nur für Gesamt oder Giro anzeigen — andere Konten haben keine Budgets
+      if(selAcc && selAcc !== "acc-giro") return { items:[], totalOpen:0 };
       const items = [];
       let totalOpen = 0;
       cats.filter(c=>c.type==="expense"||c.type==="income").forEach(cat=>{
@@ -14443,23 +14864,23 @@ function MonatScreen() {
             const d=new Date(t.date);
             return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
               (t.splits||[]).some(sp=>sp.subId===sub.id);
-          }).reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+          }).reduce((s,t)=>{ const sp=(t.splits||[]).find(sp=>sp.subId===sub.id); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(t.totalAmount)); },0);
           const pend = txs.filter(t=>{
             if(!t.pending||t._linkedTo||t._budgetSubId) return false;
             const d=new Date(t.date);
             return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()<=maxDay&&
               (t.splits||[]).some(sp=>sp.subId===sub.id);
-          }).reduce((s,t)=>s+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||Math.abs(t.totalAmount)),0);
+          }).reduce((s,t)=>{ const sp=(t.splits||[]).find(sp=>sp.subId===sub.id); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(t.totalAmount)); },0);
           const spent = real + pend;
-          const open = Math.max(0, bgt - spent);
-          if(open > 0) items.push({name:`${cat.name} / ${sub.name}`, spent, budget:bgt, open, type:cat.type});
-          totalOpen += open;
+          const open = bgt - spent; // kann negativ sein (Budget überschritten)
+          if(open !== 0) items.push({name:`${cat.name} / ${sub.name}`, spent, budget:bgt, open, type:cat.type});
+          totalOpen += Math.max(0, open); // nur positives Restbudget zählt für Abzug
         });
       });
       return {items, totalOpen};
     };
-    const budgetDetailsMitte = calcOpenBudgetDetails(14);
-    const budgetDetailsEnde  = calcOpenBudgetDetails(lastDayOfMonth);
+    const budgetDetailsMitte = useMemo(()=>calcOpenBudgetDetails(14),           [year,month,txs,selAcc]);
+    const budgetDetailsEnde  = useMemo(()=>calcOpenBudgetDetails(lastDayOfMonth),[year,month,txs,selAcc]);
     const openBudgetMitte = budgetDetailsMitte.totalOpen;
     const openBudgetEnde  = budgetDetailsEnde.totalOpen;
     if(budgetDetailsMitte.items.length && !byDate[mitteIso]) byDate[mitteIso]=[];
@@ -14470,10 +14891,14 @@ function MonatScreen() {
 
     // Tagessaldo-Basis: PrognoseE des Vormonats — gleiche Logik wie Dashboard (getProgEnde)
     // Vergangene Monate → echter Endkontostand; aktuell/zukünftig → rekursive Prognose
+    const _progEndeMCache = useMemo(()=>({}), [txs]);
     const _getProgEndeM = (y, m) => {
+      const ck=`${y}-${m}`;
+      if(ck in _progEndeMCache) return _progEndeMCache[ck];
       const tb = new Date();
-      if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth()))
-        return getKumulierterSaldo(y, m);
+      if(y<tb.getFullYear()||(y===tb.getFullYear()&&m<tb.getMonth())) {
+        const v=getKumulierterSaldo(y,m); _progEndeMCache[ck]=v; return v;
+      }
       const pY=m===0?y-1:y, pM=m===0?11:m-1;
       const prev = _getProgEndeM(pY, pM);
       if(prev===null||prev===undefined) return null;
@@ -14501,35 +14926,42 @@ function MonatScreen() {
         const subIds=new Set((cat.subs||[]).map(sub=>sub.id));
         const subTotal=(cat.subs||[]).reduce((cs,sub)=>{
           const bG=getBudgetForMonth(sub.id,y,m);
-          const real=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
-          const pend=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||t.totalAmount),0);
+          const real=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>{ const sp=(t.splits||[]).find(sp=>sp.subId===sub.id); return ss+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(t.totalAmount)); },0);
+          const pend=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id);}).reduce((ss,t)=>{ const sp=(t.splits||[]).find(sp=>sp.subId===sub.id); return ss+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(t.totalAmount)); },0);
           return cs+(bG>0?Math.max(bG,real+pend):real+pend);
         },0);
         const pendNoSub=txs.filter(t=>{if(!t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)||t.totalAmount),0),0);
         const realNoSub=txs.filter(t=>{if(t.pending||t._linkedTo||t._budgetSubId)return false;const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId)));}).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
         return s+subTotal+pendNoSub+realNoSub;
       },0);
-      return prev + inc - out;
+      const val = prev + inc - out;
+      _progEndeMCache[ck] = val;
+      return val;
     };
-    const prevY2 = month===0 ? year-1 : year, prevM2 = month===0 ? 11 : month-1;
-    const baseSaldo = _getProgEndeM(prevY2, prevM2)
-      ?? (month===0 ? getKumulierterSaldo(year-1, 11) : getKumulierterSaldo(year, month-1));
+    const baseSaldo = useMemo(()=>{
+      const prevY2 = month===0 ? year-1 : year, prevM2 = month===0 ? 11 : month-1;
+      return selAcc
+        ? (getProgEndeAccGlobal(prevY2, prevM2, selAcc) ?? getKumulierterSaldo(prevY2, prevM2, selAcc))
+        : (_getProgEndeM(prevY2, prevM2) ?? (month===0 ? getKumulierterSaldo(year-1, 11) : getKumulierterSaldo(year, month-1)));
+    }, [year, month, selAcc, txs]);
 
     const getDaySaldo = (isoDate) => {
       if(baseSaldo===null||baseSaldo===undefined) return null;
-      const dayStr = isoDate;
       const [,, dd] = isoDate.split("-");
       const dayNum = parseInt(dd);
+      const isMitteDay = dayNum <= 14;
+
+      // Fallback für vergangene Monate oder Konto-Ansicht: eigene Berechnung
+      const dayStr = isoDate;
       const realTxsDay = txs.filter(t=>{
         if(t.pending||t._linkedTo) return false;
         const d=new Date(t.date);
-        return d.getFullYear()===year && d.getMonth()===month && t.date<=dayStr;
+        return d.getFullYear()===year && d.getMonth()===month && t.date<=dayStr && _isSelAcc(t);
       });
-      // Vormerkungen: echte (keine Budget-Platzhalter, keine verknüpften)
       const pendTxsDay = txs.filter(t=>{
         if(!t.pending||t._linkedTo||t._budgetSubId) return false;
         const d=new Date(t.date);
-        return d.getFullYear()===year && d.getMonth()===month && t.date<=dayStr;
+        return d.getFullYear()===year && d.getMonth()===month && t.date<=dayStr && _isSelAcc(t);
       });
       const signed = t => {
         const ct = t._csvType || txType(t);
@@ -14539,11 +14971,9 @@ function MonatScreen() {
       };
       const realSum = realTxsDay.reduce((s,t)=>s+signed(t), 0);
       const pendSum = pendTxsDay.reduce((s,t)=>s+signed(t), 0);
-      // Offenes Budget kumulativ einrechnen: ab Tag 15 gilt Mitte-Abzug dauerhaft,
-      // ab dem Tag nach Monatsletztem (hier: immer wenn dayNum >= lastDayOfMonth) der Ende-Abzug
-      const budgetDeduct = dayNum>=lastDayOfMonth ? -openBudgetEnde
-                         : dayNum>=14             ? -openBudgetMitte
-                         : 0;
+      const budgetDeduct = (selAcc && selAcc !== "acc-giro") ? 0
+                         : dayNum>=14 ? -Math.max(0, openBudgetEnde)
+                         : -Math.max(0, openBudgetMitte);
       return baseSaldo + realSum + pendSum + budgetDeduct;
     };
     // Für die Minus-Warnung: ersten zukünftigen Tag mit positivem Saldo finden
@@ -14651,8 +15081,8 @@ function MonatScreen() {
           const prognoseMitte=base!=null?base+_inMitte-_outMitte:null;
           const prognoseEnde =base!=null?base+_inEnde -_outEnde :null;
           const _isCurH=year===_todayY&&month===_todayM,_isFutH=year>_todayY||(year===_todayY&&month>_todayM);
-          const detailMitte=(_isCurH||_isFutH)?getPrognoseSaldoDetail(year,month,true):null;
-          const detailEnde =(_isCurH||_isFutH)?getPrognoseSaldoDetail(year,month,false):null;
+          const detailMitte = monatDetailMitte;
+          const detailEnde  = monatDetailEnde;
           const saldoMitte =(_isCurH||_isFutH)?prognoseMitte??null:null;
           const saldoEnde  =(_isCurH||_isFutH)?prognoseEnde ??null:null;
           const _realIn =allMTxs.filter(t=>!t.pending&&txType(t)==="income");
@@ -14907,7 +15337,7 @@ function MonatScreen() {
                         const pendUpToDay = txs.filter(t=>{
                           if(!t.pending||t._linkedTo||t._budgetSubId) return false;
                           const d=new Date(t.date);
-                          return d.getFullYear()===year&&d.getMonth()===month&&t.date<=date;
+                          return d.getFullYear()===year&&d.getMonth()===month&&t.date<=date&&_isSelAcc(t);
                         });
                         const n = pendUpToDay.length;
                         const todayPend = dayTxs.filter(t=>t.pending&&!t._budgetSubId);
@@ -15032,8 +15462,9 @@ function MonatScreen() {
                   if(!details.items.length) return null;
                   return details.items.map(({name,spent,budget,open,type})=>{
                     const isIncome = type==="income";
-                    const accentCol = isIncome ? T.cell_inc : T.gold;
-                    const pct = Math.min(100, spent/budget*100);
+                    const isOverspent = !isIncome && open < 0;
+                    const accentCol = isIncome ? T.cell_inc : (isOverspent ? T.neg : T.gold);
+                    const pct = budget > 0 ? Math.min(150, spent/budget*100) : 100;
                     const barCol = isIncome ? T.cell_inc : (pct>=100?T.neg:pct>=75?T.gold:T.pos);
                     const subName = name.split(" / ")[1]||name;
                     const barW = Math.min(100, pct);
@@ -15044,20 +15475,33 @@ function MonatScreen() {
                       <div key={"rb-"+name} style={{borderRadius:10,marginBottom:2,overflow:"hidden",background:"transparent",borderBottom:`1px solid ${T.bd}`}}>
                         <div style={{display:"flex",alignItems:"center",gap:0,padding:"9px 8px"}}>
                           <div style={{width:32,height:32,borderRadius:9,flexShrink:0,marginRight:8,background:accentCol+"22",border:`1px solid ${T.bd}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                            {Li("target",16,accentCol)}
+                            {Li(isOverspent?"alert-triangle":"target",16,accentCol)}
                           </div>
                           <div style={{flex:1,minWidth:0,marginRight:6}}>
-                            <div style={{color:T.txt,fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Restbudget: {subName}</div>
+                            <div style={{color:isOverspent?T.neg:T.txt,fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{isOverspent?"Überzogen: ":"Restbudget: "}{subName}</div>
                             <div style={{marginTop:3,display:"flex",alignItems:"center",gap:6}}>
                               <div style={{flex:1,maxWidth:120,height:4,borderRadius:2,background:"rgba(255,255,255,0.1)",overflow:"hidden"}}>
                                 <div style={{height:"100%",borderRadius:2,background:barCol,width:`${barW}%`}}/>
                               </div>
-                              <span style={{color:T.txt2,fontSize:10}}>{Math.round(pct)}% verbraucht</span>
+                              <span style={{color:isOverspent?T.neg:T.txt2,fontSize:10}}>{Math.round(pct)}% verbraucht</span>
                             </div>
                           </div>
                           <div style={{textAlign:"right",flexShrink:0,marginRight:8}}>
-                            <div style={{color:accentCol,fontSize:14,fontWeight:800,fontFamily:"monospace"}}>{fmtSigned(signedOpen)}</div>
-                            <div style={{color:T.txt2,fontSize:10,marginTop:1}}>von {fmtSigned(signedBudget)}</div>
+                            {isOverspent ? (<>
+                              <div style={{color:T.neg,fontSize:10,fontWeight:700}}>{fmtSigned(signedBudget)} um {fmt(Math.abs(open))} überschritten</div>
+                              <div style={{borderTop:`1px solid ${T.neg}44`,margin:"3px 0"}}/>
+                              <div style={{color:T.neg,fontSize:13,fontWeight:800,fontFamily:"monospace"}}>{fmtSigned(-spent)}</div>
+                            </>) : (<>
+                              <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"baseline"}}>
+                                <span style={{color:T.txt2,fontSize:10}}>offenes Budget:</span>
+                                <span style={{color:open>0?T.gold:T.txt2,fontSize:11,fontWeight:700,fontFamily:"monospace"}}>{fmtSigned(signedOpen)}</span>
+                              </div>
+                              <div style={{borderTop:`1px solid ${T.bd}`,margin:"3px 0"}}/>
+                              <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"baseline"}}>
+                                <span style={{color:T.txt2,fontSize:10}}>genutzt:</span>
+                                <span style={{color:spent===0?T.txt2:accentCol,fontSize:13,fontWeight:800,fontFamily:"monospace"}}>{spent===0?"—":fmtSigned(-spent)}</span>
+                              </div>
+                            </>)}
                           </div>
                         </div>
                       </div>
@@ -15200,24 +15644,29 @@ function MonatScreen() {
         {/* ── Ankerpunkt-Info ── */}
         {(()=>{
           const prevY3 = month===0?year-1:year, prevM3 = month===0?11:month-1;
-          const progVal = _getProgEndeM(prevY3, prevM3);
-          const ksVal   = month===0?getKumulierterSaldo(year-1,11):getKumulierterSaldo(year,month-1);
+          const progVal = selAcc
+            ? getKumulierterSaldo(prevY3, prevM3, selAcc)
+            : _getProgEndeM(prevY3, prevM3);
+          const ksVal = selAcc
+            ? getKumulierterSaldo(prevY3, prevM3, selAcc)
+            : (month===0?getKumulierterSaldo(year-1,11):getKumulierterSaldo(year,month-1));
           const MONTHS_S2=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
           const label = `${MONTHS_S2[prevM3]} ${prevY3}`;
-          const diff = (progVal!==null&&ksVal!==null) ? Math.abs(progVal-ksVal) : null;
+          const diff = (progVal!==null&&ksVal!==null&&!selAcc) ? Math.abs(progVal-ksVal) : null;
           const abweichung = diff!==null && diff>0.01;
+          const accName = selAcc ? accounts.find(a=>a.id===selAcc)?.name : null;
           return (
             <div style={{margin:"4px 10px 8px",padding:"8px 12px",
               background:"rgba(255,255,255,0.04)",borderRadius:8,
               border:`1px solid ${abweichung?T.gold+"66":T.bd+"44"}`}}>
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{color:T.txt2,fontSize:9,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>
-                  Ankerpunkt ({label})
+                  Ankerpunkt ({label}){accName?` · ${accName}`:""}
                 </span>
                 <span style={{color:T.txt,fontSize:13,fontWeight:700,fontFamily:"monospace"}}>
                   {progVal!==null?(progVal>=0?"+":"")+fmt(progVal)+" €":"—"}
                 </span>
-                <span style={{color:T.txt2,fontSize:9}}>PrognoseE Vormonat</span>
+                <span style={{color:T.txt2,fontSize:9}}>{selAcc?(()=>{const tb=new Date();const isFut=year>tb.getFullYear()||(year===tb.getFullYear()&&month>tb.getMonth());return isFut?"PrognoseE Vormonat":"Kontostand Vormonat";})():"PrognoseE Vormonat"}</span>
                 {abweichung&&(
                   <span style={{color:T.gold,fontSize:10,fontWeight:700,
                     background:T.gold+"18",borderRadius:5,padding:"2px 7px",marginLeft:4}}>
@@ -19822,6 +20271,7 @@ function MobileKategorienModal({onClose, onKonten, onKategorienErweitert}) {
 
 window.FinanzApp = function FinanzApp() {
   const [mainTab,       setMainTab]      = useState("erfassen"); // erfassen|buchungen|struktur|mehr
+  const [sparOpenRequest, setSparOpenRequest] = useState(0);
   const [activeStructurTab, setActiveStructurTab] = useState("einstellungen");
   const [hideEmptyRows, setHideEmptyRows] = useState(true);
   const [themeName, setThemeName] = useState(()=>localStorage.getItem("mbt_theme")||"dark");
@@ -19832,12 +20282,14 @@ window.FinanzApp = function FinanzApp() {
   T = {...getTheme(themeName), themeName, _rev:themeRev};
   const [showHamburger, setShowHamburger] = useState(false);
   const [subTab,        setSubTab]       = useState("dashboard");
+  const navigateToSparen = () => { setMainTab("erfassen"); setSubTab("dashboard"); setSparOpenRequest(v=>v+1); };
   const LS_KEY = "finanzapp_v9";
 
   const [isLand,        setIsLand]       = useState(false);
   const [showAllMonths, setShowAllMonths] = useState(true); // Jahresansicht immer alle Monate
   const [year,          setYear]         = useState(CUR_YEAR);
   const [month,         setMonth]        = useState(new Date().getMonth());
+  const [selAcc,        setSelAcc]       = useState(null); // Globaler Konto-Filter (null = Gesamt)
   const [col3Name,      setCol3Name]     = useState("aktuell");
   const [csvRules,      setCsvRules]     = useState({});
   const [budgets,       setBudgets]      = useState({}); // {catId: monatsbetrag}
@@ -21234,16 +21686,16 @@ Abbrechen = ${remoteName}-Stand laden`
         // Mitte-Phase (Tag 1-14): bereits abgelaufen → echte Buchungen bis Tag 14
         const realBis14 = realTxsForSub
           .filter(r=>new Date(r.date).getDate()<=14)
-          .reduce((s,r)=>s+Math.abs((r.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||0),0);
+          .reduce((s,r)=>{ const sp=(r.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(r.totalAmount)); },0);
         const mitteBudget = Math.abs(mitteTx.totalAmount);
         const effMitte = Math.max(mitteBudget, realBis14);
 
         // Ende-Phase (Tag 15-cutDay): Budget + Buchungen ab 15. + alle Vormerkungen
         const realAb15 = realTxsForSub
           .filter(r=>new Date(r.date).getDate()>14)
-          .reduce((s,r)=>s+Math.abs((r.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||0),0);
+          .reduce((s,r)=>{ const sp=(r.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(r.totalAmount)); },0);
         const concForSub = concreteTxsForSub
-          .reduce((s,c)=>s+Math.abs((c.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||c.totalAmount),0);
+          .reduce((s,c)=>{ const sp=(c.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(c.totalAmount)); },0);
         const endeBudget = Math.abs(endeTx.totalAmount);
         const effEnde = Math.max(endeBudget, realAb15 + concForSub);
 
@@ -21263,9 +21715,9 @@ Abbrechen = ${remoteName}-Stand laden`
         // Kein Split oder Mitte-Drilldown: normale Logik
         const budget = Math.abs(repTx.totalAmount);
         const realForSub = realTxsForSub
-          .reduce((s,r)=>s+Math.abs((r.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||0),0);
+          .reduce((s,r)=>{ const sp=(r.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(r.totalAmount)); },0);
         const concreteForSub = concreteTxsForSub
-          .reduce((s,c)=>s+Math.abs((c.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||c.totalAmount),0);
+          .reduce((s,c)=>{ const sp=(c.splits||[]).find(sp=>sp.subId===baseSubId||sp.catId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(c.totalAmount)); },0);
         effektiv = Math.max(budget, realForSub + concreteForSub);
 
         if(realForSub + concreteForSub > budget) {
@@ -21313,16 +21765,16 @@ Abbrechen = ${remoteName}-Stand laden`
         const endeBudget  = Math.abs(endeTx.totalAmount);
         budget = mitteBudget + endeBudget;
         const realBis14Amt = realTxsForSub2.filter(r=>new Date(r.date).getDate()<=14)
-          .reduce((s,r)=>s+Math.abs((r.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||0),0);
+          .reduce((s,r)=>{ const sp=(r.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(r.totalAmount)); },0);
         const realAb15Amt = realTxsForSub2.filter(r=>new Date(r.date).getDate()>14)
-          .reduce((s,r)=>s+Math.abs((r.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||0),0);
-        const concAmt2 = concForSub2.reduce((s,c)=>s+Math.abs((c.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||c.totalAmount),0);
+          .reduce((s,r)=>{ const sp=(r.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(r.totalAmount)); },0);
+        const concAmt2 = concForSub2.reduce((s,c)=>{ const sp=(c.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(c.totalAmount)); },0);
         effektiv = Math.max(mitteBudget, realBis14Amt) + Math.max(endeBudget, realAb15Amt + concAmt2);
         displayDate = endeTx.date;
       } else {
         budget = Math.abs(repTx.totalAmount);
-        const realAmt2 = realTxsForSub2.reduce((s,r)=>s+Math.abs((r.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||0),0);
-        const concAmt2 = concForSub2.reduce((s,c)=>s+Math.abs((c.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||c.totalAmount),0);
+        const realAmt2 = realTxsForSub2.reduce((s,r)=>{ const sp=(r.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(r.totalAmount)); },0);
+        const concAmt2 = concForSub2.reduce((s,c)=>{ const sp=(c.splits||[]).find(sp=>sp.subId===baseSubId); return s+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(c.totalAmount)); },0);
         effektiv = Math.max(budget, realAmt2 + concAmt2);
         // Anzeige-Datum: Mitte-Budget → 14., Ende-Budget → letzter Tag des Monats
         const isMitteBudget = repTx._budgetSubId?.endsWith("_mitte");
@@ -21332,8 +21784,16 @@ Abbrechen = ${remoteName}-Stand laden`
           ? `${toYear}-${pad2d(toMonth+1)}-14`
           : `${toYear}-${pad2d(toMonth+1)}-${pad2d(lastDayDisp)}`;
       }
-      const realAmt = realTxsForSub2.reduce((s,r)=>s+Math.abs((r.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||0),0);
-      const concAmt = concForSub2.reduce((s,c)=>s+Math.abs((c.splits||[]).find(sp=>sp.subId===baseSubId)?.amount||c.totalAmount),0);
+      const realAmt = realTxsForSub2.reduce((s,r)=>{
+        const sp = (r.splits||[]).find(sp=>sp.subId===baseSubId);
+        const amt = sp?.amount!=null && sp.amount!==0 ? Math.abs(sp.amount) : Math.abs(r.totalAmount);
+        return s+amt;
+      },0);
+      const concAmt = concForSub2.reduce((s,c)=>{
+        const sp = (c.splits||[]).find(sp=>sp.subId===baseSubId);
+        const amt = sp?.amount!=null && sp.amount!==0 ? Math.abs(sp.amount) : Math.abs(c.totalAmount);
+        return s+amt;
+      },0);
       budgetEntries.push({
         budgetTx:repTx, baseSubId, budget, isInc,
         realTxs:realTxsForSub2, realAmt,
@@ -21348,6 +21808,52 @@ Abbrechen = ${remoteName}-Stand laden`
       pendIn, pendOut, totalIn, totalOut, saldo,
       budgetEntries, unbudgetedPend, unbudgetedRealTxs,
       overBudgetWarnings };
+  };
+
+  // Konto-spezifische Prognose — gecacht, korrekt mit Budget-Logik
+  const _progEndeAccCache = React.useRef({});
+  const _progEndeAccTxsLen = React.useRef(0);
+  const resetProgEndeCache = () => { _progEndeAccCache.current = {}; };
+  const getProgEndeAccGlobal = (y, m, accId) => {
+    // Cache automatisch invalidieren wenn txs sich geändert hat
+    if(_progEndeAccTxsLen.current !== txs.length) {
+      _progEndeAccCache.current = {};
+      _progEndeAccTxsLen.current = txs.length;
+    }
+    const ck = `${y}-${m}-${accId}`;
+    if(ck in _progEndeAccCache.current) return _progEndeAccCache.current[ck];
+    const tb = new Date();
+    if(y < tb.getFullYear() || (y === tb.getFullYear() && m < tb.getMonth())) {
+      const v = getKumulierterSaldo(y, m, accId);
+      _progEndeAccCache.current[ck] = v;
+      return v;
+    }
+    const pY = m===0?y-1:y, pM = m===0?11:m-1;
+    const prevEnde = getProgEndeAccGlobal(pY, pM, accId);
+    if(prevEnde===null||prevEnde===undefined) { _progEndeAccCache.current[ck]=null; return null; }
+    const lastD = new Date(y,m+1,0).getDate();
+    const todayY=tb.getFullYear(), todayM=tb.getMonth(), todayD=tb.getDate();
+    const isCur=y===todayY&&m===todayM, isPastM=y<todayY||(y===todayY&&m<todayM);
+    const endeAbg=isPastM||(isCur&&todayD>=lastD);
+    const isAcc = t => t.accountId===accId || (!t.accountId && accId==="acc-giro");
+    const signAmt = t => { const type=t._csvType||(t.totalAmount>=0?"income":"expense"); return type==="income"?Math.abs(t.totalAmount):-Math.abs(t.totalAmount); };
+    if(accId !== "acc-giro") {
+      const allAccTxs = txs.filter(t=>{ if(t._linkedTo||t._budgetSubId)return false; if(endeAbg&&t.pending)return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m; });
+      const v = prevEnde + allAccTxs.reduce((s,t)=>s+signAmt(t),0);
+      _progEndeAccCache.current[ck] = v; return v;
+    }
+    const inc = cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
+      s+txs.filter(t=>{ if(t._linkedTo||t._budgetSubId)return false; if(endeAbg&&t.pending)return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id); }).reduce((ss,t)=>{ const sa=(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((a,sp)=>a+Math.abs(pn(sp.amount)),0); return ss+(sa>0?sa:Math.abs(t.totalAmount)); },0),0);
+    const out = cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
+      if(endeAbg) return s+txs.filter(t=>{ if(t._linkedTo||t._budgetSubId)return false; if(t.pending&&t._seriesTyp!=="finanzierung")return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id); }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+      const subIds=new Set((cat.subs||[]).map(s=>s.id));
+      const st=(cat.subs||[]).reduce((cs,sub)=>{ const bG=getBudgetForMonth(sub.id,y,m); const r=txs.filter(t=>{ if(t.pending||t._linkedTo||t._budgetSubId||!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id); }).reduce((ss,t)=>{ const sp=(t.splits||[]).find(sp=>sp.subId===sub.id); return ss+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(t.totalAmount)); },0); const p=txs.filter(t=>{ if(!t.pending||t._linkedTo||t._budgetSubId||!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&sp.subId===sub.id); }).reduce((ss,t)=>{ const sp=(t.splits||[]).find(sp=>sp.subId===sub.id); return ss+(sp?.amount!=null&&sp.amount!==0?Math.abs(sp.amount):Math.abs(t.totalAmount)); },0); return cs+(bG>0?Math.max(bG,r+p):r+p); },0);
+      const pNS=txs.filter(t=>{ if(!t.pending||t._linkedTo||t._budgetSubId||!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))); }).reduce((ss,t)=>ss+Math.abs(t.totalAmount),0);
+      const rNS=txs.filter(t=>{ if(t.pending||t._linkedTo||t._budgetSubId||!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id&&(!sp.subId||!subIds.has(sp.subId))); }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
+      return s+st+pNS+rNS;
+    },0);
+    const v = prevEnde + inc - out;
+    _progEndeAccCache.current[ck] = v; return v;
   };
 
   const getPrognoseSaldo = (toYear, toMonth, half) => {
@@ -21559,10 +22065,22 @@ Abbrechen = ${remoteName}-Stand laden`
     } else {
       // Nur diese eine Buchung
       setTxs(p=>p.map(t=>{
-        if(t.id!==editTx.id) return t;
+        if(t.id!==editTx.id) {
+          // Wenn linkedIds in editTx geändert wurden (z.B. durch Entknüpfen),
+          // müssen die entknüpften Vormerkungen wieder auf pending gesetzt werden
+          if(!editTx.pending && (t._linkedTo===editTx.id) && !(editTx.linkedIds||[]).includes(t.id)) {
+            return {...t, pending:true, _linkedTo:null};
+          }
+          // Hauptbuchung: linkedIds aktualisieren falls diese Buchung eine der entknüpften ist
+          return t;
+        }
         const upd3 = {...t, desc:editTx.desc, note:editTx.note||"", totalAmount:newTotal||amt, date:editTx.date,
           pending:isPending, accountId:editTx.accountId, pendingDate,
-          splits:newSplits, _csvType:editTx._csvType||t._csvType};
+          splits:newSplits, _csvType:editTx._csvType||t._csvType,
+          linkedIds: editTx.linkedIds||[]};
+        // _linkedTo explizit übernehmen (kann null sein nach Entknüpfen)
+        if(editTx._linkedTo) upd3._linkedTo = editTx._linkedTo;
+        else delete upd3._linkedTo;
         if(editTx._seriesIdx) upd3._seriesIdx = editTx._seriesIdx;
         else delete upd3._seriesIdx;
         if(editTx._seriesTotal) upd3._seriesTotal = editTx._seriesTotal;
@@ -21767,12 +22285,13 @@ Abbrechen = ${remoteName}-Stand laden`
   // ── Context value ────────────────────────────────────────────────────────
   const cx = {
     cats, setCats, groups, setGroups, txs, setTxs, accounts, setAccounts,
-    yearData, setYearData, year, setYear, month, setMonth, isLand,
-    showAllMonths, setShowAllMonths,
+    yearData, setYearData, year, setYear, month, setMonth, selAcc, setSelAcc, isLand,
+    showAllMonths, setShowAllMonths, mainTab, setMainTab, subTab, setSubTab,
     col3Name, setCol3Name, modal, setModal, mgmtCat, setMgmtCat,
     editTx, setEditTx, newTx, setNewTx, newCat, setNewCat,
     newSubName, setNewSubName, exportModal, setExportModal,
-    getCat, getSub, txType, getActualSum, getBudgetForMonth, getTotalIncome, getTotalExpense, getKumulierterSaldo, getPrognoseSaldo, getPrognoseSaldoDetail, getPendingSum, pendingItemsFor, 
+    getCat, getSub, txType, getActualSum, getBudgetForMonth, getTotalIncome, getTotalExpense, getKumulierterSaldo, getPrognoseSaldo, getPrognoseSaldoDetail, getProgEndeAccGlobal, resetProgEndeCache, getPendingSum, pendingItemsFor,
+    navigateToSparen, sparOpenRequest,
     getJV, setJV, getMV, setMV, getAcc, openEdit, saveEdit, deleteFromEdit,
     updEditSplit, moveCat, moveSub, updateSub, updateCat,
     renameCat, renameSub, deleteCat, deleteSub, saveNewCat, saveNewSub,
