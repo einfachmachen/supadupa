@@ -6260,7 +6260,7 @@ function SaldoHero2({year, month,
     const lastD = new Date(y,m+1,0).getDate();
     const todayY=tb.getFullYear(), todayM=tb.getMonth(), todayD=tb.getDate();
     const isCur=y===todayY&&m===todayM, isPastM=y<todayY||(y===todayY&&m<todayM);
-    const endeAbg=isPastM||(isCur&&todayD>=lastD);
+    const endeAbg=isPastM; // aktueller Monat: immer volle Prognose inkl. Vormerkungen
     // Filter: Buchung gehört zu diesem Konto
     const isAcc = t => t.accountId===accId || (!t.accountId && accId==="acc-giro");
     const signAmt = t => {
@@ -6873,7 +6873,7 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
   const drill = drillOpen==="Mitte" ? detailMitte : drillOpen==="Ende" ? detailEnde : null;
   const fmtD = iso=>{const[,m,d]=iso.split("-");return `${d}.${m}.`;};
   return (
-    <div style={{borderTop:`1px solid rgba(255,255,255,0.07)`,paddingTop:6,marginTop:2}}>
+    <div style={{borderTop:`1px solid rgba(255,255,255,0.07)`,paddingTop:0,marginTop:0}}>
       {/* Toggle-Header nur zeigen wenn nicht direkt aus Hero aufgerufen */}
       {!initialOpen&&<div style={{display:"flex",gap:3,alignItems:"flex-start"}}>
         <div style={{width:44,flexShrink:0}}/>
