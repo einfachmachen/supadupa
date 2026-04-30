@@ -6675,19 +6675,29 @@ function SaldoHero2({year, month,
     <div style={{margin:"4px 0 0",background:T.hero_bg,
       borderRadius:0,padding:"4px 0 0",position:"relative",overflow:"hidden"}}>
       <div style={{position:"relative",textAlign:"center",margin:"0 0 0",padding:"8px 14px 10px"}}>
-        {/* MITTE / ENDE — absolut positioniert, horizontal über Prognosespalten, vertikal mit Kontostand */}
-        {showPrognose&&<>
-          <div style={{position:"absolute",top:0,bottom:0,left:0,
-            width:"calc(50% - 30px)",display:"flex",alignItems:"center",justifyContent:"center",
-            pointerEvents:"none"}}>
-            <span style={{color:T.mid,fontSize:11,fontWeight:700,letterSpacing:1,opacity:0.7}}>MITTE</span>
+      {/* MITTE / ENDE als horizontale Linien die die Seiten halbieren */}
+      {showPrognose&&<>
+        <div style={{position:"absolute",top:0,bottom:0,left:0,
+          width:"calc(50% - 30px)",display:"flex",alignItems:"center",
+          pointerEvents:"none",paddingLeft:8,paddingRight:4}}>
+          <div style={{flex:1,display:"flex",alignItems:"center",gap:6}}>
+            <div style={{flex:1,height:1,background:`linear-gradient(to right, transparent, ${T.mid}60)`}}/>
+            <span style={{color:T.mid,fontSize:9,fontWeight:700,letterSpacing:2,
+              opacity:0.75,flexShrink:0}}>MITTE</span>
+            <div style={{flex:1,height:1,background:`linear-gradient(to left, transparent, ${T.mid}60)`}}/>
           </div>
-          <div style={{position:"absolute",top:0,bottom:0,right:0,
-            width:"calc(50% - 30px)",display:"flex",alignItems:"center",justifyContent:"center",
-            pointerEvents:"none"}}>
-            <span style={{color:T.gold,fontSize:11,fontWeight:700,letterSpacing:1,opacity:0.7}}>ENDE</span>
+        </div>
+        <div style={{position:"absolute",top:0,bottom:0,right:0,
+          width:"calc(50% - 30px)",display:"flex",alignItems:"center",
+          pointerEvents:"none",paddingLeft:4,paddingRight:8}}>
+          <div style={{flex:1,display:"flex",alignItems:"center",gap:6}}>
+            <div style={{flex:1,height:1,background:`linear-gradient(to right, transparent, ${T.gold}60)`}}/>
+            <span style={{color:T.gold,fontSize:9,fontWeight:700,letterSpacing:2,
+              opacity:0.75,flexShrink:0}}>ENDE</span>
+            <div style={{flex:1,height:1,background:`linear-gradient(to left, transparent, ${T.gold}60)`}}/>
           </div>
-        </>}
+        </div>
+      </>}
         <div onClick={()=>{
             if(allAccIds.length<=1) return;
             const idx = allAccIds.indexOf(selAcc);
@@ -6695,7 +6705,10 @@ function SaldoHero2({year, month,
           }}
           style={{fontSize:40,fontWeight:800,letterSpacing:-1,color:ksColor,
             textShadow:"0 2px 12px rgba(0,0,0,0.4)",position:"relative",zIndex:1,
-            cursor:"pointer",userSelect:"none"}}>
+            cursor:"pointer",userSelect:"none",display:"inline-block",
+            padding:"0 12px",
+            background:`${T.hero_bg.includes("gradient")?T.bg:T.hero_bg}`,
+            borderRadius:8}}>
           {displayKs!==null ? fmt(Math.abs(displayKs))+" €" : selAcc ? "—" : fmt(Math.abs(ms))+" €"}
         </div>
         {/* Konto-Label + Unterzeilen */}
