@@ -6601,7 +6601,8 @@ function SaldoHero2({year, month,
     <div style={{display:"flex",alignItems:"center",marginBottom:6}}>
       <HalfCell vIn={mIn} vOut={mOut} clrIn={clrIn} clrOut={clrOut}
         dim={true} isMitte={true} onTapIn={onTapIn} onTapOut={onTapOut}/>
-      <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10}}>{label}</div>
+      <div onClick={()=>setShowDetail(false)}
+        style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10,cursor:"pointer"}}>{label}</div>
       <HalfCell vIn={eIn} vOut={eOut} clrIn={clrIn} clrOut={clrOut}
         dim={false} isMitte={false} onTapIn={onTapIn} onTapOut={onTapOut}/>
     </div>
@@ -6616,9 +6617,8 @@ function SaldoHero2({year, month,
             {pm!==null?fmt(pm)+" €":"–"}
           </span>
         </div>
-        <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10,fontWeight:700,
-          display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-          Prog.{Li(showDetail?"chevron-up":"chevron-down",9,subClr)}
+        <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10,fontWeight:700}}>
+          Prog.
         </div>
         <div style={{flex:2,textAlign:"center",padding:"4px 0"}}
           onClick={e=>{if(pe!==null){e.stopPropagation();setProgDrill(v=>v==="Ende"?null:"Ende");}}}>
@@ -6675,41 +6675,32 @@ function SaldoHero2({year, month,
     <div style={{margin:"4px 0 0",background:T.hero_bg,
       borderRadius:0,padding:"4px 0 0",position:"relative",overflow:"hidden"}}>
       <div style={{position:"relative",textAlign:"center",margin:"0 0 0",padding:"8px 14px 10px"}}>
-      {/* MITTE / ENDE als horizontale Linien die die Seiten halbieren */}
-      {showPrognose&&<>
-        <div style={{position:"absolute",top:0,bottom:0,left:0,
-          width:"calc(50% - 30px)",display:"flex",alignItems:"center",
-          pointerEvents:"none",paddingLeft:8,paddingRight:4}}>
-          <div style={{flex:1,display:"flex",alignItems:"center",gap:6}}>
-            <div style={{flex:1,height:1,background:`linear-gradient(to right, transparent, ${T.mid}60)`}}/>
-            <span style={{color:T.mid,fontSize:9,fontWeight:700,letterSpacing:2,
-              opacity:0.75,flexShrink:0}}>MITTE</span>
-            <div style={{flex:1,height:1,background:`linear-gradient(to left, transparent, ${T.mid}60)`}}/>
+        {/* MITTE / Kontostand / ENDE — inline flex, aligned am Betrag */}
+        <div style={{display:"flex",alignItems:"baseline",justifyContent:"center",gap:0}}>
+          {showPrognose&&<div style={{flex:1,display:"flex",alignItems:"baseline",justifyContent:"flex-end",
+            paddingRight:8,paddingBottom:6,pointerEvents:"none",minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:4,width:"100%"}}>
+              <div style={{flex:1,height:1,background:`linear-gradient(to right, transparent, ${T.mid}55)`,alignSelf:"center"}}/>
+              <span style={{color:T.mid,fontSize:9,fontWeight:700,letterSpacing:2,opacity:0.7,flexShrink:0,lineHeight:1}}>MITTE</span>
+            </div>
+          </div>}
+          <div onClick={()=>{
+              if(allAccIds.length<=1) return;
+              const idx = allAccIds.indexOf(selAcc);
+              setSelAcc(allAccIds[(idx+1)%allAccIds.length]);
+            }}
+            style={{fontSize:40,fontWeight:800,letterSpacing:-1,color:ksColor,
+              textShadow:`0 0 20px ${ksColor}55, 0 2px 8px rgba(0,0,0,0.8)`,
+              position:"relative",zIndex:1,cursor:"pointer",userSelect:"none",flexShrink:0}}>
+            {displayKs!==null ? fmt(Math.abs(displayKs))+" €" : selAcc ? "—" : fmt(Math.abs(ms))+" €"}
           </div>
-        </div>
-        <div style={{position:"absolute",top:0,bottom:0,right:0,
-          width:"calc(50% - 30px)",display:"flex",alignItems:"center",
-          pointerEvents:"none",paddingLeft:4,paddingRight:8}}>
-          <div style={{flex:1,display:"flex",alignItems:"center",gap:6}}>
-            <div style={{flex:1,height:1,background:`linear-gradient(to right, transparent, ${T.gold}60)`}}/>
-            <span style={{color:T.gold,fontSize:9,fontWeight:700,letterSpacing:2,
-              opacity:0.75,flexShrink:0}}>ENDE</span>
-            <div style={{flex:1,height:1,background:`linear-gradient(to left, transparent, ${T.gold}60)`}}/>
-          </div>
-        </div>
-      </>}
-        <div onClick={()=>{
-            if(allAccIds.length<=1) return;
-            const idx = allAccIds.indexOf(selAcc);
-            setSelAcc(allAccIds[(idx+1)%allAccIds.length]);
-          }}
-          style={{fontSize:40,fontWeight:800,letterSpacing:-1,color:ksColor,
-            textShadow:"0 2px 12px rgba(0,0,0,0.4)",position:"relative",zIndex:1,
-            cursor:"pointer",userSelect:"none",display:"inline-block",
-            padding:"0 12px",
-            background:`${T.hero_bg.includes("gradient")?T.bg:T.hero_bg}`,
-            borderRadius:8}}>
-          {displayKs!==null ? fmt(Math.abs(displayKs))+" €" : selAcc ? "—" : fmt(Math.abs(ms))+" €"}
+          {showPrognose&&<div style={{flex:1,display:"flex",alignItems:"baseline",justifyContent:"flex-start",
+            paddingLeft:8,paddingBottom:6,pointerEvents:"none",minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:4,width:"100%"}}>
+              <span style={{color:T.gold,fontSize:9,fontWeight:700,letterSpacing:2,opacity:0.7,flexShrink:0,lineHeight:1}}>ENDE</span>
+              <div style={{flex:1,height:1,background:`linear-gradient(to left, transparent, ${T.gold}55)`,alignSelf:"center"}}/>
+            </div>
+          </div>}
         </div>
         {/* Konto-Label + Unterzeilen */}
         <div style={{marginTop:2,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
@@ -14458,6 +14449,7 @@ function WerkzeugeSection() {
 function KontoWarnungWidget({showFolgemonateToggle=false}) {
   const { txs, cats, year, month, getKumulierterSaldo, getPrognoseSaldo, getCat, budgets, navigateToSparen, selAcc, getProgEndeAccGlobal, accounts } = useContext(AppCtx);
   const [folgemonate, setFolgemonate] = React.useState(false);
+  const [showFolgemonate, setShowFolgemonate] = React.useState(false);
   const [expandedMonths, setExpandedMonths] = React.useState(new Set());
 
   const warnings = React.useMemo(()=>{
@@ -14651,21 +14643,7 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
     return probleme.length ? probleme : null;
   }, [txs]);
 
-  if(!warnings.length && !showFolgemonateToggle && !sparWarnung) return null;
-  if(!warnings.length && !sparWarnung) return (
-    showFolgemonateToggle ? (
-      <div style={{margin:"4px 10px 0",display:"flex",alignItems:"center",
-        justifyContent:"flex-end",gap:6}}>
-        <span style={{color:T.txt2,fontSize:10}}>Alle Folgemonate prüfen</span>
-        <div onClick={()=>setFolgemonate(v=>!v)}
-          style={{width:32,height:18,borderRadius:9,cursor:"pointer",position:"relative",
-            background:folgemonate?T.neg:"rgba(255,255,255,0.12)",transition:"background 0.2s"}}>
-          <div style={{position:"absolute",top:2,left:folgemonate?14:2,width:14,height:14,
-            borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
-        </div>
-      </div>
-    ) : null
-  );
+  if(!warnings.length && !sparWarnung) return null;
 
   const MONTHS_S=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
 
@@ -14693,19 +14671,7 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
           </div>
         </div>
       )}
-      {showFolgemonateToggle&&(
-        <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",
-          gap:6,marginBottom:4}}>
-          <span style={{color:T.txt2,fontSize:10}}>Alle Folgemonate prüfen</span>
-          <div onClick={()=>setFolgemonate(v=>!v)}
-            style={{width:32,height:18,borderRadius:9,cursor:"pointer",position:"relative",
-              background:folgemonate?T.neg:"rgba(255,255,255,0.12)",transition:"background 0.2s"}}>
-            <div style={{position:"absolute",top:2,left:folgemonate?14:2,width:14,height:14,
-              borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
-          </div>
-        </div>
-      )}
-      {(folgemonate ? warnings : warnings.slice(0,1)).map((w,i)=>{
+      {warnings.slice(0, showFolgemonate ? warnings.length : 1).map((w,i)=>{
         const mKey = `${w.year}-${w.month}`;
         const isExpanded = expandedMonths.has(mKey);
         const hasMultiple = (w.allDays||[]).length > 1;
@@ -14764,12 +14730,14 @@ function KontoWarnungWidget({showFolgemonateToggle=false}) {
           </div>
         );
       })}
-      {!folgemonate && warnings.length > 1 && (
-        <div onClick={()=>setFolgemonate(true)} style={{
-          margin:"2px 0",padding:"5px 10px",textAlign:"center",
-          color:T.neg,fontSize:10,fontWeight:700,cursor:"pointer",
-          background:`${T.neg}10`,borderRadius:8,border:`1px solid ${T.neg}33`}}>
-          {Li("alert-triangle",10,T.neg)} +{warnings.length-1} weitere Warnung{warnings.length>2?"en":""} — alle anzeigen
+      {warnings.length > 1 && (
+        <div onClick={()=>setShowFolgemonate(v=>!v)}
+          style={{margin:"2px 0 4px",padding:"5px 10px",textAlign:"center",
+            color:T.txt2,fontSize:10,fontWeight:700,cursor:"pointer",
+            background:"rgba(255,255,255,0.04)",borderRadius:8,
+            border:`1px solid ${T.bd}`,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+          {Li(showFolgemonate?"chevron-up":"chevron-down",10,T.txt2)}
+          {showFolgemonate ? "Weniger anzeigen" : `+${warnings.length-1} weitere Warnung${warnings.length>2?"en":""}`}
         </div>
       )}
     </div>
