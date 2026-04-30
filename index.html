@@ -6278,9 +6278,10 @@ function SaldoHero2({year, month,
     });
     const uncatSum = uncatTxs.reduce((s,t)=>s+signAmt(t), 0);
     // Für Nicht-Giro-Konten: alle Buchungen direkt über signAmt zählen (kein Kategorie-Filter)
+    // _linkedTo einbeziehen damit Sparplan-Zugänge sichtbar sind
     if(accId !== "acc-giro") {
       const allAccTxs = (txs||[]).filter(t=>{
-        if(t._linkedTo||t._budgetSubId) return false;
+        if(t._budgetSubId) return false; // nur Budget-Platzhalter ausschließen
         if(endeAbg&&t.pending) return false;
         if(!isAcc(t)) return false;
         const d=new Date(t.date);
@@ -6629,10 +6630,20 @@ function SaldoHero2({year, month,
       </div>
       {progDrill&&(()=>{
         const filterDetail = (detail) => {
-          if(!detail || !selAcc) return detail;
-          const isAcc = t => t.accountId===selAcc || (!t.accountId && selAcc==="acc-giro");
-          const filteredRealTxs = (detail.unbudgetedRealTxs||[]).filter(isAcc);
-          const filteredPend    = (detail.unbudgetedPend||[]).filter(isAcc);
+          if(!detail) return detail;
+          // Sparplan-Transfers immer separat sammeln (kontosspezifisch)
+          const sparTransfers = (detail.unbudgetedPend||[]).filter(t=>
+            t._linkedTo && (t.desc||"").startsWith("Sparen·")
+          );
+          if(!selAcc) {
+            // Gesamt: unverändert zurückgeben (Umbuchungen werden im Render gruppiert)
+            return detail;
+          }
+          const isSpar = t => (t.desc||"").startsWith("Sparen·");
+          const isAcc = t => t.accountId===selAcc || (!t.accountId && selAcc==="acc-giro") || (isSpar(t) && t._linkedTo && t.accountId===selAcc);
+          // Kontosspezifische Buchungen + Sparplan-Transfers für dieses Konto
+          const filteredRealTxs = (detail.unbudgetedRealTxs||[]).filter(t=>isAcc(t)||((t._linkedTo||(t.desc||"").startsWith("Sparen·"))&&isAcc(t)));
+          const filteredPend    = (detail.unbudgetedPend||[]).filter(t=>isAcc(t));
           const getTxType = t => {
             if(t._csvType) return t._csvType;
             const sp=(t.splits||[]).filter(s=>s.catId);
@@ -6657,7 +6668,9 @@ function SaldoHero2({year, month,
           };
         };
         const prevY2=month===0?year-1:year, prevM2=month===0?11:month-1;
-        const accBase = selAcc ? getProgEndeAcc(prevY2, prevM2, selAcc) : null;
+        const accBase = selAcc
+          ? getProgEndeAcc(prevY2, prevM2, selAcc)
+          : getProgEndeAcc(prevY2, prevM2, "acc-giro"); // Giro als Basis für Gesamt-Drilldown
         const accSaldoMitte = selAcc ? getProgEndeAcc(year, month, selAcc) : pm;
         const accSaldoEnde  = selAcc ? getProgEndeAcc(year, month, selAcc) : pe;
         const detM = detailMitte ? {...filterDetail(detailMitte), base: accBase??filterDetail(detailMitte)?.base} : null;
@@ -6869,6 +6882,7 @@ function SaldoHero2({year, month,
 // ══════════════════════════════════════════════════════════════════════
 // ── SaldoPrognose: Mitte/Ende Prognose mit Drilldown ────────────────
 function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, saldoEnde, getCat, getSub, initialOpen=null}) {
+  const { selAcc, accounts } = React.useContext(AppCtx);
   const [drillOpen, setDrillOpen] = React.useState(initialOpen);
   const drill = drillOpen==="Mitte" ? detailMitte : drillOpen==="Ende" ? detailEnde : null;
   const fmtD = iso=>{const[,m,d]=iso.split("-");return `${d}.${m}.`;};
@@ -6960,7 +6974,9 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
                   const budgets2WithPend = budgets2.map(b=>{
                     const bCatId = (b.budgetTx?.splits||[])[0]?.catId;
                     const bSubId = b.baseSubId;
+                    if(!bCatId) return b; // kein catId → keine Einmischung
                     const extra = unbPend.filter(t=>
+                      !((t.desc||"").startsWith("Sparen·")) && // Sparplan nie einmischen
                       (t.splits||[]).some(sp=>sp.catId===bCatId && (sp.subId===bSubId || !sp.subId || sp.subId===""))
                     );
                     return extra.length ? {...b, concTxs:[...(b.concTxs||[]),...extra]} : b;
@@ -7031,7 +7047,41 @@ function SaldoPrognose({year, month, txs, detailMitte, detailEnde, saldoMitte, s
                         </div>
                       );
                     }
-                    if(item.type==="pend") return <TxRow key={idx} t={item.data} isInc={item.data._csvType==="income"} icon={item.data._seriesId?"repeat":"calendar"} iconCol={T.gold}/>;
+                    if(item.type==="pend") {
+                      const t = item.data;
+                      // Sparplan-Transfer: als Umbuchung zusammenfassen (nur im Gesamt-Modus)
+                      if(!selAcc && (t.desc||"").startsWith("Sparen·")) {
+                        // Nur den Abgang (expense von Giro) anzeigen, Zugang (income auf Tagesgeld) überspringen
+                        if(t._csvType==="income"||t._linkedTo) return null;
+                        // Finde Zielkonto aus dem Zugang
+                        const zugang = txs.find(t2=>
+                          t2.pending && (
+                            t2._linkedTo===t.id ||
+                            (t2._seriesId && t._seriesId && t2._seriesId===t._seriesId+"-tgt" && t2.date===t.date) ||
+                            (t2._seriesId && t._seriesId && t2._seriesId===t._seriesId.replace(/-tgt$/,"") && false) ||
+                            (t2._csvType==="income" && (t2.desc||"")===t.desc && t2.date===t.date)
+                          )
+                        );
+                        const targetAcc = zugang ? (accounts.find(a=>a.id===zugang.accountId)?.name || zugang.accountId) : null;
+                        const fromAccName = accounts.find(a=>a.id===t.accountId)?.name || accounts.find(a=>a.id==="acc-giro")?.name || "Giro";
+                        const umbBlue = "#4A9FD4";
+                        return (
+                          <div key={idx} style={{display:"flex",alignItems:"center",gap:6,padding:"3px 0",marginBottom:2}}>
+                            {Li("arrow-right-left",10,umbBlue)}
+                            <div style={{flex:1,minWidth:0}}>
+                              <span style={{color:umbBlue,fontSize:10,fontWeight:700}}>
+                              {fromAccName} → {targetAcc||"?"}
+                            </span>
+                              <span style={{color:T.txt2,fontSize:9,marginLeft:6}}>{(t.desc||"").replace("Sparen·","")}</span>
+                            </div>
+                            <span style={{color:umbBlue,fontSize:11,fontWeight:700,fontFamily:"monospace",flexShrink:0}}>
+                              {fmt(Math.abs(t.totalAmount))} €
+                            </span>
+                          </div>
+                        );
+                      }
+                      return <TxRow key={idx} t={t} isInc={t._csvType==="income"} icon={t._seriesId?"repeat":"calendar"} iconCol={T.gold}/>;
+                    }
                     return <TxRow key={idx} t={item.data} isInc={item.data._csvType==="income"} icon="check-circle" iconCol={T.pos}/>;
                   })};
                   </>);
@@ -7680,22 +7730,30 @@ function DashboardScreen() {
     const pendingIn = pTxsIn.reduce((s,t)=>s+pendOpenAmt(t),0);
     const catTotals = cats.filter(c=>c.type==="expense")
       .map(c=>({...c,sum:
-        (c.subs||[]).reduce((s,sub)=>s+getActualSum(year,month,sub.id),0) +
-        // Finanzierungsraten zählen als Ausgaben (bleiben pending, werden nie real gebucht)
+        (c.subs||[]).reduce((s,sub)=>{
+          if(!selAcc) return s+getActualSum(year,month,sub.id);
+          // Kontospezifisch: nur Buchungen dieses Kontos
+          const accSum = txs.filter(t=>!t.pending&&!t._linkedTo&&_isSelAcc(t)&&(()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&(t.splits||[]).some(sp=>sp.subId===sub.id)).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+          return s+accSum;
+        },0) +
         txs.filter(t=>t.pending&&t._seriesTyp==="finanzierung"&&!t._linkedTo&&!t._budgetSubId&&
+          _isSelAcc(t)&&
           (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
           (t.splits||[]).some(sp=>(c.subs||[]).some(sub=>sub.id===sp.subId))
         ).reduce((s,t)=>s+Math.abs(t.totalAmount||0),0)
       }))
       .filter(c=>{
-        if(c.sum>0) return true;
-        const hasBudget=(c.subs||[]).some(sub=>getBudgetForMonth(sub.id,year,month)>0);
+        if(c.sum>0 && !selAcc) return true;
+        const hasBudget=(!selAcc||selAcc==="acc-giro")&&(c.subs||[]).some(sub=>getBudgetForMonth(sub.id,year,month)>0);
         const hasPend=txs.some(t=>t.pending&&!t._linkedTo&&!t._budgetSubId&&
+          _isSelAcc(t)&&
           (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
           (t.splits||[]).some(sp=>sp.catId===c.id));
         const hasRealTx=txs.some(t=>!t.pending&&!t._linkedTo&&
+          _isSelAcc(t)&&
           (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
           (t.splits||[]).some(sp=>sp.catId===c.id));
+        if(selAcc) return hasPend||hasRealTx;
         return hasBudget||hasPend||hasRealTx;
       }).sort((a,b)=>{
         if(catSortMode==="asc")  return a.sum-b.sum;
@@ -7703,9 +7761,9 @@ function DashboardScreen() {
         return b.sum-a.sum;
       });
     // Einnahmen-Kategorien (income + tagesgeld)
-    // Einnahmen: echte Buchungen + konkrete Vormerkungen (kein Budget-Platzhalter)
     const getPendingIncomeSum = (catId) => txs.filter(t=>{
       if(!t.pending||t._linkedTo||t._budgetSubId) return false;
+      if(!_isSelAcc(t)) return false;
       const d=new Date(t.date);
       return d.getFullYear()===year&&d.getMonth()===month&&
         (t.splits||[]).some(sp=>sp.catId===catId);
@@ -7713,13 +7771,21 @@ function DashboardScreen() {
       .reduce((ss,sp)=>ss+Math.abs(pn(sp.amount)),0),0);
 
     const incomeTotals = cats.filter(c=>c.type==="income"||c.type==="tagesgeld")
-      .map(c=>({...c,sum:(c.subs||[]).reduce((s,sub)=>s+getActualSum(year,month,sub.id),0)+getPendingIncomeSum(c.id)}))
+      .map(c=>({...c,sum:
+        (c.subs||[]).reduce((s,sub)=>{
+          if(!selAcc) return s+getActualSum(year,month,sub.id);
+          const accSum = txs.filter(t=>!t.pending&&!t._linkedTo&&_isSelAcc(t)&&(()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&(t.splits||[]).some(sp=>sp.subId===sub.id)).reduce((ss,t)=>ss+Math.abs((t.splits||[]).find(sp=>sp.subId===sub.id)?.amount||0),0);
+          return s+accSum;
+        },0)+getPendingIncomeSum(c.id)
+      }))
       .filter(c=>{
-        if(c.sum>0) return true;
+        if(c.sum>0 && !selAcc) return true;
         const hasPend=txs.some(t=>t.pending&&!t._linkedTo&&!t._budgetSubId&&
+          _isSelAcc(t)&&
           (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
           (t.splits||[]).some(sp=>sp.catId===c.id));
         const hasRealTx=txs.some(t=>!t.pending&&!t._linkedTo&&
+          _isSelAcc(t)&&
           (()=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;})()&&
           (t.splits||[]).some(sp=>sp.catId===c.id));
         return hasPend||hasRealTx;
@@ -12554,6 +12620,10 @@ function ManagementScreen({activeTab="kategorien"}) {
   const [editGrpLabel, setEditGrpLabel] = useState(null);
   const [editGrpLabelVal, setEditGrpLabelVal] = useState("");
   const [newGroup, setNewGroup] = useState({label:"", icon:"folder-open", accent:T.blue, behavior:"expense", accountId:""});
+  const [collapsedAccs, setCollapsedAccs] = useState(new Set());
+  const [collapsedGrps, setCollapsedGrps] = useState(new Set());
+  const toggleAcc = id => setCollapsedAccs(p=>{ const s=new Set(p); s.has(id)?s.delete(id):s.add(id); return s; });
+  const toggleGrp = id => setCollapsedGrps(p=>{ const s=new Set(p); s.has(id)?s.delete(id):s.add(id); return s; });
   const [inlineNewCat, setInlineNewCat] = useState(null);
   const [inlineCatName, setInlineCatName] = useState("");
   const [dropTargetCat, setDropTargetCat] = useState(null);
@@ -12867,10 +12937,15 @@ function ManagementScreen({activeTab="kategorien"}) {
           const grpsNoAcc = _groups.filter(g=>!g.accountId);
           if(grpsNoAcc.length>0) accsWithGroups.push({acc:null, grps: grpsNoAcc});
 
-          return accsWithGroups.map(({acc, grps}, blockIdx) => (
-            <div key={acc?.id||"no-acc"}>
-              {/* Konto-Header */}
-              <div style={{padding:"10px 14px 4px", display:"flex", alignItems:"center", gap:8,
+          return accsWithGroups.map(({acc, grps}, blockIdx) => {
+            const accKey = acc?.id||"no-acc";
+            const accCollapsed = collapsedAccs.has(accKey);
+            return (
+            <div key={accKey}>
+              {/* Konto-Header — einklappbar */}
+              <div onClick={()=>toggleAcc(accKey)}
+                style={{padding:"10px 14px 4px", display:"flex", alignItems:"center", gap:8,
+                cursor:"pointer",
                 borderTop: blockIdx>0 ? `2px solid ${T.bd}` : "none",
                 marginTop: blockIdx>0 ? 6 : 0}}>
                 {acc ? (<>
@@ -12878,23 +12953,24 @@ function ManagementScreen({activeTab="kategorien"}) {
                     display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                     {Li(acc.icon||"landmark",13,acc.color||T.blue)}
                   </div>
-                  <span style={{color:acc.color||T.blue,fontSize:13,fontWeight:800}}>
+                  <span style={{color:acc.color||T.blue,fontSize:13,fontWeight:800,flex:1}}>
                     {acc.name}
                   </span>
                   {acc.delayDays>0&&<span style={{color:T.gold,fontSize:9,fontWeight:700,
                     background:T.gold+"22",borderRadius:4,padding:"1px 5px"}}>+{acc.delayDays}d</span>}
                 </>) : (<>
                   {Li("layers",13,T.txt2)}
-                  <span style={{color:T.txt2,fontSize:12,fontWeight:700}}>Kein Konto zugeordnet</span>
+                  <span style={{color:T.txt2,fontSize:12,fontWeight:700,flex:1}}>Kein Konto zugeordnet</span>
                 </>)}
+                {Li(accCollapsed?"chevron-right":"chevron-down",12,T.txt2)}
               </div>
 
               {/* Gruppen dieses Kontos */}
-              {grps.map((grp) => {
+              {!accCollapsed && grps.map((grp) => {
                 const gi = _groups.indexOf(grp);
                 return (
           <div key={grp.id}>
-            {/* Gruppen-Header */}
+            {/* Gruppen-Header — einklappbar */}
             <div style={{display:"flex",alignItems:"center",padding:"8px 14px 3px",gap:6}}>
               <div style={{display:"flex",flexDirection:"column",gap:1}}>
                 <button onClick={()=>moveGroup(grp.id,-1)} disabled={gi===0}
@@ -12948,6 +13024,10 @@ function ManagementScreen({activeTab="kategorien"}) {
                   padding:"1px 6px",fontSize:9,fontWeight:700}}>{Li(a.icon,10,a.color)} {a.name}</span>
               ):null;})()}
               <span style={{flex:1}}/>
+              <button onClick={e=>{e.stopPropagation();toggleGrp(grp.id);}}
+                style={{background:"none",border:"none",color:T.txt2,cursor:"pointer",padding:"2px 4px"}}>
+                {Li(collapsedGrps.has(grp.id)?"chevron-right":"chevron-down",12,T.txt2)}
+              </button>
               {_accounts.length>0&&(
                 <select value={grp.accountId||""}
                   onChange={e=>setGroups(p=>p.map(g=>g.id===grp.id?{...g,accountId:e.target.value}:g))}
@@ -13003,7 +13083,7 @@ function ManagementScreen({activeTab="kategorien"}) {
             )}
 
             {/* Kategorien dieser Gruppe */}
-            {(_cats).filter(c=>c.type===grp.type).map((cat,ci,arr)=>(
+            {!collapsedGrps.has(grp.id) && (_cats).filter(c=>c.type===grp.type).map((cat,ci,arr)=>(
               <div key={cat.id}
                 data-dropzone="cat" data-dropid={cat.id}
                 onPointerUp={e=>{
@@ -13051,7 +13131,8 @@ function ManagementScreen({activeTab="kategorien"}) {
                 ); // end grp div
               })} {/* end grps.map */}
             </div>
-          )); // end accsWithGroups.map
+          ); // end accsWithGroups block
+          }); // end accsWithGroups.map
         })()} {/* end IIFE */}
 
 </div>
@@ -21589,8 +21670,10 @@ Abbrechen = ${remoteName}-Stand laden`
       return t.totalAmount >= 0 ? "income" : "expense";
     };
 
+    const isSparTransfer = t => t._linkedTo && (t.desc||"").startsWith("Sparen·");
     const realTxs = txs.filter(t=>{
-      if(t.pending||t._linkedTo) return false;
+      if(t.pending) return false;
+      if(t._linkedTo && !isSparTransfer(t)) return false;
       const d=new Date(t.date);
       return d.getFullYear()===toYear && d.getMonth()===toMonth && d.getDate()<=cutDay;
     });
@@ -21599,8 +21682,10 @@ Abbrechen = ${remoteName}-Stand laden`
 
     const seenPend = new Set();
     // Alle Vormerkungen im Zeitraum (ohne Duplikate)
+    // Sparplan-Transfers (_linkedTo) werden einbezogen damit sie im Drilldown sichtbar sind
     const allPendTxs = txs.filter(t=>{
-      if(!t.pending||t._linkedTo) return false;
+      if(!t.pending) return false;
+      if(t._linkedTo && !isSparTransfer(t)) return false; // normale _linkedTo ausschließen, Spar-Transfers einbeziehen
       const d=new Date(t.date);
       if(d.getFullYear()!==toYear||d.getMonth()!==toMonth||d.getDate()>cutDay) return false;
       const dupKey=`${t.date}|${t.totalAmount}|${(t.desc||"").slice(0,30)}`;
@@ -21739,9 +21824,15 @@ Abbrechen = ${remoteName}-Stand laden`
     const realOutUnbudgeted = unbudgetedRealTxs.filter(t=>getTxType(t)!=="income").reduce((s,t)=>s+Math.abs(t.totalAmount),0);
 
     // Konkrete Vormerkungen OHNE Budget: separat zählen
-    const unbudgetedPend = concretePend.filter(c=>
-      !(c.splits||[]).some(sp=>budgetSubIds.has(sp.subId) || budgetSubIds.has(sp.catId) || budgetCatIds.has(sp.catId) || budgetCatIds.has(sp.subId))
-    );
+    // Sparplan-Transfers immer direkt einbeziehen, Budget-Logik bypassen
+    const sparplanPend = concretePend.filter(t=>(t.desc||"").startsWith("Sparen·"));
+    const nonSparplanPend = concretePend.filter(t=>!(t.desc||"").startsWith("Sparen·"));
+    const unbudgetedPend = [
+      ...sparplanPend, // immer ungekürzt
+      ...nonSparplanPend.filter(c=>
+        !(c.splits||[]).some(sp=>budgetSubIds.has(sp.subId) || budgetSubIds.has(sp.catId) || budgetCatIds.has(sp.catId) || budgetCatIds.has(sp.subId))
+      )
+    ];
     const pendIn  = pendInBudget  + unbudgetedPend.filter(t=>getTxType(t)==="income").reduce((s,t)=>s+Math.abs(t.totalAmount),0);
     const pendOut = pendOutBudget + unbudgetedPend.filter(t=>getTxType(t)!=="income").reduce((s,t)=>s+Math.abs(t.totalAmount),0);
 
@@ -21837,13 +21928,18 @@ Abbrechen = ${remoteName}-Stand laden`
     const endeAbg=isPastM;
     const isAcc = t => t.accountId===accId || (!t.accountId && accId==="acc-giro");
     const signAmt = t => { const type=t._csvType||(t.totalAmount>=0?"income":"expense"); return type==="income"?Math.abs(t.totalAmount):-Math.abs(t.totalAmount); };
+    // Verknüpfte Buchungen ermitteln — wenn eine Vormerkung eine echte Buchung hat (_linkedTo), nicht doppelt zählen
+    const realDates = new Set(txs.filter(t=>!t.pending&&isAcc(t)&&(()=>{const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m;})()).map(t=>t.id));
+    const isRealBooked = t => t._linkedTo && realDates.has(t._linkedTo);
     if(accId !== "acc-giro") {
-      const allAccTxs = txs.filter(t=>{ if(t._linkedTo||t._budgetSubId)return false; if(endeAbg&&t.pending)return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m; });
+      // Für Nicht-Giro-Konten: _linkedTo-Transfers einbeziehen (Sparplan-Zugang)
+      // aber _budgetSubId-Platzhalter weiterhin ausschließen
+      const allAccTxs = txs.filter(t=>{ if(t._budgetSubId)return false; if(endeAbg&&t.pending)return false; if(t.pending&&isRealBooked(t))return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m; });
       const v = prevEnde + allAccTxs.reduce((s,t)=>s+signAmt(t),0);
       _progEndeAccCache.current[ck] = v; return v;
     }
     const inc = cats.filter(c=>c.type==="income"||c.type==="tagesgeld").reduce((s,cat)=>
-      s+txs.filter(t=>{ if(t._linkedTo||t._budgetSubId)return false; if(endeAbg&&t.pending)return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id); }).reduce((ss,t)=>{ const sa=(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((a,sp)=>a+Math.abs(pn(sp.amount)),0); return ss+(sa>0?sa:Math.abs(t.totalAmount)); },0),0);
+      s+txs.filter(t=>{ if(t._linkedTo||t._budgetSubId)return false; if(endeAbg&&t.pending)return false; if(t.pending&&isRealBooked(t))return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id); }).reduce((ss,t)=>{ const sa=(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((a,sp)=>a+Math.abs(pn(sp.amount)),0); return ss+(sa>0?sa:Math.abs(t.totalAmount)); },0),0);
     const out = cats.filter(c=>c.type==="expense").reduce((s,cat)=>{
       if(endeAbg) return s+txs.filter(t=>{ if(t._linkedTo||t._budgetSubId)return false; if(t.pending&&t._seriesTyp!=="finanzierung")return false; if(!isAcc(t))return false; const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()===m&&(t.splits||[]).some(sp=>sp.catId===cat.id); }).reduce((ss,t)=>ss+(t.splits||[]).filter(sp=>sp.catId===cat.id).reduce((sss,sp)=>sss+Math.abs(pn(sp.amount)),0),0);
       const subIds=new Set((cat.subs||[]).map(s=>s.id));
