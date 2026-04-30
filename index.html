@@ -1124,28 +1124,28 @@ function MonthPicker({month, year, onMonth, onYear, yearOnly=false}) {
     background: isLightTheme?"#fff":T.surf3,
     border: isLightTheme?`1px solid ${T.bds}`:"none",
     color:T.blue,
-    borderRadius:6,width:20,height:22,fontSize:12,cursor:"pointer",
+    borderRadius:8, width:32, height:32, fontSize:16, cursor:"pointer",
     display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
     boxShadow: isLightTheme?"0 1px 3px rgba(0,0,0,0.12)":"none",
   };
 
   return (
     <div ref={ref} style={{position:"relative",display:"inline-flex",alignItems:"center",gap:3}}>
-      <button onClick={yearOnly?()=>onYear(year-1):prevM} style={btnS}>{Li("chevron-left",14)}</button>
+      <button onClick={yearOnly?()=>onYear(year-1):prevM} style={btnS}>{Li("chevron-left",16)}</button>
       {/* Label: klickbar → Dropdown */}
       <span onClick={()=>{setPickYear(year);setOpen(o=>!o);}}
         style={{
           background: isLightTheme?"#fff":T.surf3,
-          borderRadius:7,padding:"2px 9px",
-          color:T.txt,fontWeight:700,fontSize:12,cursor:"pointer",
-          userSelect:"none",textAlign:"center",whiteSpace:"nowrap",
+          borderRadius:8, padding:"4px 12px",
+          color:T.txt, fontWeight:700, fontSize:14, cursor:"pointer",
+          userSelect:"none", textAlign:"center", whiteSpace:"nowrap",
           border:`1px solid ${open?T.blue:isLightTheme?T.bds:"transparent"}`,
           boxShadow: isLightTheme?"0 1px 3px rgba(0,0,0,0.12)":"none",
           transition:"border-color 0.15s",
-          minWidth: yearOnly?38:72}}>
+          minWidth: yearOnly?46:88}}>
         {yearOnly ? year : `${MONTHS_S[month]} ${year}`}
       </span>
-      <button onClick={yearOnly?()=>onYear(year+1):nextM} style={btnS}>{Li("chevron-right",14)}</button>
+      <button onClick={yearOnly?()=>onYear(year+1):nextM} style={btnS}>{Li("chevron-right",16)}</button>
 
       {/* Dropdown — öffnet nach unten (jetzt in der Titelleiste) */}
       {open&&(
@@ -6245,6 +6245,7 @@ function SaldoHero2({year, month,
   onDrillUncatIn, onDrillUncatOut, onDrill}) {
   const { getKumulierterSaldo, accounts, startBalances, txs, cats, getBudgetForMonth, budgets, selAcc, setSelAcc } = useContext(AppCtx);
   const ks = getKumulierterSaldo(year, month);
+  const [showDetail, setShowDetail] = React.useState(false);
 
   // Konto-spezifische Prognose-Ende Berechnung mit Budget-Floor-Logik
   const getProgEndeAcc = (y, m, accId) => {
@@ -6607,16 +6608,20 @@ function SaldoHero2({year, month,
   );
   const PrognoseRow = ({pm, pe}) => (
     <>
-      <div style={{display:"flex",alignItems:"center"}}>
-        <div style={{flex:2,textAlign:"center",...(pm!==null?tapStyle:{}),padding:"4px 0"}}
-          onClick={pm!==null?()=>setProgDrill(v=>v==="Mitte"?null:"Mitte"):undefined}>
+      <div style={{display:"flex",alignItems:"center",cursor:"pointer"}}
+        onClick={()=>setShowDetail(v=>!v)}>
+        <div style={{flex:2,textAlign:"center",padding:"4px 0"}}
+          onClick={e=>{if(pm!==null){e.stopPropagation();setProgDrill(v=>v==="Mitte"?null:"Mitte");}}}>
           <span style={{color:saldoColor(pm),fontSize:17,fontWeight:800}}>
             {pm!==null?fmt(pm)+" €":"–"}
           </span>
         </div>
-        <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10,fontWeight:700}}>Prog.</div>
-        <div style={{flex:2,textAlign:"center",...(pe!==null?tapStyle:{}),padding:"4px 0"}}
-          onClick={pe!==null?()=>setProgDrill(v=>v==="Ende"?null:"Ende"):undefined}>
+        <div style={{width:LBL_W,flexShrink:0,textAlign:"center",color:subClr,fontSize:10,fontWeight:700,
+          display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+          Prog.{Li(showDetail?"chevron-up":"chevron-down",9,subClr)}
+        </div>
+        <div style={{flex:2,textAlign:"center",padding:"4px 0"}}
+          onClick={e=>{if(pe!==null){e.stopPropagation();setProgDrill(v=>v==="Ende"?null:"Ende");}}}>
           <span style={{color:saldoColor(pe),fontSize:17,fontWeight:800}}>
             {pe!==null?fmt(pe)+" €":"–"}
           </span>
@@ -6668,16 +6673,23 @@ function SaldoHero2({year, month,
   );
   return (
     <div style={{margin:"4px 0 0",background:T.hero_bg,
-      borderRadius:0,padding:"12px 0 0",position:"relative",overflow:"hidden"}}>
+      borderRadius:0,padding:"4px 0 0",position:"relative",overflow:"hidden"}}>
       <div style={{position:"relative",textAlign:"center",margin:"0 0 0",padding:"8px 14px 10px"}}>
+        {/* MITTE / ENDE — absolut positioniert, horizontal über Prognosespalten, vertikal mit Kontostand */}
         {showPrognose&&<>
-          <div style={{position:"absolute",left:0,top:"50%",transform:"translateY(-50%)",
-            color:T.mid,fontSize:11,fontWeight:700,letterSpacing:1,opacity:0.5,paddingLeft:14}}>MITTE</div>
-          <div style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",
-            color:T.gold,fontSize:11,fontWeight:700,letterSpacing:1,opacity:0.5,paddingRight:14}}>ENDE</div>
+          <div style={{position:"absolute",top:0,bottom:0,left:0,
+            width:"calc(50% - 30px)",display:"flex",alignItems:"center",justifyContent:"center",
+            pointerEvents:"none"}}>
+            <span style={{color:T.mid,fontSize:11,fontWeight:700,letterSpacing:1,opacity:0.7}}>MITTE</span>
+          </div>
+          <div style={{position:"absolute",top:0,bottom:0,right:0,
+            width:"calc(50% - 30px)",display:"flex",alignItems:"center",justifyContent:"center",
+            pointerEvents:"none"}}>
+            <span style={{color:T.gold,fontSize:11,fontWeight:700,letterSpacing:1,opacity:0.7}}>ENDE</span>
+          </div>
         </>}
         <div onClick={()=>{
-            if(allAccIds.length<=1) return; // kein Toggle ohne Konten mit Ankerpunkt
+            if(allAccIds.length<=1) return;
             const idx = allAccIds.indexOf(selAcc);
             setSelAcc(allAccIds[(idx+1)%allAccIds.length]);
           }}
@@ -6719,7 +6731,8 @@ function SaldoHero2({year, month,
           )}
         </div>
       </div>
-      <div style={{background:"rgba(255,255,255,0.06)",borderRadius:0,padding:"10px 0 10px"}}>
+      <div style={{background:"rgba(255,255,255,0.06)",borderRadius:0}}>
+        {showDetail&&<div>
         {(()=>{
           // Wenn kein Konto gewählt → Props nutzen (Gesamt)
           if(!selAcc) return (<>
@@ -6781,7 +6794,7 @@ function SaldoHero2({year, month,
               onTapOut={(isMitte)=>drill("Ausgaben – unkat."+(isMitte?" bis 14.":""), isMitte?uOut.filter(bis14):uOut, false)}/>}
           </>);
         })()}
-        <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"6px 0 4px"}}/>
+        </div>}{/* end showDetail */}
         {showPrognose ? (()=>{
           const prevY=month===0?year-1:year, prevM=month===0?11:month-1;
           const linkedChIds = new Set(); (txs||[]).forEach(t=>(t.linkedIds||[]).forEach(id=>linkedChIds.add(id)));
@@ -7102,19 +7115,20 @@ function TagesgeldWidget({year, month}) {
   };
 
   // Tagesgenauen Minimalsaldo eines Monats berechnen
-  const getMinTagessaldo = (y, m, virtualSpar={}) => {
+  const getMinTagessaldo = (y, m, virtualSpar={}, accId) => {
     // Cache nur ohne virtualSpar sinnvoll
-    const key = Object.keys(virtualSpar).length===0 ? `${y}-${m}-${selAcc||"all"}` : null;
+    const effSelAcc = accId !== undefined ? accId : selAcc;
+    const key = Object.keys(virtualSpar).length===0 ? `${y}-${m}-${effSelAcc||"all"}` : null;
     if(key && key in minTagCache.current) return minTagCache.current[key];
     const prevY=m===0?y-1:y, prevM=m===0?11:m-1;
-    const baseSaldo = selAcc
-      ? (getProgEndeAccGlobal(prevY, prevM, selAcc) ?? getKumulierterSaldo(prevY, prevM, selAcc))
+    const baseSaldo = effSelAcc
+      ? (getProgEndeAccGlobal(prevY, prevM, effSelAcc) ?? getKumulierterSaldo(prevY, prevM, effSelAcc))
       : getProgEndeW(prevY, prevM);
     if(baseSaldo===null||baseSaldo===undefined) return {min:null, saldoEnde:null};
     const lastDay = new Date(y,m+1,0).getDate();
     const pad2 = n=>String(n).padStart(2,"0");
     const pfx = `${y}-${pad2(m+1)}-`;
-    const isAccTx = t => !selAcc || t.accountId===selAcc || (!t.accountId && selAcc==="acc-giro");
+    const isAccTx = t => !effSelAcc || t.accountId===effSelAcc || (!t.accountId && effSelAcc==="acc-giro");
     const mTxs = txs.filter(t=>{
       if(t._linkedTo) return false;
       const d=new Date(t.date);
@@ -7126,7 +7140,7 @@ function TagesgeldWidget({year, month}) {
     };
     // openBudget einmalig für Mitte + Ende — nur für Gesamt/Giro
     const calcOpenBudget = (maxDay) => {
-      if(selAcc && selAcc !== "acc-giro") return 0;
+      if(effSelAcc && effSelAcc !== "acc-giro") return 0;
       let total=0;
       const dayStr=`${pfx}${pad2(maxDay)}`;
       cats.filter(c=>c.type==="expense"||c.type==="income").forEach(cat=>{
@@ -7207,7 +7221,8 @@ function TagesgeldWidget({year, month}) {
     return sparMonate.length;
   };
 
-  const berechnen = (onDone) => {
+  const berechnen = (onDone, accOverride) => {
+    const effAcc = accOverride !== undefined ? accOverride : selAcc;
     setComputing(true);
     setResult(null);
     setProgress(0);
@@ -7233,7 +7248,7 @@ function TagesgeldWidget({year, month}) {
       const end = Math.min(i + CHUNK, total);
       for(; i < end; i++) {
         const m=(nowM+i)%12, y=nowY+Math.floor((nowM+i)/12);
-        const {min:minTag, saldoEnde} = getMinTagessaldo(y, m, virtualSpar);
+        const {min:minTag, saldoEnde} = getMinTagessaldo(y, m, virtualSpar, effAcc);
         const maxMoeglich = minTag!==null ? Math.floor(Math.max(0, minTag - puffer)) : 0;
 
         let zusaetzlich = 0;
@@ -7249,7 +7264,7 @@ function TagesgeldWidget({year, month}) {
             for(let ahead = 1; ahead <= LOOKAHEAD; ahead++) {
               const ni = i + ahead;
               const nm=(nowM+ni)%12, ny=nowY+Math.floor((nowM+ni)/12);
-              const nextMin = getMinTagessaldo(ny, nm, vsTest).min;
+              const nextMin = getMinTagessaldo(ny, nm, vsTest, effAcc).min;
               if(nextMin !== null && nextMin < puffer) { ok = false; break; }
             }
             if(ok) lo = mid; else hi = mid - 1;
@@ -7276,13 +7291,21 @@ function TagesgeldWidget({year, month}) {
     if(!seriesIds.length) { showToast("Kein Sparplan zum Anpassen gefunden."); return; }
     const seriesId = seriesIds[seriesIds.length-1];
     const altKumuliert = existingSeries.reduce((s,t)=>s+Math.abs(t.totalAmount),0);
+    // Wichtig: immer mit Giro-Konto rechnen, unabhängig von selAcc
+    const prevSelAcc = selAcc;
+    // Temporär auf Giro schalten für die Berechnung — via lokale Variable
+    const savedSelAcc = selAcc;
+    // Berechnung mit acc-giro erzwingen: minTagCache leeren und mit Giro-Kontext rechnen
+    minTagCache.current = {};
+    progEndeCache.current = {};
+    resetProgEndeCache();
     berechnen((rows)=>{
       const anzahl = doAktualisieren(rows, seriesId, seriesId+"-tgt", sparDesc);
       const neuKumuliert = rows.filter(r=>r.zusaetzlich>0).reduce((s,r)=>s+r.zusaetzlich,0);
       const diff = neuKumuliert - altKumuliert;
       const diffStr = diff>0 ? `+${fmt(diff)} €` : diff<0 ? `−${fmt(Math.abs(diff))} €` : "keine Änderung";
       showToast(`✓ Automatisch angepasst: ${anzahl} Raten · ${diffStr}`);
-    });
+    }, "acc-giro"); // Immer Giro für Sparplan-Berechnung
   };
   const maxTransfer = result?.[0]?.zusaetzlich ?? null;
   const col = maxTransfer===null?T.txt2:maxTransfer<=0?T.txt2:maxTransfer<500?T.warn:T.pos;
@@ -7894,6 +7917,7 @@ function DashboardScreen() {
             </button>
           </div>
         )}
+        <div style={{position:"sticky",top:0,zIndex:10,background:T.hero_bg}}>
         {(()=>{
           // ── Prognose: Vormonatssaldo + Einnahmen - Ausgaben ──
 
@@ -8000,6 +8024,7 @@ function DashboardScreen() {
             );
           }
         })()}
+        </div>
 
         {/* ── Kontostand-Warnung ── */}
         <KontoWarnungWidget showFolgemonateToggle={true}/>
@@ -15019,6 +15044,7 @@ function MonatScreen() {
       <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}} onTouchStart={onTS} onTouchEnd={onTE}>
 
         {/* Hero — SaldoHero2 wie Dashboard */}
+        <div style={{position:"sticky",top:0,zIndex:10,background:T.hero_bg}}>
         {(()=>{
           const _tb=new Date(),_todayY=_tb.getFullYear(),_todayM=_tb.getMonth(),_todayD=_tb.getDate();
           const _isCurS=year===_todayY&&month===_todayM,_isPastS=year<_todayY||(year===_todayY&&month<_todayM);
@@ -15121,6 +15147,7 @@ function MonatScreen() {
         })()}
         {/* Kategorie-Balken — gleiche Hintergrundfarbe wie Hero */}
         {catSums.length>0&&<CategoryChart catSums={catSums} maxSum={maxSum} budgets={budgets} getBudgetForMonth={getBudgetForMonth} year={year} month={month}/>}
+        </div>
 
         {/* Budget-Schnellzugriff */}
         <div style={{margin:"0 10px 4px",display:"flex",flexWrap:"wrap",gap:4}}>
@@ -15645,20 +15672,18 @@ function MonatScreen() {
         {(()=>{
           const prevY3 = month===0?year-1:year, prevM3 = month===0?11:month-1;
           const progVal = selAcc
-            ? getKumulierterSaldo(prevY3, prevM3, selAcc)
+            ? (getProgEndeAccGlobal(prevY3, prevM3, selAcc) ?? getKumulierterSaldo(prevY3, prevM3, selAcc))
             : _getProgEndeM(prevY3, prevM3);
-          const ksVal = selAcc
-            ? getKumulierterSaldo(prevY3, prevM3, selAcc)
-            : (month===0?getKumulierterSaldo(year-1,11):getKumulierterSaldo(year,month-1));
           const MONTHS_S2=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
           const label = `${MONTHS_S2[prevM3]} ${prevY3}`;
-          const diff = (progVal!==null&&ksVal!==null&&!selAcc) ? Math.abs(progVal-ksVal) : null;
-          const abweichung = diff!==null && diff>0.01;
           const accName = selAcc ? accounts.find(a=>a.id===selAcc)?.name : null;
+          const tb2 = new Date();
+          const isFut = year>tb2.getFullYear()||(year===tb2.getFullYear()&&month>tb2.getMonth());
+          const ankLabel = selAcc ? (isFut?"PrognoseE Vormonat":"Kontostand Vormonat") : "PrognoseE Vormonat";
           return (
             <div style={{margin:"4px 10px 8px",padding:"8px 12px",
               background:"rgba(255,255,255,0.04)",borderRadius:8,
-              border:`1px solid ${abweichung?T.gold+"66":T.bd+"44"}`}}>
+              border:`1px solid ${T.bd}44`}}>
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{color:T.txt2,fontSize:9,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>
                   Ankerpunkt ({label}){accName?` · ${accName}`:""}
@@ -15666,14 +15691,7 @@ function MonatScreen() {
                 <span style={{color:T.txt,fontSize:13,fontWeight:700,fontFamily:"monospace"}}>
                   {progVal!==null?(progVal>=0?"+":"")+fmt(progVal)+" €":"—"}
                 </span>
-                <span style={{color:T.txt2,fontSize:9}}>{selAcc?(()=>{const tb=new Date();const isFut=year>tb.getFullYear()||(year===tb.getFullYear()&&month>tb.getMonth());return isFut?"PrognoseE Vormonat":"Kontostand Vormonat";})():"PrognoseE Vormonat"}</span>
-                {abweichung&&(
-                  <span style={{color:T.gold,fontSize:10,fontWeight:700,
-                    background:T.gold+"18",borderRadius:5,padding:"2px 7px",marginLeft:4}}>
-                    {Li("alert-triangle",10,T.gold)}{" "}
-                    Abweichung vom Endkontostand: {ksVal>=0?"+":""}{fmt(ksVal)} € (Δ {fmt(diff)} €)
-                  </span>
-                )}
+                <span style={{color:T.txt2,fontSize:9}}>{ankLabel}</span>
               </div>
             </div>
           );
@@ -21834,7 +21852,8 @@ Abbrechen = ${remoteName}-Stand laden`
     const lastD = new Date(y,m+1,0).getDate();
     const todayY=tb.getFullYear(), todayM=tb.getMonth(), todayD=tb.getDate();
     const isCur=y===todayY&&m===todayM, isPastM=y<todayY||(y===todayY&&m<todayM);
-    const endeAbg=isPastM||(isCur&&todayD>=lastD);
+    // Aktueller Monat: immer volle Prognose inkl. Vormerkungen — nicht nur echte Buchungen
+    const endeAbg=isPastM;
     const isAcc = t => t.accountId===accId || (!t.accountId && accId==="acc-giro");
     const signAmt = t => { const type=t._csvType||(t.totalAmount>=0?"income":"expense"); return type==="income"?Math.abs(t.totalAmount):-Math.abs(t.totalAmount); };
     if(accId !== "acc-giro") {
