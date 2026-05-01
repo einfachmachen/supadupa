@@ -6368,7 +6368,7 @@ function SaldoHero2({year, month,
   const isLight = T.themeName==="light"||T.themeName==="ios"||T.themeName==="material"||T.themeName==="paper"||T.themeName==="dkb"||T.themeName==="sand"||T.themeName==="clean"||T.themeName==="brutalist"||T.themeName==="swiss";
   const subClr = isLight?"rgba(0,0,0,0.45)":T.txt2;
   const ksColor = displayColor(displayKs);
-  const showPrognose = isCurrent || isFuture;
+  const showPrognose = true; // Auch für vergangene Monate die Prognose-Zeile zeigen (mit echten Werten)
   const saldoColor = v => v===null?T.txt2:v<0?T.cond_neg:v<=500?T.cond_warn:v<=1000?T.cond_gold:T.cond_pos;
   const ms = buchInE - buchOutE;
   const [progDrill, setProgDrill] = React.useState(null);
@@ -6826,6 +6826,21 @@ function SaldoHero2({year, month,
             const base=getProgEndeAcc(prevY,prevM,aId);
             if(base===null||base===undefined) return null;
             const isAcc2 = t => t.accountId===aId||(!t.accountId&&aId==="acc-giro");
+            // Vergangene Monate: einfache direkte Summe ohne Budget-Logik (alle Konten)
+            const isPastMonth = !isCurrent && !isFuture;
+            if(isPastMonth) {
+              const pad2=n=>String(n).padStart(2,"0");
+              const start=`${year}-${pad2(month+1)}-01`;
+              const mid=`${year}-${pad2(month+1)}-14`;
+              const lD=new Date(year,month+1,0).getDate();
+              const end=`${year}-${pad2(month+1)}-${pad2(lD)}`;
+              const monthTxs=(txs||[]).filter(t=>!t.pending&&!t._linkedTo&&!t._budgetSubId&&isAcc2(t)&&
+                t.date>=start&&t.date<=end);
+              const sumUntil=(cutoff)=>monthTxs.filter(t=>t.date<=cutoff).reduce((s,t)=>s+signAmt2(t),0);
+              const M=base+sumUntil(mid);
+              const all=(txs||[]).filter(t=>{if(t._linkedTo||t._budgetSubId||linkedChIds.has(t.id))return false;if(!isAcc2(t))return false;const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===month;});
+              return {base,mSum:M-base,eSum:E-base,M,E,count:all.length,txs:all};
+            }
             // Für Nicht-Giro: einfache direkte Summen ohne Budget-Logik, _linkedTo einbeziehen
             if(aId !== "acc-giro") {
               const signAmt = t => {
@@ -7162,6 +7177,15 @@ function TagesgeldWidget({year, month}) {
   const [sparSubId, setSparSubId]   = useState(()=>localStorage.getItem("mbt_spar_subid")||"");
   const [sparAccId, setSparAccId]   = useState(()=>localStorage.getItem("mbt_spar_accid")||"");
   const [sparPlanName, setSparPlanName] = useState(()=>localStorage.getItem("mbt_spar_planname")||"Sparplan 1");
+  // Einheitlicher sparDesc-Builder — nur vom Plannamen abhängig
+  const buildSparDesc = (name) => "Sparen·"+(name||"Plan");
+  // Bestehende Sparplan-Series für aktuellen Plannamen finden
+  const findExistingSeries = (name) => {
+    const desc = buildSparDesc(name);
+    const series = txs.filter(t=>t.pending&&!t._linkedTo&&t.desc===desc&&t._seriesId&&t.accountId==="acc-giro");
+    const ids = [...new Set(series.map(t=>t._seriesId))];
+    return {desc, series, seriesIds:ids};
+  };
   const [sparTgtCatId, setSparTgtCatId] = useState(()=>localStorage.getItem("mbt_spar_tgt_catid")||"");
   const [sparTgtSubId, setSparTgtSubId] = useState(()=>localStorage.getItem("mbt_spar_tgt_subid")||"");
 
@@ -7356,7 +7380,7 @@ function TagesgeldWidget({year, month}) {
     progEndeCache.current = {}; // Auch lokalen Prognose-Cache leeren
     resetProgEndeCache(); // Globalen AppCtx Prognose-Cache leeren
     // Wenn ein Sparplan mit diesem Namen existiert, alte Raten ignorieren — sonst rechnen wir mit reduziertem Saldo
-    const sparDesc = "Sparen·"+(sparPlanName||sparAccId||"Plan");
+    const sparDesc = buildSparDesc(sparPlanName);
     const hasExisting = txs.some(t=>t.pending&&!t._linkedTo&&t.desc===sparDesc&&t.accountId==="acc-giro");
     const excludeDesc = hasExisting ? sparDesc : null;
     let i = 0;
@@ -7415,9 +7439,7 @@ function TagesgeldWidget({year, month}) {
   };
 
   const autoAnpassen = () => {
-    const sparDesc = "Sparen·"+(sparPlanName||sparAccId||"Plan");
-    const existingSeries = txs.filter(t=>t.pending&&!t._linkedTo&&t.desc===sparDesc&&t._seriesId&&t.accountId==="acc-giro");
-    const seriesIds = [...new Set(existingSeries.map(t=>t._seriesId))];
+    const {desc:sparDesc, series:existingSeries, seriesIds} = findExistingSeries(sparPlanName);
     if(!seriesIds.length) { showToast("Kein Sparplan zum Anpassen gefunden."); return; }
     const seriesId = seriesIds[seriesIds.length-1];
     const altKumuliert = existingSeries.reduce((s,t)=>s+Math.abs(t.totalAmount),0);
@@ -7482,7 +7504,11 @@ function TagesgeldWidget({year, month}) {
                 .map(t=>t.desc)
               )];
               if(!existingDescs.length) return null;
+              // Aktueller Plan-Match-Status
+              const currentDesc = buildSparDesc(sparPlanName);
+              const currentMatches = existingDescs.includes(currentDesc);
               return (
+                <>
                 <select value=""
                   onChange={e=>{
                     if(!e.target.value) return;
@@ -7491,13 +7517,14 @@ function TagesgeldWidget({year, month}) {
                     localStorage.setItem("mbt_spar_planname", name);
                     e.target.value = "";
                   }}
-                  style={{background:T.surf2,color:T.txt2,border:`1px solid ${T.bd}`,
+                  style={{background:T.surf2,color:T.txt2,border:`1px solid ${currentMatches?T.pos:T.bd}`,
                     borderRadius:8,padding:"4px 6px",fontSize:10,fontFamily:"inherit",cursor:"pointer"}}>
-                  <option value="">⋯ laden</option>
+                  <option value="">{currentMatches?"✓ geladen":"⋯ laden"}</option>
                   {existingDescs.map(d=>(
                     <option key={d} value={d}>{d.replace(/^Sparen·/,"")}</option>
                   ))}
                 </select>
+                </>
               );
             })()}
           </div>
@@ -7672,9 +7699,7 @@ function TagesgeldWidget({year, month}) {
               <div style={{display:"flex",gap:6}}>
                 {/* Sparplan aktualisieren — nur wenn bereits eine Spar-Serie existiert */}
                 {(()=>{
-                  const sparDesc = "Sparen·"+(sparPlanName||sparAccId||"Plan");
-                  const existingSeries = txs.filter(t=>t.pending&&!t._linkedTo&&t.desc===sparDesc&&t._seriesId&&t.accountId==="acc-giro");
-                  const seriesIds = [...new Set(existingSeries.map(t=>t._seriesId))];
+                  const {desc:sparDesc, seriesIds} = findExistingSeries(sparPlanName);
                   if(!seriesIds.length) return null;
                   return (<div style={{display:"flex",gap:6}}>
                     <button onClick={()=>{
@@ -7709,7 +7734,13 @@ function TagesgeldWidget({year, month}) {
                   const sparMonate = result ? result.filter(r=>r.zusaetzlich>0) : [];
                   if(!result) { showToast("Bitte zuerst Neuberechnen klicken."); return; }
                   if(!sparMonate.length) { showToast("Keine Sparraten möglich — Konto bereits voll genutzt oder unter Puffer."); return; }
-                  const sparDesc = "Sparen·"+(sparPlanName||sparAccId||"Plan");
+                  // Bestehende Serie? Dann Aktualisieren nutzen, nicht doppelt anlegen
+                  const {seriesIds:existingIds} = findExistingSeries(sparPlanName);
+                  if(existingIds.length>0) {
+                    showToast("Plan existiert bereits — bitte Aktualisieren statt Anlegen verwenden");
+                    return;
+                  }
+                  const sparDesc = buildSparDesc(sparPlanName);
                   const seriesId = "series-"+uid();
                   const newTxs = sparMonate.flatMap((row, i) => {
                     const pad2 = n=>String(n).padStart(2,"0");
@@ -8141,9 +8172,27 @@ function DashboardScreen() {
           };
           const prevY=month===0?year-1:year, prevM=month===0?11:month-1;
           const base = getProgEnde(prevY, prevM);
-          // Prognose direkt aus gemeinsamen Summen: Vormonatssaldo + Einnahmen - Ausgaben
-          const prognoseMitte = base!=null ? base + _inMitte - _outMitte : null;
-          const prognoseEnde  = base!=null ? base + _inEnde  - _outEnde  : null;
+          // Für vergangene Monate: VormonatsEndsaldo + alle echten Buchungen bis 14./Monatsende
+          let prognoseMitte, prognoseEnde;
+          if(_isPastS && base!=null) {
+            const pad2 = n=>String(n).padStart(2,"0");
+            const start = `${year}-${pad2(month+1)}-01`;
+            const mid = `${year}-${pad2(month+1)}-14`;
+            const lastD = new Date(year,month+1,0).getDate();
+            const end = `${year}-${pad2(month+1)}-${pad2(lastD)}`;
+            const isAccGiro = t => t.accountId==="acc-giro" || (!t.accountId);
+            const monthTxs = txs.filter(t=>!t.pending&&!t._linkedTo&&!t._budgetSubId&&isAccGiro(t)&&
+              t.date>=start && t.date<=end);
+            const sumUntil = (cutoff) => monthTxs.filter(t=>t.date<=cutoff).reduce((s,t)=>{
+              const ct=t._csvType||(t.totalAmount>=0?"income":"expense");
+              return s+(ct==="income"?Math.abs(t.totalAmount):-Math.abs(t.totalAmount));
+            },0);
+            prognoseMitte = base + sumUntil(mid);
+            prognoseEnde  = base + sumUntil(end);
+          } else {
+            prognoseMitte = base!=null ? base + _inMitte - _outMitte : null;
+            prognoseEnde  = base!=null ? base + _inEnde  - _outEnde  : null;
+          }
 
           {
             const detailMitte = dashDetailMitte;
@@ -10984,10 +11033,47 @@ function KontostandImportButton({year, accId: importAccId, onImport}) {
         if(!isNaN(a) && a!==0) kontoMatches.push({date:d||cols[1], amount:a});
       }
     }
+    // Tagesgeld-Zinsen: jede Zeile mit Verwendungszweck beginnend mit "Abrechnung"
+    // hat den echten Zinsbetrag in der Betrag-Spalte und das echte Buchungsdatum in Spalte 1.
+    // zinsByDate: Buchungsdatum → Zinsbetrag (mit Vorzeichen)
+    const zinsByDate = new Map();
+    // Header-Zeile finden um Spalten-Indices zu kennen
+    let zinsHeaderIdx = -1, zinsHeaders = [];
+    for(let i=0; i<Math.min(lines.length,10); i++) {
+      const h = lines[i].split(";").map(c=>c.replace(/^"+|"+$/g,"").trim().toLowerCase());
+      if(h.includes("buchungsdatum")||h.includes("datum")) { zinsHeaderIdx=i; zinsHeaders=h; break; }
+    }
+    if(zinsHeaderIdx >= 0) {
+      const dateColZ = zinsHeaders.findIndex(h=>h==="buchungsdatum"||h==="datum");
+      const amountColZ = zinsHeaders.findIndex(h=>h==="betrag"||h==="amount"||h.includes("umsatz"));
+      const descColZ = zinsHeaders.findIndex(h=>h.includes("verwendungszweck")||h.includes("zweck"));
+      for(let i=zinsHeaderIdx+1; i<lines.length; i++) {
+        const cols = lines[i].split(";").map(c=>c.replace(/^"+|"+$/g,"").trim());
+        if(cols.length < 2) continue;
+        const desc = descColZ>=0 ? cols[descColZ] : "";
+        // Zinsen-Buchung erkennen: Verwendungszweck beginnt mit "Abrechnung" und enthält "Zinsen"
+        if(!desc.startsWith("Abrechnung")) continue;
+        if(!desc.includes("Zinsen") && !desc.includes("zinsen")) continue;
+        const d = parseGermanDate(cols[dateColZ] || "");
+        const a = parseFloat((cols[amountColZ]||"").replace(/\./g,"").replace(",","."));
+        if(d && !isNaN(a) && a!==0) zinsByDate.set(d, a);
+      }
+    }
     if(kontoMatches.length>0) {
       kontoMatches.sort((a,b)=>a.date.localeCompare(b.date));
       const latest = kontoMatches[kontoMatches.length-1];
-      lastSaldo = latest.amount; lastSaldoDate = latest.date;
+      // Zinsen nur addieren wenn die Zinsen-Buchung BIS ZUM Kontostand-Datum gebucht wurde
+      // (also im selben Monat oder Tage davor — nicht erst im Folgemonat!)
+      let zins = 0;
+      const refTime = new Date(latest.date).getTime();
+      for(const [d, v] of zinsByDate.entries()) {
+        if(!d) continue;
+        const diffDays = (refTime - new Date(d).getTime()) / 86400000;
+        // Buchungsdatum der Zinsen muss am oder vor dem Kontostand-Datum liegen (max 3 Tage davor)
+        if(diffDays >= 0 && diffDays <= 3) { zins = v; break; }
+      }
+      lastSaldo = latest.amount + zins;
+      lastSaldoDate = latest.date;
     }
 
     // DKB: Saldo-Spalte
@@ -15221,8 +15307,27 @@ function MonatScreen() {
           };
           const prevY=month===0?year-1:year,prevM=month===0?11:month-1;
           const base=_getProgEndeM2(prevY,prevM);
-          const prognoseMitte=base!=null?base+_inMitte-_outMitte:null;
-          const prognoseEnde =base!=null?base+_inEnde -_outEnde :null;
+          const _isPastM2=year<_todayY||(year===_todayY&&month<_todayM);
+          let prognoseMitte, prognoseEnde;
+          if(_isPastM2 && base!=null) {
+            const pad2=n=>String(n).padStart(2,"0");
+            const start=`${year}-${pad2(month+1)}-01`;
+            const mid=`${year}-${pad2(month+1)}-14`;
+            const lD=new Date(year,month+1,0).getDate();
+            const end=`${year}-${pad2(month+1)}-${pad2(lD)}`;
+            const isAccGiro=t=>t.accountId==="acc-giro"||(!t.accountId);
+            const monthTxs=txs.filter(t=>!t.pending&&!t._linkedTo&&!t._budgetSubId&&isAccGiro(t)&&
+              t.date>=start&&t.date<=end);
+            const sumUntil=(cutoff)=>monthTxs.filter(t=>t.date<=cutoff).reduce((s,t)=>{
+              const ct=t._csvType||(t.totalAmount>=0?"income":"expense");
+              return s+(ct==="income"?Math.abs(t.totalAmount):-Math.abs(t.totalAmount));
+            },0);
+            prognoseMitte=base+sumUntil(mid);
+            prognoseEnde =base+sumUntil(end);
+          } else {
+            prognoseMitte=base!=null?base+_inMitte-_outMitte:null;
+            prognoseEnde =base!=null?base+_inEnde -_outEnde :null;
+          }
           const _isCurH=year===_todayY&&month===_todayM,_isFutH=year>_todayY||(year===_todayY&&month>_todayM);
           const detailMitte = monatDetailMitte;
           const detailEnde  = monatDetailEnde;
@@ -21587,9 +21692,14 @@ Abbrechen = ${remoteName}-Stand laden`
   // Kumulierter Kontostand bis inkl. Monat m des Jahres y
   const _ksCache = React.useRef({});
   const _ksTxsRef = React.useRef(null);
+  const _ksBalRef = React.useRef(null);
   const getKumulierterSaldo = (toYear, toMonth, accountId=null) => {
     const noCache = window.MBT_DEBUG?.disable_kumcache;
-    if(_ksTxsRef.current !== txs) { _ksCache.current={}; _ksTxsRef.current=txs; }
+    if(_ksTxsRef.current !== txs || _ksBalRef.current !== startBalances) {
+      _ksCache.current = {};
+      _ksTxsRef.current = txs;
+      _ksBalRef.current = startBalances;
+    }
     const ck=`${toYear}-${toMonth}-${accountId||""}`;
     if(!noCache && ck in _ksCache.current) return _ksCache.current[ck];
     const accFilter = accountId;
@@ -21725,8 +21835,13 @@ Abbrechen = ${remoteName}-Stand laden`
   // ── Prognostizierter Saldo (inkl. offene Vormerkungen bis Halbmonat oder Monatsende) ──
   const _progDetailCache = React.useRef({});
   const _progDetailTxsRef = React.useRef(null);
+  const _progDetailBalRef = React.useRef(null);
   const getPrognoseSaldoDetail = (toYear, toMonth, half) => {
-    if(_progDetailTxsRef.current!==txs){_progDetailCache.current={};_progDetailTxsRef.current=txs;}
+    if(_progDetailTxsRef.current!==txs || _progDetailBalRef.current!==startBalances) {
+      _progDetailCache.current={};
+      _progDetailTxsRef.current=txs;
+      _progDetailBalRef.current=startBalances;
+    }
     const ck=`${toYear}-${toMonth}-${half?1:0}`;
     if(ck in _progDetailCache.current) return _progDetailCache.current[ck];
     let base;
@@ -21996,12 +22111,14 @@ Abbrechen = ${remoteName}-Stand laden`
   // Konto-spezifische Prognose — gecacht, korrekt mit Budget-Logik
   const _progEndeAccCache = React.useRef({});
   const _progEndeAccTxsRef = React.useRef(null);
+  const _progEndeAccBalRef = React.useRef(null);
   const resetProgEndeCache = () => { _progEndeAccCache.current = {}; };
   const getProgEndeAccGlobal = (y, m, accId) => {
     const noCache = window.MBT_DEBUG?.disable_progndeacc;
-    if(_progEndeAccTxsRef.current !== txs) {
+    if(_progEndeAccTxsRef.current !== txs || _progEndeAccBalRef.current !== startBalances) {
       _progEndeAccCache.current = {};
       _progEndeAccTxsRef.current = txs;
+      _progEndeAccBalRef.current = startBalances;
     }
     const ck = `${y}-${m}-${accId}`;
     if(!noCache && ck in _progEndeAccCache.current) return _progEndeAccCache.current[ck];
