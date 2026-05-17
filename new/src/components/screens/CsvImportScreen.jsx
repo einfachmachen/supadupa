@@ -340,7 +340,11 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   return (
     <div className={mobileMode?"mobile-modal":""} style={embedded
       ? {display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif",minHeight:300}
-      : {position:"fixed",inset:0,background:T.bg,zIndex:15,display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif"}}>
+      : {position:"fixed",inset:0,background:T.bg,zIndex:15,display:"flex",flexDirection:"column",
+         fontFamily:"'SF Pro Text',-apple-system,sans-serif",
+         // Reserve unten: die nav-bottom (Home/Monat/Jahr) ist position:fixed z-index:9999
+         // und überdeckt sonst den Footer mit dem "Buchungen importieren"-Button.
+         paddingBottom:"calc(60px + env(safe-area-inset-bottom, 0px))"}}>
       {/* Header */}
       {!embedded&&<div style={{background:T.surf,borderBottom:`1px solid ${T.bds}`,padding:MPad,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
         <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt,borderRadius:10,width:mobileMode?44:34,height:mobileMode?44:34,cursor:"pointer",fontSize:18}}>{Li("arrow-left",mobileMode?20:13)}</button>

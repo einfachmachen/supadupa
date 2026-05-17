@@ -267,16 +267,22 @@ function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAm
                   // Wenn ein Konto gewählt ist: ALLE Gruppen dieses Kontos zeigen
                   // (Einnahme + Ausgabe), Typ-Filter wird dabei ignoriert.
                   // Ohne Konto-Filter: nach Behavior-Typ filtern.
+                  // Helper: matcht eine Gruppe gegen den filterType.
+                  // (Zentrales Predicate, damit accountId und filterType gleichzeitig
+                  // wirken können — sonst zeigt der CSV-Import auch Einnahme-Kategorien
+                  // für Ausgaben, wenn ein Konto vorausgewählt ist.)
+                  const matchesType = (g) => {
+                    if(!filterType) return true;
+                    if(filterType==="tagesgeld") return g.behavior==="tagesgeld"||g.type==="tagesgeld";
+                    if(filterType==="income")    return g.behavior==="income"   ||g.behavior==="tagesgeld"||g.type==="income"   ||g.type==="tagesgeld";
+                    // expense
+                    return g.behavior==="expense"||g.behavior==="tagesgeld"||g.type==="expense"||g.type==="tagesgeld"||(!g.behavior&&g.type!=="income");
+                  };
                   let filteredGroups;
                   if(accountId) {
-                    filteredGroups = groups.filter(g => g.accountId===accountId);
+                    filteredGroups = groups.filter(g => g.accountId===accountId && matchesType(g));
                   } else {
-                    filteredGroups = groups.filter(g=>!filterType||(filterType==="tagesgeld"
-                      ? (g.behavior==="tagesgeld"||g.type==="tagesgeld")
-                      : filterType==="income"
-                      ? (g.behavior==="income"||g.behavior==="tagesgeld"||g.type==="income"||g.type==="tagesgeld")
-                      : (g.behavior==="expense"||g.behavior==="tagesgeld"||g.type==="expense"||g.type==="tagesgeld"||(!g.behavior&&g.type!=="income"))
-                    ));
+                    filteredGroups = groups.filter(matchesType);
                   }
                   // IMMER nach Konto gruppieren — Konto-Header über jeder Gruppe
                   const byAcc = new Map();

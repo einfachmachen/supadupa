@@ -213,7 +213,16 @@
   .mobile-modal input { font-size: var(--mob-fs) !important; }
   .mobile-modal input[type="date"] { font-size: var(--mob-fs) !important; }
   /* Mobile mode — alle Texte und Buttons größer */
-  .mobile-modal { font-size: 18px; top: 0 !important; height: 100vh !important; }
+  /* Fix: nav-bottom (z-index 9999, fixed bottom:0, 57px hoch) überdeckt
+     den unteren Rand jedes mobile-modals. Wir reservieren die Höhe + Safe-Area. */
+  .mobile-modal {
+    font-size: 18px;
+    top: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding-bottom: calc(57px + env(safe-area-inset-bottom, 0px)) !important;
+    box-sizing: border-box;
+  }
   .mobile-modal button { min-height: 48px; font-size: 18px !important; }
   .mobile-modal label, .mobile-modal span, .mobile-modal div { font-size: inherit; }
   .mobile-modal textarea { font-size: var(--mob-fs) !important; line-height: 1.5 !important; }
@@ -5334,17 +5343,18 @@ function CatPicker({value, onChange, placeholder="Kategorie wählen…", totalAm
                 {(()=>{
                   // Wenn ein Konto gewählt ist: ALLE Gruppen dieses Kontos zeigen
                   // (Einnahme + Ausgabe), Typ-Filter wird dabei ignoriert.
-                  // Ohne Konto-Filter: nach Behavior-Typ filtern.
+                  // Helper: matcht eine Gruppe gegen den filterType.
+                  const matchesType = (g) => {
+                    if(!filterType) return true;
+                    if(filterType==="tagesgeld") return g.behavior==="tagesgeld"||g.type==="tagesgeld";
+                    if(filterType==="income")    return g.behavior==="income"   ||g.behavior==="tagesgeld"||g.type==="income"   ||g.type==="tagesgeld";
+                    return g.behavior==="expense"||g.behavior==="tagesgeld"||g.type==="expense"||g.type==="tagesgeld"||(!g.behavior&&g.type!=="income");
+                  };
                   let filteredGroups;
                   if(accountId) {
-                    filteredGroups = groups.filter(g => g.accountId===accountId);
+                    filteredGroups = groups.filter(g => g.accountId===accountId && matchesType(g));
                   } else {
-                    filteredGroups = groups.filter(g=>!filterType||(filterType==="tagesgeld"
-                      ? (g.behavior==="tagesgeld"||g.type==="tagesgeld")
-                      : filterType==="income"
-                      ? (g.behavior==="income"||g.behavior==="tagesgeld"||g.type==="income"||g.type==="tagesgeld")
-                      : (g.behavior==="expense"||g.behavior==="tagesgeld"||g.type==="expense"||g.type==="tagesgeld"||(!g.behavior&&g.type!=="income"))
-                    ));
+                    filteredGroups = groups.filter(matchesType);
                   }
                   // IMMER nach Konto gruppieren — Konto-Header über jeder Gruppe
                   const byAcc = new Map();
@@ -18748,7 +18758,9 @@ function CsvImportScreen({onClose, embedded=false, mobileMode=false}) {
   return (
     <div className={mobileMode?"mobile-modal":""} style={embedded
       ? {display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif",minHeight:300}
-      : {position:"fixed",inset:0,background:T.bg,zIndex:15,display:"flex",flexDirection:"column",fontFamily:"'SF Pro Text',-apple-system,sans-serif"}}>
+      : {position:"fixed",inset:0,background:T.bg,zIndex:15,display:"flex",flexDirection:"column",
+         fontFamily:"'SF Pro Text',-apple-system,sans-serif",
+         paddingBottom:"calc(60px + env(safe-area-inset-bottom, 0px))"}}>
       {/* Header */}
       {!embedded&&<div style={{background:T.surf,borderBottom:`1px solid ${T.bds}`,padding:MPad,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
         <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"none",color:T.txt,borderRadius:10,width:mobileMode?44:34,height:mobileMode?44:34,cursor:"pointer",fontSize:18}}>{Li("arrow-left",mobileMode?20:13)}</button>
