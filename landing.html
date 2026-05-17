@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MyBudgetTracker</title>
+  <meta name="theme-color" content="#2C3035">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #2C3035;
+      color: #E8EAED;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .wrap {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .logo svg { width: 56px; height: 56px; }
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+    .sub {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(232,234,237,0.55);
+      margin-bottom: 32px;
+    }
+    .card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      margin-bottom: 12px;
+      transition: background 0.15s, transform 0.15s, border-color 0.15s;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .card:active { transform: scale(0.985); }
+    @media (hover: hover) {
+      .card:hover {
+        background: rgba(255,255,255,0.07);
+        border-color: rgba(170,204,0,0.4);
+      }
+    }
+    .card .row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .card .badge {
+      flex-shrink: 0;
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .badge.neu { background: rgba(170,204,0,0.15); color: #AACC00; }
+    .badge.alt { background: rgba(137,196,244,0.15); color: #89C4F4; }
+    .card .title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .card .desc {
+      font-size: 12px;
+      color: rgba(232,234,237,0.55);
+    }
+    .arrow {
+      margin-left: auto;
+      color: rgba(232,234,237,0.35);
+      font-size: 20px;
+    }
+    .foot {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(232,234,237,0.35);
+      line-height: 1.6;
+    }
+    .foot a { color: rgba(170,204,0,0.7); text-decoration: none; }
+    .foot a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#AACC00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+    </div>
+    <h1>MyBudgetTracker</h1>
+    <div class="sub">Welche Version möchtest du öffnen?</div>
+
+    <a class="card" href="./new/">
+      <div class="row">
+        <div class="badge neu">NEU</div>
+        <div>
+          <div class="title">Modulare Version</div>
+          <div class="desc">React + Vite, atomic design, schnell und gepflegt</div>
+        </div>
+        <div class="arrow">›</div>
+      </div>
+    </a>
+
+    <a class="card" href="./old/">
+      <div class="row">
+        <div class="badge alt">ALT</div>
+        <div>
+          <div class="title">Original-Version</div>
+          <div class="desc">Single-File-PWA, der ursprüngliche Stand</div>
+        </div>
+        <div class="arrow">›</div>
+      </div>
+    </a>
+
+    <div class="foot">
+      Tipp: „Zum Home-Bildschirm" im Safari-Menü installiert die App als PWA.
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,73 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # manuell auslösbar
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: new/package-lock.json
+
+      - name: Install new app dependencies
+        working-directory: ./new
+        run: npm ci --no-audit --no-fund
+
+      - name: Build new app
+        working-directory: ./new
+        # Base muss /<repo-name>/new/ sein, damit Asset-URLs stimmen.
+        # ${{ github.event.repository.name }} ist zur Build-Zeit der Repo-Name.
+        run: npm run build -- --base=/${{ github.event.repository.name }}/new/
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          # Landing-Page als index.html
+          cp landing.html _site/index.html
+          # Alte App als Unterordner /old/
+          mkdir -p _site/old
+          cp -r old/* _site/old/
+          # WICHTIG: GitHub Pages erwartet die Einstiegsdatei "index.html",
+          # die alte App heißt aber "index-OLD.html". Symlink bzw. Kopie.
+          cp old/index-OLD.html _site/old/index.html
+          # Neue App (Build-Output)
+          mkdir -p _site/new
+          cp -r new/dist/* _site/new/
+          # Sanity-Check
+          echo "── Site-Inhalt ──"
+          find _site -maxdepth 2 -type f | head -30
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
